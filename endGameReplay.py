@@ -8,6 +8,8 @@ import os
 
 # TODO: Rivers, + improve: goody huts, barbarians, icebergs
 # TODO: Lock civ colors and city visualization
+# TODO: Include more natural wonders
+# TODO: Take actual turn number in use
 
 # TODO: Nice to have stuff in future:
 #       TODO: Optional visualize units
@@ -43,8 +45,8 @@ axTurn = plt.axes([0.1, 0.03, 0.8, 0.02])
 sTurn = Slider(axTurn, 'Turn', 1, TurnCount, valinit=1, valstep=1)
 
 hg_environment = HexGrid(M, N)
-hg_borders = HexGrid(M, N, 0.85)
-hg_goodyHut = HexGrid(M, N, 0.2)
+hg_borders = HexGrid(M, N, 0.8)
+hg_goodyHut = HexGrid(M, N, 0.35)
 
 hg_environment.set_fc_colors(gdh.envColors)
 hg_goodyHut.set_fc_colors(gdh.goodyHuts[0])
