@@ -1,0 +1,345 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- CTE_UI -->
+<!-- Author: Zur13 -->
+<!-- DateCreated: 2/9/2019 9:30:17 PM -->
+<!-- Copyright 2019, © Zur13, All rights reserved -->
+<Context Name="CmeCtx">
+	<Container													ID="CmeContentContainer"		Anchor="R,T"	Offset="0,0"		Size="auto,auto"		>
+		<AlphaAnim												ID="CmePendingNWMetaTimer"		Anchor="C,T"						Size="parent,parent"	Speed="6" Cycle="Once" AlphaStart="0" AlphaEnd="1" Function="Root"/>
+		<AlphaAnim												ID="CmeLaunchBarBtnTimer"																	Begin="0" End="1" Speed="100" Cycle="Once" Stopped="1"/>
+		<!-- Button on the top panel  -->
+		<Container												ID="CmeLaunchBarBtnCont"		Anchor="R,T"	Offset="0,0"		Size="48,auto"			ConsumeMouse="1">
+			<Button												ID="CmeLaunchBarBtn"			Anchor="C,C"						Size="29,29"			Texture="TopBarCMEButton.dds" ToolTip="LOC_CHEAT_MAP_EDITOR_LAUNCH_BAR_BTN_TIP" ConsumeMouse="1">
+				<Label																							Offset="3,8"								Style="TopBarMeta"				String="CME" />
+			</Button>
+		</Container>
+
+		<!-- Mod Window Style="CityPanelSlotGrid"  -->
+		<Container												ID="CmeDlgContainer"			Anchor="R,T"	Offset="30,130"		Size="500,auto"			AnchorSide="I,I"	ConsumeMouse="1"	Hidden="1">
+			<Grid												ID="CmeDlgContentGridBg"		Anchor="R,T"	Offset="0,0"		Size="parent,auto"		Texture="Controls_PanelBlue" ConsumeMouse="0"	Hidden="1" SliceCorner="25,28" SliceSize="33,18" SliceTextureSize="83,75" >
+			</Grid>
+			<Grid												ID="CmeDlgContentGrid"			Anchor="R,T"	Offset="0,0"		Size="parent,auto"		Style="CityPanelSlotGrid" ConsumeMouse="1" Hidden="0" >
+				<Stack											ID="CmeDlgContext"				Anchor="R,T"						Size="parent,auto"		StackGrowth="Bottom" Padding="3">
+					<Stack										ID="CmeStackMain"				Anchor="R,T"						Size="parent,auto"		StackGrowth="Bottom" Padding="3">
+						<Grid																	Anchor="C,C"	Offset="0,10"		Size="parent-40,24"		Style="CityPanelSlotGrid">
+							<Label								ID="CmeHeaderLbl"				Anchor="C,C"												Style="DiplomacyCivHeader"		String="Cheat Map Editor"	FontStyle="stroke" ColorSet="BodyTextBright"/>
+						</Grid>
+
+						<Stack									ID="CmeStackTabs"				Anchor="C,T"	Offset="0,0"		Size="auto,auto"		Style="CityPanelSlotGrid"	StackGrowth="Left" Padding="10" >
+							<GridButton							ID="CmeBtnTabRiv"				Anchor="R,C"	Offset="0,0"		Size="113,26"			Style="ShellButton"				String=""		ToolTip="LOC_CHEAT_MAP_EDITOR_BTN_TAB_RIV_TIP" >
+								<Label							ID="CmeBtnTabRivLbl"			Anchor="C,C"												Style="FontNormal14"			String="LOC_CHEAT_MAP_EDITOR_BTN_TAB_RIV_LBL_STR"	FontStyle="stroke" ColorSet="BodyTextBright"/>
+							</GridButton>
+							<GridButton							ID="CmeBtnTabCliff"				Anchor="R,C"	Offset="0,0"		Size="113,26"			Style="ShellButton"				String=""		ToolTip="LOC_CHEAT_MAP_EDITOR_BTN_TAB_CLI_TIP" >
+								<Label							ID="CmeBtnTabRivLbl"			Anchor="C,C"												Style="FontNormal14"			String="LOC_CHEAT_MAP_EDITOR_BTN_TAB_CLI_LBL_STR"	FontStyle="stroke" ColorSet="BodyTextBright"/>
+							</GridButton>
+							<GridButton							ID="CmeBtnTabTer"				Anchor="R,C"	Offset="0,0"		Size="113,26"			Style="ShellButton"				String=""		ToolTip="LOC_CHEAT_MAP_EDITOR_BTN_TAB_TER_TIP" >
+								<Label							ID="CmeBtnTabTerLbl"			Anchor="C,C"												Style="FontNormal14"			String="LOC_CHEAT_MAP_EDITOR_BTN_TAB_TER_LBL_STR"	FontStyle="stroke" ColorSet="BodyTextBright"/>
+							</GridButton>
+						</Stack>
+							
+						<Container								ID="CmeTabsCtr"					Anchor="C,T"	Offset="0,0"		Size="parent,3"			>
+							<Line								ID="CmeTabs"																				Start="20,0"	End="480,0"	Color="25,25,25,150"	Width="2" />
+						</Container>
+
+						<Container								ID="CmeStackTerrainBody"		Anchor="R,T"	Offset="20,0"		Size="parent,auto"		Hidden="0">
+							<Stack								ID="CmeStackTerrainBody1"		Anchor="R,T"						Size="parent,auto"		StackGrowth="Bottom" Padding="3">
+									
+								<Container						ID="CmeStackTerType"			Anchor="R,T"	Offset="0,0"		Size="parent-40,auto"	Style="CityPanelSlotGrid"	StackGrowth="Right" Padding="20" >
+									<Label						ID="CmeLblTerType"				Anchor="L,C"	Offset="0,0"		Size="90,auto"			Style="FontNormal14"			String="LOC_CHEAT_MAP_EDITOR_LBL_TER_TYPE_STR"	WrapWidth="90"	FontStyle="stroke" ColorSet="BodyTextBright" Align="Right"/>
+									
+<!-- TODO: SAFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF-->
+									<!--<SimplePullDown			ID="CmePDTerType"				Anchor="R,C"	Offset="93,0"		Size="230,28"			Style="PullDownBlue"							ToolTip="LOC_CHEAT_MAP_EDITOR_PD_TER_TYPE_TIP"	ScrollThreshold="500" SpaceForScroll="10" EntryInstance="InstanceOne" AutoFlip="1" />-->
+									<PullDown					ID="CmePDTerType"				Anchor="R,C"	Offset="93,0"		Size="230,28"			Style="PullDownBlue"							ToolTip="LOC_CHEAT_MAP_EDITOR_PD_TER_TYPE_TIP"	ScrollThreshold="500" SpaceForScroll="1" AutoFlip="1" AutoSizePopUp="1"/>
+									<!--<PullDown					ID="CmePDTerType"				Anchor="R,C"	Offset="93,0"		Size="230,28"			Style="PullDownBlue"							ToolTip="LOC_CHEAT_MAP_EDITOR_PD_TER_TYPE_TIP"	ScrollThreshold="500" SpaceForScroll="1" AutoFlip="1" AutoSizePopUp="1" >
+										<ButtonData>
+											<GridButton			ID="CmePDBtnTerType"							Offset="0,0"		Size="200,28"			Style="UnitPanelHeader"			String=""		Texture="Controls_ButtonControl" SliceCorner="10,10" SliceSize="1,1" SliceTextureSize="24,24" TruncateWidth="210" StateOffsetIncrement="0,24"/>
+										</ButtonData>
+										<GridData																Offset="0,50"								Texture="Controls_OptionPanel" SliceCorner="3,3" SliceSize="10,52" SliceTextureSize="16,64"/>
+										<ScrollPanelData										Anchor="C,C"						Size="18,18"			Vertical="1"	AutoScrollBar="1">
+											<ScrollBar											Anchor="R,C"												Style="Slider_Vert"		AnchorSide="O,I"		/>
+											<UpButton											Anchor="R,T"												Style="Scroll_Up"		AnchorSide="O,I"			/>
+											<DownButton											Anchor="R,B"												Style="Scroll_Down"		AnchorSide="O,I"		/>
+										</ScrollPanelData>
+										<StackData												Anchor="C,T"												StackGrowth="Bottom"	Padding="0"/>
+										<InstanceData			Name="CmePDInstTerType" >
+											<GridButton			ID="Button"						Anchor="L,T"						Size="200,30"			Style="UnitPanelHeader"	Texture="Controls_ButtonControl.dds" SliceCorner="10,10" SliceSize="1,1" SliceTextureSize="24,24" StateOffsetIncrement="0,24" TruncateWidth="150"/>
+										</InstanceData>
+									</PullDown>-->
+<!-- TODO: SAFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF-->									
+									<GridButton					ID="CmeBtnRefTerType"			Anchor="R,C"	Offset="62,0"		Size="28,28"			Style="ShellButton"								ToolTip="LOC_CHEAT_MAP_EDITOR_BTN_REF_TERTYPE_TIP" >
+										<Label													Anchor="C,C"	Offset="0,2"								Style="TopBarMeta"				String="[ICON_TradeRouteLarge]" />
+									</GridButton>
+									<Container													Anchor="R,C"	Offset="31,0"		Size="28,28"			ConsumeMouse="0" />
+									<GridButton					ID="CmeBtnUnTer"				Anchor="R,C"	Offset="0,0"		Size="28,28"			Style="ShellButton"								ToolTip="LOC_CHEAT_MAP_EDITOR_BTN_UN_TER_TIP" >
+										<Label													Anchor="C,C"	Offset="0,0"								Style="TopBarMeta"				String="U" />
+									</GridButton>
+								</Container>
+
+								<Container						ID="CmeStackFeature"			Anchor="R,T"	Offset="0,0"		Size="parent-40,auto"	Style="CityPanelSlotGrid"	StackGrowth="Right" Padding="20" >
+									<Label						ID="CmeLblFeature"				Anchor="L,C"	Offset="0,0"		Size="90,auto"			Style="FontNormal14" 			String="LOC_CHEAT_MAP_EDITOR_LBL_FEATURE_STR"	WrapWidth="90"	FontStyle="stroke" ColorSet="BodyTextBright" Align="Right"/>
+									<PullDown					ID="CmePDFeature"				Anchor="R,C"	Offset="93,0"		Size="230,28"			Style="PullDownBlue"							ToolTip="LOC_CHEAT_MAP_EDITOR_PD_FEATURE_TIP"	ScrollThreshold="500" SpaceForScroll="10" EntryInstance="InstanceOne" AutoFlip="1" />
+									<GridButton					ID="CmeBtnRefFea"				Anchor="R,C"	Offset="62,0"		Size="28,28"			Style="ShellButton"								ToolTip="LOC_CHEAT_MAP_EDITOR_BTN_REF_FEA_TIP" >
+										<Label													Anchor="C,C"	Offset="0,2"								Style="TopBarMeta"				String="[ICON_TradeRouteLarge]" />
+									</GridButton>
+									<GridButton					ID="CmeBtnNonFea"				Anchor="R,C"	Offset="31,0"		Size="28,28"			Style="ShellButton"								ToolTip="LOC_CHEAT_MAP_EDITOR_BTN_NON_FEA_TIP" >
+										<Label													Anchor="C,C"	Offset="0,0"								Style="TopBarMeta"				String="X" />
+									</GridButton>
+									<GridButton					ID="CmeBtnUnFea"				Anchor="R,C"	Offset="0,0"		Size="28,28"			Style="ShellButton"								ToolTip="LOC_CHEAT_MAP_EDITOR_BTN_UN_FEA_TIP" >
+										<Label													Anchor="C,C"	Offset="0,0"								Style="TopBarMeta"				String="U" />
+									</GridButton>
+								</Container>
+
+								<Container						ID="CmeStackRes"				Anchor="R,T"	Offset="0,0"		Size="parent-40,auto"	Style="CityPanelSlotGrid"	StackGrowth="Right" Padding="20" >
+									<Label						ID="CmeLblRes"					Anchor="L,C"	Offset="0,0"		Size="90,auto"			Style="FontNormal14"			String="LOC_CHEAT_MAP_EDITOR_LBL_RES_STR"	WrapWidth="90" FontStyle="stroke" ColorSet="BodyTextBright" Align="Right"/>
+									<PullDown					ID="CmePDRes"					Anchor="R,C"	Offset="150,0"		Size="173,28"			Style="PullDownBlue"					ToolTip="LOC_CHEAT_MAP_EDITOR_PD_RES_TIP"	ScrollThreshold="400" SpaceForScroll="10" EntryInstance="InstanceOne" AutoFlip="1" />
+									<Grid														Anchor="R,C"	Offset="94,0"		Size="54,28"			Texture="Controls_TextArea" SliceTextureSize="22,22" SliceCorner="11,20" >
+										<EditBox				ID="CmeEBResValue"				Anchor="C,C"						Size="18,parent"		Style="FontNormal14"					ToolTip="LOC_CHEAT_MAP_EDITOR_EB_RES_VALUE_TIP"	FontStyle="Stroke" TextOffset="4" ColorSet="BodyTextBright" NumberInput="1" EditMode="1" MaxLength="2" ConsumeMouse="1" HighlightColor="25,120,154,200"/>
+										<GridButton				ID="CmeBtnResValueLeft"			Anchor="L,C"						Size="18,28"			Style="ShellButton"						ToolTip="LOC_CHEAT_MAP_EDITOR_BTN_RES_VALUE_LEFT_TIP" >
+											<Label												Anchor="C,C"	Offset="0,0"								Style="TopBarMeta"				String="-" />
+										</GridButton>
+										<GridButton				ID="CmeBtnResValueRight"		Anchor="R,C"						Size="18,28"			Style="ShellButton"						ToolTip="LOC_CHEAT_MAP_EDITOR_BTN_RES_VALUE_RIGHT_TIP" >
+											<Label												Anchor="C,C"	Offset="0,0"								Style="TopBarMeta"				String="+" />
+										</GridButton>
+									</Grid>
+									<GridButton					ID="CmeBtnRefRes"				Anchor="R,C"	Offset="62,0"		Size="28,28"			Style="ShellButton"						ToolTip="LOC_CHEAT_MAP_EDITOR_BTN_REF_RES_TIP" >
+										<Label													Anchor="C,C"	Offset="0,2"								Style="TopBarMeta"				String="[ICON_TradeRouteLarge]" />
+									</GridButton>
+									<GridButton					ID="CmeBtnNonRes"				Anchor="R,C"	Offset="31,0"		Size="28,28"			Style="ShellButton"						ToolTip="LOC_CHEAT_MAP_EDITOR_BTN_NON_RES_TIP" >
+										<Label													Anchor="C,C"	Offset="0,0"								Style="TopBarMeta"				String="X" />
+									</GridButton>
+									<GridButton					ID="CmeBtnUnRes"				Anchor="R,C"	Offset="0,0"		Size="28,28"			Style="ShellButton"						ToolTip="LOC_CHEAT_MAP_EDITOR_BTN_UN_RES_TIP" >
+										<Label													Anchor="C,C"	Offset="0,0"								Style="TopBarMeta"				String="U" />
+									</GridButton>
+								</Container>
+
+								<Container						ID="CmeStackImpr"				Anchor="R,T"	Offset="0,0"		Size="parent-40,auto"	Style="CityPanelSlotGrid"	StackGrowth="Right" Padding="20" >
+									<Label						ID="CmeLblImpr"					Anchor="L,C"	Offset="0,0"		Size="90,auto"			Style="FontNormal14"			String="LOC_CHEAT_MAP_EDITOR_LBL_IMPR_STR"	WrapWidth="90" FontStyle="stroke" ColorSet="BodyTextBright" Align="Right"/>
+									<PullDown					ID="CmePDImpr"					Anchor="R,C"	Offset="93,0"		Size="230,28"			Style="PullDownBlue"					ToolTip="LOC_CHEAT_MAP_EDITOR_PD_IMPR_TIP"	ScrollThreshold="400" SpaceForScroll="10" EntryInstance="InstanceOne" AutoFlip="1" />
+									<GridButton					ID="CmeBtnRefImp"				Anchor="R,C"	Offset="62,0"		Size="28,28"			Style="ShellButton"						ToolTip="LOC_CHEAT_MAP_EDITOR_BTN_REF_IMP_TIP" >
+										<Label													Anchor="C,C"	Offset="0,2"								Style="TopBarMeta"				String="[ICON_TradeRouteLarge]" />
+									</GridButton>
+									<GridButton					ID="CmeBtnNonImp"				Anchor="R,C"	Offset="31,0"		Size="28,28"			Style="ShellButton"						ToolTip="LOC_CHEAT_MAP_EDITOR_BTN_NON_IMP_TIP" >
+										<Label													Anchor="C,C"	Offset="0,0"								Style="TopBarMeta"				String="X" />
+									</GridButton>
+									<GridButton					ID="CmeBtnUnImp"				Anchor="R,C"	Offset="0,0"		Size="28,28"			Style="ShellButton"						ToolTip="LOC_CHEAT_MAP_EDITOR_BTN_UN_IMP_TIP" >
+										<Label													Anchor="C,C"	Offset="0,0"								Style="TopBarMeta"				String="U" />
+									</GridButton>
+								</Container>
+
+								<Container						ID="CmeStackRoute"				Anchor="R,T"	Offset="0,0"		Size="parent-40,auto"	Style="CityPanelSlotGrid"	StackGrowth="Right" Padding="20" >
+									<Label						ID="CmeLblRoute"				Anchor="L,C"	Offset="0,0"		Size="90,auto"			Style="FontNormal14"			String="LOC_CHEAT_MAP_EDITOR_LBL_ROUTE_STR"	WrapWidth="90" FontStyle="stroke" ColorSet="BodyTextBright" Align="Right"/>
+									<PullDown					ID="CmePDRoute"					Anchor="R,C"	Offset="93,0"		Size="230,28"			Style="PullDownBlue"					ToolTip="LOC_CHEAT_MAP_EDITOR_PD_ROUTE_TIP"	ScrollThreshold="500" SpaceForScroll="1" AutoFlip="1" />
+									<GridButton					ID="CmeBtnRefRoute"				Anchor="R,C"	Offset="62,0"		Size="28,28"			Style="ShellButton"						ToolTip="LOC_CHEAT_MAP_EDITOR_BTN_REF_ROUTE_TIP" >
+										<Label													Anchor="C,C"	Offset="0,2"								Style="TopBarMeta"				String="[ICON_TradeRouteLarge]" />
+									</GridButton>
+									<GridButton					ID="CmeBtnNonRoute"				Anchor="R,C"	Offset="31,0"		Size="28,28"			Style="ShellButton"						ToolTip="LOC_CHEAT_MAP_EDITOR_BTN_NON_ROUTE_TIP" >
+										<Label													Anchor="C,C"	Offset="0,0"								Style="TopBarMeta"				String="X" />
+									</GridButton>
+									<GridButton					ID="CmeBtnUnRoute"				Anchor="R,C"	Offset="0,0"		Size="28,28"			Style="ShellButton"						ToolTip="LOC_CHEAT_MAP_EDITOR_BTN_UN_ROUTE_TIP" >
+										<Label													Anchor="C,C"	Offset="0,0"								Style="TopBarMeta"				String="U" />
+									</GridButton>
+								</Container>
+
+								<Container						ID="CmeStackOwner"				Anchor="R,T"	Offset="0,0"		Size="parent-40,auto"	Style="CityPanelSlotGrid"	StackGrowth="Right" Padding="20" Hidden="0">
+									<Label						ID="CmeLblOwner"				Anchor="L,C"	Offset="0,0"		Size="90,auto"			Style="FontNormal14" 			String="LOC_CHEAT_MAP_EDITOR_LBL_OWNER_STR"	WrapWidth="90"	FontStyle="stroke" ColorSet="BodyTextBright" Align="Right"/>
+									<PullDown					ID="CmePDOwner"					Anchor="R,C"	Offset="93,0"		Size="230,28"			Style="PullDownBlue"					ToolTip="LOC_CHEAT_MAP_EDITOR_PD_OWNER_TIP"	ScrollThreshold="500" SpaceForScroll="10" EntryInstance="InstanceOne" AutoFlip="1" />
+									<GridButton					ID="CmeBtnRefOwner"				Anchor="R,C"	Offset="62,0"		Size="28,28"			Style="ShellButton"						ToolTip="LOC_CHEAT_MAP_EDITOR_BTN_REF_ROUTE_TIP" >
+										<Label													Anchor="C,C"	Offset="0,2"								Style="TopBarMeta"				String="[ICON_TradeRouteLarge]" />
+									</GridButton>
+									<GridButton					ID="CmeBtnNonOwner"				Anchor="R,C"	Offset="31,0"		Size="28,28"			Style="ShellButton"						ToolTip="LOC_CHEAT_MAP_EDITOR_BTN_NON_ROUTE_TIP" >
+										<Label													Anchor="C,C"	Offset="0,0"								Style="TopBarMeta"				String="X" />
+									</GridButton>
+									<GridButton					ID="CmeBtnUnOwner"				Anchor="R,C"	Offset="0,0"		Size="28,28"			Style="ShellButton"						ToolTip="LOC_CHEAT_MAP_EDITOR_BTN_UN_ROUTE_TIP" >
+										<Label													Anchor="C,C"	Offset="0,0"								Style="TopBarMeta"				String="U" />
+									</GridButton>
+								</Container>
+
+								<Container						ID="CmeStackElev"				Anchor="R,T"	Offset="0,0"		Size="parent-40,auto"	Style="CityPanelSlotGrid"	StackGrowth="Right" Padding="20" >
+									<Label						ID="CmeLblElev"					Anchor="L,C"	Offset="0,0"		Size="90,auto"			Style="FontNormal14"			String="LOC_CHEAT_MAP_EDITOR_LBL_ELEV_STR"	WrapWidth="90" FontStyle="stroke" ColorSet="BodyTextBright" Align="Right"/>
+									<PullDown					ID="CmePDElev"					Anchor="R,C"	Offset="93,0"		Size="230,28"			Style="PullDownBlue"					ToolTip="LOC_CHEAT_MAP_EDITOR_PD_ELEV_TIP"	ScrollThreshold="500" SpaceForScroll="10" EntryInstance="InstanceOne" AutoFlip="1" />
+									<GridButton					ID="CmeBtnRefElev"				Anchor="R,C"	Offset="62,0"		Size="28,28"			Style="ShellButton"						ToolTip="LOC_CHEAT_MAP_EDITOR_BTN_REF_ELEV_TIP" >
+										<Label													Anchor="C,C"	Offset="0,2"								Style="TopBarMeta"				String="[ICON_TradeRouteLarge]" />
+									</GridButton>
+									<GridButton					ID="CmeBtnNonElev"				Anchor="R,C"	Offset="31,0"		Size="28,28"			Style="ShellButton"						ToolTip="LOC_CHEAT_MAP_EDITOR_BTN_NON_ELEV_TIP" >
+										<Label													Anchor="C,C"	Offset="0,0"								Style="TopBarMeta"				String="X" />
+									</GridButton>
+									<GridButton					ID="CmeBtnUnElev"				Anchor="R,C"	Offset="0,0"		Size="28,28"			Style="ShellButton"						ToolTip="LOC_CHEAT_MAP_EDITOR_BTN_UN_ELEV_TIP" >
+										<Label													Anchor="C,C"	Offset="0,0"								Style="TopBarMeta"				String="U" />
+									</GridButton>
+								</Container>
+
+								<Container						ID="CmeStackContType"			Anchor="R,T"	Offset="0,0"		Size="parent-40,auto"	Style="CityPanelSlotGrid"	StackGrowth="Right" Padding="20" >
+									<Label						ID="CmeLblContType"				Anchor="L,C"	Offset="0,0"		Size="90,auto"			Style="FontNormal14"			String="LOC_CHEAT_MAP_EDITOR_LBL_CONT_TYPE_STR"	WrapWidth="90"  FontStyle="stroke" ColorSet="BodyTextBright" Align="Right"/>
+									<PullDown					ID="CmePDContType"				Anchor="R,C"	Offset="93,0"		Size="230,28"			Style="PullDownBlue"					ToolTip="LOC_CHEAT_MAP_EDITOR_PD_CONT_TYPE_TIP"	ScrollThreshold="500" SpaceForScroll="10" EntryInstance="InstanceOne" AutoFlip="1" />
+									<GridButton					ID="CmeBtnRefCont"				Anchor="R,C"	Offset="62,0"		Size="28,28"			Style="ShellButton"						ToolTip="LOC_CHEAT_MAP_EDITOR_BTN_REF_CONT_TIP" >
+										<Label													Anchor="C,C"	Offset="0,2"								Style="TopBarMeta"				String="[ICON_TradeRouteLarge]" />
+									</GridButton>
+									<GridButton					ID="CmeBtnNonCont"				Anchor="R,C"	Offset="31,0"		Size="28,28"			Style="ShellButton"						ToolTip="LOC_CHEAT_MAP_EDITOR_BTN_NON_CONT_TIP" >
+										<Label													Anchor="C,C"	Offset="0,0"								Style="TopBarMeta"				String="X" />
+									</GridButton>
+									<GridButton					ID="CmeBtnUnCont"				Anchor="R,C"	Offset="0,0"		Size="28,28"			Style="ShellButton"						ToolTip="LOC_CHEAT_MAP_EDITOR_BTN_UN_CONT_TIP" >
+										<Label													Anchor="C,C"	Offset="0,0"								Style="TopBarMeta"				String="U" />
+									</GridButton>
+								</Container>
+							</Stack>
+						</Container>
+
+						<Container								ID="CmeStackRiverBody"			Anchor="R,T"	Offset="20,0"		Size="parent,auto"		Hidden="1">
+							<Stack								ID="CmeStackRiverBody1"			Anchor="R,T"						Size="parent,auto"		StackGrowth="Bottom" Padding="3">
+								
+									<Grid														Anchor="R,T"	Offset="0,0"		Size="parent-40,auto"	Style="CityPanelSlotGrid">
+										<Container				ID="CmeStackRiver"				Anchor="R,T"	Offset="0,0"		Size="parent,auto"		Style="CityPanelSlotGrid">
+											<Label				ID="CmeLblRiver"				Anchor="C,T"	Offset="0,5"		Size="140,22"			Style="FontNormal14"			String="LOC_CHEAT_MAP_EDITOR_LBL_RIVER_STR"			ToolTip="LOC_CHEAT_MAP_EDITOR_LBL_RIVER_TIP"  WrapWidth="140" FontStyle="stroke" ColorSet="BodyTextBright" Align="Right"/>
+											<CheckBox			ID="CmeCBRiverUnch"				Anchor="R,T"	Offset="5,35"								Style="MainMenuCheck"			String="LOC_CHEAT_MAP_EDITOR_CB_RIVER_UNCH_STR"		ToolTip="LOC_CHEAT_MAP_EDITOR_CB_RIVER_UNCH_TIP" WrapWidth="145" TextOffset="-5" ColorSet="BodyTextBright" Align="Right" Disabled="false" IsChecked="0" Hidden="1"/>
+											
+											<Container			ID="CmeStackNewRivId"			Anchor="R,T"	Offset="10,30"		Size="parent,auto"		Style="CityPanelSlotGrid"	StackGrowth="Right" Padding="20" Hidden="0">
+												<Label			ID="CmeLblNewRivId"				Anchor="L,C"	Offset="20,0"		Size="90,auto"			Style="FontNormal14"			String="LOC_CHEAT_MAP_EDITOR_LBL_NEW_RIVER_ID_STR"	WrapWidth="90" FontStyle="stroke" ColorSet="BodyTextBright" Align="Right"/>
+												<PullDown		ID="CmePDNewRivId"				Anchor="R,C"	Offset="0,0"		Size="330,28"			Style="PullDownBlue"					ToolTip="LOC_CHEAT_MAP_EDITOR_PD_NEW_RIVER_ID_TIP"	ScrollThreshold="500" SpaceForScroll="10" EntryInstance="InstanceOne" AutoFlip="1" />
+											</Container>
+											
+											<Container			ID="CmeStackRiverHex"			Anchor="C,T"	Offset="0,70"		Size="70,90"			Padding="0" Style="CityPanelSlotGrid">
+
+												<GridButton		ID="CmeBtnRiverSW"				Anchor="L,T"	Offset="5,35"		Size="30,30"			Style=""						String="" ToolTip="LOC_CHEAT_MAP_EDITOR_BTN_RIVER_SW_TIP" >
+													<Image		ID="CmeRiverHexSWBG"			Anchor="T,R"	Offset="0,0"		Size="30,30"			StretchMode="Fill"	Texture="CmeRiverSW.dds"/>
+													<Image		ID="CmeRiverHexSWD0"			Anchor="T,R"	Offset="0,0"		Size="30,30"			StretchMode="Fill"	Texture="CmeRiverSWD0.dds"/>
+													<Image		ID="CmeRiverHexSWD1"			Anchor="T,R"	Offset="0,0"		Size="30,30"			StretchMode="Fill"	Texture="CmeRiverSWD1.dds"/>
+													<Image		ID="CmeRiverHexSWD2"			Anchor="T,R"	Offset="0,0"		Size="30,30"			StretchMode="Fill"	Texture="CmeRiverSWD2.dds"/>
+												</GridButton>
+
+												<GridButton		ID="CmeBtnRiverSE"				Anchor="L,T"	Offset="40,35"		Size="30,30"			Style=""						String="" ToolTip="LOC_CHEAT_MAP_EDITOR_BTN_RIVER_SE_TIP" >
+													<Image		ID="CmeRiverHexSEBG"			Anchor="T,R"	Offset="0,0"		Size="30,30"			StretchMode="Fill"	Texture="CmeRiverSE.dds"/>
+													<Image		ID="CmeRiverHexSED0"			Anchor="T,R"	Offset="0,0"		Size="30,30"			StretchMode="Fill"	Texture="CmeRiverSED0.dds"/>
+													<Image		ID="CmeRiverHexSED1"			Anchor="T,R"	Offset="0,0"		Size="30,30"			StretchMode="Fill"	Texture="CmeRiverSED1.dds"/>
+													<Image		ID="CmeRiverHexSED2"			Anchor="T,R"	Offset="0,0"		Size="30,30"			StretchMode="Fill"	Texture="CmeRiverSED2.dds"/>
+												</GridButton>
+
+												<GridButton		ID="CmeBtnRiverE"				Anchor="L,T"	Offset="40,2"		Size="30,30"			Style=""						String="" ToolTip="LOC_CHEAT_MAP_EDITOR_BTN_RIVER_E_TIP" >
+													<Image		ID="CmeRiverHexEBG"				Anchor="T,R"	Offset="0,0"		Size="30,30"			StretchMode="Fill"	Texture="CmeRiverE.dds"/>
+													<Image		ID="CmeRiverHexED0"				Anchor="T,R"	Offset="0,0"		Size="30,30"			StretchMode="Fill"	Texture="CmeRiverED0.dds"/>
+													<Image		ID="CmeRiverHexED1"				Anchor="T,R"	Offset="0,0"		Size="30,30"			StretchMode="Fill"	Texture="CmeRiverED1.dds"/>
+													<Image		ID="CmeRiverHexED2"				Anchor="T,R"	Offset="0,0"		Size="30,30"			StretchMode="Fill"	Texture="CmeRiverED2.dds"/>
+												</GridButton>
+											</Container>
+										</Container>
+									</Grid>
+								<!--</Container>-->
+							</Stack>
+						</Container>
+								
+						<Container								ID="CmeStackCliBody"			Anchor="R,T"	Offset="20,0"		Size="parent,auto"		Hidden="1">
+							<Stack								ID="CmeStackCliBody1"			Anchor="R,T"						Size="parent,auto"		StackGrowth="Bottom" Padding="3">
+								
+									<Grid														Anchor="R,T"	Offset="0,0"		Size="parent-40,auto"	Style="CityPanelSlotGrid">
+										<Container				ID="CmeStackCliff"				Anchor="C,T"	Offset="0,0"		Size="175,145"			Style="CityPanelSlotGrid">
+											<Label				ID="CmeLblCliff"				Anchor="C,T"	Offset="0,5"		Size="110,22"			Style="FontNormal14"			String="LOC_CHEAT_MAP_EDITOR_LBL_CLIFF_STR"			ToolTip="LOC_CHEAT_MAP_EDITOR_LBL_CLIFF_TIP"  WrapWidth="140" FontStyle="stroke" ColorSet="BodyTextBright" Align="Right"/>
+											<CheckBox			ID="CmeCBCliffUnch"				Anchor="R,T"	Offset="5,35"								Style="MainMenuCheck"			String="LOC_CHEAT_MAP_EDITOR_CB_CLIFF_UNCH_STR"		ToolTip="LOC_CHEAT_MAP_EDITOR_CB_CLIFF_UNCH_TIP" WrapWidth="145" TextOffset="-5" ColorSet="BodyTextBright" Align="Right" Disabled="false" IsChecked="0" Hidden="1"/>
+
+											<Container			ID="CmeStackCliffHex"			Anchor="C,T"	Offset="0,70"		Size="70,90"			Style="CityPanelSlotGrid"	Padding="0" >
+
+												<GridButton		ID="CmeBtnCliffSW"				Anchor="L,T"	Offset="5,35"		Size="30,30"			Style=""						String="" ToolTip="LOC_CHEAT_MAP_EDITOR_BTN_CLIFF_SW_TIP" >
+													<!--<Line		ID="CmeCliffHexSW"																			Start="0,0"	End="30,30"	Color="205,55,46,255"	Width="3" />-->-->
+													<Image		ID="CmeCliffHexSWBG"			Anchor="T,R"	Offset="0,0"		Size="30,30"			StretchMode="Fill"	Texture="CmeRiverSW.dds"/>
+													<Image		ID="CmeCliffHexSW"				Anchor="T,R"	Offset="0,0"		Size="30,30"			StretchMode="Fill"	Texture="CmeRiverSWD0.dds"/>
+												</GridButton>
+
+												<GridButton		ID="CmeBtnCliffSE"				Anchor="L,T"	Offset="40,35"		Size="30,30"			Style=""						String="" ToolTip="LOC_CHEAT_MAP_EDITOR_BTN_CLIFF_SE_TIP" >
+													<Image		ID="CmeCliffHexSEBG"			Anchor="T,R"	Offset="0,0"		Size="30,30"			StretchMode="Fill"	Texture="CmeRiverSE.dds"/>
+													<Image		ID="CmeCliffHexSE"				Anchor="T,R"	Offset="0,0"		Size="30,30"			StretchMode="Fill"	Texture="CmeRiverSED0.dds"/>
+												</GridButton>
+
+												<GridButton		ID="CmeBtnCliffE"				Anchor="L,T"	Offset="40,2"		Size="30,30"			Style=""						String="" ToolTip="LOC_CHEAT_MAP_EDITOR_BTN_CLIFF_E_TIP" >
+													<Image		ID="CmeCliffHexEBG"				Anchor="T,R"	Offset="0,0"		Size="30,30"			StretchMode="Fill"	Texture="CmeRiverE.dds"/>
+													<Image		ID="CmeCliffHexE"				Anchor="T,R"	Offset="0,0"		Size="30,30"			StretchMode="Fill"	Texture="CmeRiverED0.dds"/>
+												</GridButton>
+											</Container>
+										</Container>
+									</Grid>
+								
+							</Stack>
+						</Container>
+					</Stack>
+						
+					<Stack										ID="CmeStackBtnAll"				Anchor="R,B"	Offset="0,10"		Size="parent,auto"		StackGrowth="Bottom" Padding="3">
+						<Container								ID="CmeTabsCtr2"				Anchor="C,T"	Offset="0,0"		Size="parent,3" >
+							<Line								ID="CmeTabs2"																				Start="20,0"	End="480,0"		Color="25,25,25,150"	Width="2" />
+						</Container>
+							
+						
+						<Stack									ID="CmeStackBtn1"				Anchor="R,T"	Offset="20,0"		Size="parent-40,auto"	Style="CityPanelSlotGrid"	StackGrowth="Left" Padding="10" >
+							<Grid								ID="CmeStackSafeMode"			Anchor="R,C"	Offset="0,0"		Size="146,28"			Style="CityPanelSlotGrid"	StackGrowth="Right" >
+								<Label							ID="CmeLblSafeMode"				Anchor="L,C"	Offset="4,0"		Size="120,auto"			Style="FontNormal14" 			String="LOC_CHEAT_MAP_EDITOR_LBL_SAFE_MODE_STR" WrapWidth="120"	FontStyle="stroke" ColorSet="BodyTextBright" Align="Right"	ToolTip="LOC_CHEAT_MAP_EDITOR_LBL_SAFE_MODE_TIP"  />
+								<CheckBox						ID="CmeCBSafeMode"				Anchor="L,C"	Offset="125,0"								Style="MainMenuCheck"			String="" WrapWidth="110" TextOffset="1"  ColorSet="BodyTextBright" Align="Right" Disabled="false" IsChecked="1"	ToolTip="LOC_CHEAT_MAP_EDITOR_CB_SAFE_MODE_TIP" />
+							</Grid>
+
+							<Grid								ID="CmeStackSafeAdvMode"		Anchor="R,C"	Offset="0,0"		Size="148,28"			Style="CityPanelSlotGrid"	StackGrowth="Right" >
+								<Label							ID="CmeLblSafeAdvMode"			Anchor="L,C"	Offset="4,0"		Size="120,auto"			Style="FontNormal14"			String="LOC_CHEAT_MAP_EDITOR_LBL_SAFE_ADV_MODE_STR" WrapWidth="120"  FontStyle="stroke" ColorSet="BodyTextBright" Align="Right"	ToolTip="LOC_CHEAT_MAP_EDITOR_LBL_SAFE_ADV_MODE_TIP" />
+								<CheckBox						ID="CmeCBSafeAdvMode"			Anchor="L,C"	Offset="127,0"								Style="MainMenuCheck"			String="" WrapWidth="110" TextOffset="1"  ColorSet="BodyTextBright" Align="Right" Disabled="false" IsChecked="1" ToolTip="LOC_CHEAT_MAP_EDITOR_CB_SAFE_ADV_MODE_TIP" />
+							</Grid>
+
+							<Grid								ID="CmeStackPaintMode"			Anchor="R,C"	Offset="0,0"		Size="146,28"			Style="CityPanelSlotGrid"	StackGrowth="Right" >
+								<Label							ID="CmeLblPaintMode"			Anchor="L,C"	Offset="4,0"		Size="120,auto"			Style="FontNormal14"			String="LOC_CHEAT_MAP_EDITOR_LBL_PAINT_MODE_STR"	ToolTip="LOC_CHEAT_MAP_EDITOR_LBL_PAINT_MODE_TIP"  WrapWidth="120"  FontStyle="stroke" ColorSet="BodyTextBright" Align="Right" />
+								<CheckBox						ID="CmeCBPaintMode"				Anchor="L,C"	Offset="125,0"								Style="MainMenuCheck"			String=""	ToolTip="LOC_CHEAT_MAP_EDITOR_CB_PAINT_MODE_TIP" WrapWidth="110" TextOffset="1" ColorSet="BodyTextBright" Align="Right" Disabled="false"/>
+							</Grid>
+						</Stack>
+						<Stack									ID="CmeStackBtn2" 				Anchor="R,T"	Offset="20,0"		Size="parent-40,auto"	Style="CityPanelSlotGrid"	StackGrowth="Left" Padding="6" >
+								
+							<GridButton							ID="CmeFix"						Anchor="R,C"	Offset="0,0"		Size="110,26"			Style="ShellButton"				String=""	ToolTip="LOC_CHEAT_MAP_EDITOR_FIX_TIP" Disabled="false" Hidden="0"	>
+								<Label							ID="CmeFixLbl"					Anchor="C,C"												Style="FontNormal14"			String="LOC_CHEAT_MAP_EDITOR_FIX_LBL_STR"	FontStyle="stroke" ColorSet="BodyTextBright"/>
+								<AlphaAnim						ID="CmeFixMeAnim" 				Anchor="C,C"												AlphaBegin="0" AlphaEnd="1" Speed="3" Cycle="Bounce" Pause=".6" Hidden="1">
+									<Label						ID="CmeFixLbl2" 				Anchor="C,C"												Style="FontNormal14"			String="LOC_CHEAT_MAP_EDITOR_FIX_LBL2_STR"	FontStyle="stroke" ColorSet="StagingStatus_Invalid"/>
+								</AlphaAnim>
+							</GridButton>
+
+							<GridButton							ID="CmeRemoveUnits"				Anchor="R,C"	Offset="0,0"		Size="110,26"			Style="ShellButton"				String=""	ToolTip="LOC_CHEAT_MAP_EDITOR_REMOVE_UNITS_TIP" >
+								<Label							ID="CmeRemoveUnitsLbl"			Anchor="C,C"												Style="FontNormal14"			String="LOC_CHEAT_MAP_EDITOR_REMOVE_UNITS_LBL_STR"	FontStyle="stroke" ColorSet="BodyTextBright"/>
+							</GridButton>
+
+							<GridButton							ID="CmeShowStatus"				Anchor="R,C"	Offset="0,0"		Size="110,26"			Style="ShellButton"				String=""	ToolTip="LOC_CHEAT_MAP_EDITOR_SHOW_SAVELOAD_TIP" >
+								<Label							ID="CmeShowStatusLbl"			Anchor="C,C"												Style="FontNormal14"			String="LOC_CHEAT_MAP_EDITOR_SHOW_SAVELOAD_LBL_STR"	FontStyle="stroke" ColorSet="BodyTextBright"/>
+							</GridButton>
+
+							<Grid								ID="CmeStackBtns0"				Anchor="R,C"	Offset="0,0"		Size="112,28"			Style="CityPanelSlotGrid"	StackGrowth="Right" >
+								<Label							ID="CmeLblBg"					Anchor="L,C"	Offset="4,0"		Size="86,auto"			Style="FontNormal14"			String="LOC_CHEAT_MAP_EDITOR_LBL_BG_STR" WrapWidth="86" FontStyle="stroke" ColorSet="BodyTextBright" Align="Right"	ToolTip="LOC_CHEAT_MAP_EDITOR_LBL_BG_TIP" />
+								<CheckBox						ID="CmeCBBg"					Anchor="L,C"	Offset="88,0"								Style="MainMenuCheck"			String="" WrapWidth="110" TextOffset="1" ColorSet="BodyTextBright" Align="Right" Disabled="false" IsChecked="0" ToolTip="LOC_CHEAT_MAP_EDITOR_CB_BG_TIP" />
+							</Grid>
+						</Stack>
+						<Stack									ID="CmeStackBtn3"				Anchor="R,T"	Offset="20,0"		Size="parent-40,auto"	Style="CityPanelSlotGrid"	StackGrowth="Left" Padding="6" >
+							<GridButton							ID="CmeUnch"					Anchor="R,C"	Offset="0,0"		Size="110,26"			Style="ShellButton"				String="LOC_CHEAT_MAP_EDITOR_UNCH_STR" ToolTip="LOC_CHEAT_MAP_EDITOR_UNCH_TIP" >
+							</GridButton>
+
+							<GridButton							ID="CmeNone"					Anchor="R,C"	Offset="0,0"		Size="110,26"			Style="ShellButton"				String="LOC_CHEAT_MAP_EDITOR_NONE_STR" ToolTip="LOC_CHEAT_MAP_EDITOR_NONE_TIP" >
+							</GridButton>
+
+							<GridButton							ID="CmeCANCEL"					Anchor="R,C"	Offset="0,0"		Size="110,26"			Style="ShellButton"				String="LOC_CHEAT_MAP_EDITOR_CANCEL_STR" ToolTip="LOC_CHEAT_MAP_EDITOR_CANCEL_TIP" >
+							</GridButton>
+								
+							<GridButton							ID="CmeOK"						Anchor="R,C"	Offset="0,0"		Size="112,26"			Style="ShellButton"				String=""	ToolTip="LOC_CHEAT_MAP_EDITOR_OK_TIP" >
+								<Label							ID="CmeOKLbl" 					Anchor="C,C"												Style="FontNormal14"			String="LOC_CHEAT_MAP_EDITOR_OK_LBL_STR"	FontStyle="stroke" ColorSet="BodyTextBright"/>
+							</GridButton>
+						</Stack>
+							
+					</Stack>
+					
+					<!--Validation status subwindow-->
+					<Grid										ID="CmeDlgValidationContent"	Anchor="R,B"	Offset="20,0"		Size="parent-40,auto"	Style="CityPanelSlotGrid"	AnchorSide="I,I"	ConsumeMouse="1" Hidden="0" >
+						<Stack									ID="CmeStackVld" 				Anchor="R,T"	Offset="5,5"		Size="parent-10,auto"	StackGrowth="Bottom" Padding="5" >
+							<Label								ID="CmeValidLbl1"				Anchor="L,C"												Style="FontNormal14"			String="LOC_CHEAT_MAP_EDITOR_VALID_LBL1_STR"	WrapWidth="450" FontStyle="stroke" ColorSet="BodyTextBright"/>
+							<Label								ID="CmeValidLbl2"				Anchor="L,C"												Style="FontNormal14"			String="LOC_CHEAT_MAP_EDITOR_VALID_LBL2_STR"	WrapWidth="450"	FontStyle="stroke" ColorSet="BodyTextBright"/>
+							<Label								ID="CmeValidLbl3"				Anchor="L,C"												Style="FontNormal14"			String="LOC_CHEAT_MAP_EDITOR_VALID_LBL3_STR"	WrapWidth="450"	FontStyle="stroke" ColorSet="BodyTextBright"/>
+							<Label								ID="CmeValidLbl4"				Anchor="L,C"												Style="FontNormal14"			String="LOC_CHEAT_MAP_EDITOR_VALID_LBL4_STR"	WrapWidth="450"	FontStyle="stroke" ColorSet="BodyTextBright"/>
+							<Label								ID="CmeValidLbl5"				Anchor="L,C"												Style="FontNormal14"			String=""										WrapWidth="450"	FontStyle="stroke" ColorSet="BodyTextBright"/>
+							<Label								ID="CmeValidLbl6"				Anchor="L,C"												Style="FontNormal14"			String=""										WrapWidth="450" FontStyle="stroke" ColorSet="BodyTextBright"/>
+							
+							<Container							ID="CmeTabsCtr"					Anchor="C,T"	Offset="0,0"		Size="parent,3" />
+						</Stack>
+					</Grid>
+
+					<Container																	Anchor="R,T"	Offset="0,0"		Size="parent-40,8"		ConsumeMouse="0" />
+				</Stack>
+			</Grid>
+			<!--Mod Window End--> 
+		</Container>
+
+	</Container>
+</Context>
+

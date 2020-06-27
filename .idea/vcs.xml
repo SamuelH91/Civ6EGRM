@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="VcsDirectoryMappings">
+    <mapping directory="$PROJECT_DIR$" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/ThirdParty/Civilization-5-Savegame-Editor" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/ThirdParty/civ6save-editing" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/ThirdParty/js-civ5save" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/civ6save-editing" vcs="Git" />
+  </component>
+</project>

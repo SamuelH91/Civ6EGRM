@@ -1,0 +1,38 @@
+Terrain types:
+grassland: 				48 198 231 131: 	30 C6 E7 83
+grassland (hills):		112 12 157 110: 	70 0C 9D 6E
+grassland (mountains):	51 180 131 95:		33 B4 83 5F
+plains: 				94 134 230 251: 	5E 86 E6 FB
+plains (hills): 		158 100 206 230:	9E 64 CE E6
+plains (mountains):		240 168 185 163:	F0 A8 B9 A3
+desert: 				44 10 168 229:		2C 0A A8 E5
+desert (hills): 		179 52 65 185:		B3 34 41 B9
+desert (mountains): 	249 190 144 84:		F9 BE 90 54
+tundra: 				171 158 242 72:		AB 9E F2 48
+tundra (hills):			246 176 98 235:		F6 B0 62 EB
+tundra (mountains):		189 221 73 223:		BD DD 49 DF
+snow: 					15 132 234 103:		0F 84 EA 67
+snow (hills): 			128 18 3 229:		80 12 03 E5
+snow (mountains):		244 70 177 41:		E0 46 B1 29
+Ocean: 					221 9 201 71:		DD 09 C9 47
+Coast: 					17 122 112 74:		11 7A 70 4A
+
+
+Features:
+No feature: 			255 255 255 255:	FF FF FF FF
+Rainforest:				57 84 17 233:		39 54 11 E9
+Woods:					68 9 34 10: 		44 09 22 0A
+March (grassland only):	195 89 85 35:		C3 59 55 23
+Oasis (desert only):	163 83 31 98:		A3 53 1F 62
+Floodlands(desert only):38 119 181 82:		26 77 B5 52
+Ice (ocean/coast):		148 3 236 91:		94 03 EC 5B
+
+Goody hut: 									EA CD 58 15
+Barb: ‭										BC 0A 2B DE		DE 2B 0A BC		3727362748
+
+Terrain2?:
+Sea:					255 255 255 255: 	FF FF FF FF
+Land:					197 141 5 214:		C5 8D 05 D6
+Snow:					234 205 88 21:		EA CD 58 15
+
+
