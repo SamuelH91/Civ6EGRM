@@ -1,72 +1,84 @@
 import matplotlib.pyplot as plt
-import numpy as np
 from utils.hexgrid import HexGrid
 
-from matplotlib.colors import ListedColormap
 from matplotlib.collections import PatchCollection
-from saveFileHandler.filehandler import *
+from saveFileHandler.gameDataHandler import *
 from matplotlib.widgets import Button, Slider
+import os
 
-# TODO: Read and parse all files to memory
-# TODO: From 1st save take environment
-# TODO: Visualize colors with current slider situation
-# TODO: Rivers, goody huts, barbarians
+# TODO: Rivers, + improve: goody huts, barbarians, icebergs
+# TODO: Lock civ colors and city visualization
 
 # TODO: Nice to have stuff in future:
 #       TODO: Optional visualize units
 #       TODO: List events (e.g. wars, wonders, great people)
 
-M = 44
-N = 26
-hg = HexGrid(M, N, 10)
-hg2 = HexGrid(M, N, 10)
+# Read and parse all files to memory
+gdh = GameDataHandler(os.getcwd() + "/data/auto/")
+gdh.parseData()
 
-f = open("data/GANDHI 20 3240 BC.Civ6Save", "rb")
-data = f.read()
-f.close()
+# Calculate border colors
+gdh.calculateBorderColors()
 
-map = save_to_map_json(data)
-hg2.set_environment_colors(map)
-hg.update_border_colors(map)
-hg.set_fill(False)
-hg.set_lw(2)
+# Calculate environment colors
+gdh.calculateEnvColors()
 
-# our_cmap = ListedColormap(hg2.color_list)
-# patches_collection = PatchCollection(hg2.patches_list, cmap=our_cmap)
+# Other stuff
+gdh.calculateOtherStuff()
 
+# MapSize
+M, N = gdh.getMapSize()
+
+# TurnCount
+TurnCount = gdh.getTurnCount()
+
+# Figure
 fig, ax = plt.subplots()
-bax = fig.add_axes([0.45, 0.91, 0.1, 0.05])
-button = Button(bax, "toggle")
-axTurn = plt.axes([0.1, 0.05, 0.8, 0.01]) #, facecolor=axcolor)
-sTurn = Slider(axTurn, 'Turn', 1, 30, valinit=1, valstep=1)
 
-our_cmap = ListedColormap(hg2.color_list)
-p_env = PatchCollection(hg2.patches_list, cmap=our_cmap)
-p_env.set_array(np.arange(len(hg2.patches_list)))
+# Button for border toggling
+bax = fig.add_axes([0.1, 0.95, 0.2, 0.05])
+button = Button(bax, "Toggle borders")
+# Slider for turns
+axTurn = plt.axes([0.1, 0.03, 0.8, 0.02])
+sTurn = Slider(axTurn, 'Turn', 1, TurnCount, valinit=1, valstep=1)
+
+hg_environment = HexGrid(M, N)
+hg_borders = HexGrid(M, N, 0.85)
+hg_goodyHut = HexGrid(M, N, 0.2)
+
+hg_environment.set_fc_colors(gdh.envColors)
+hg_goodyHut.set_fc_colors(gdh.goodyHuts[0])
+hg_borders.set_ec_colors(gdh.borderColors[0])
+hg_borders.set_fill(False)
+hg_borders.set_lw(2)
+
+p_env = PatchCollection(hg_environment.patches_list, match_original=True)
 ax.add_collection(p_env)
 
-our_cmap = ListedColormap(hg.color_list)
-p_borders = PatchCollection(hg.patches_list, match_original=True)
-#p_borders.set_array(np.arange(len(hg.patches_list)))
-
-
-
+p_borders = PatchCollection(hg_borders.patches_list, match_original=True)
 ax.add_collection(p_borders)
-ax.autoscale_view(True,True,True)
-ax.set_aspect('equal', adjustable='box')
 
+p_goodyHuts = PatchCollection(hg_goodyHut.patches_list, match_original=True)
+ax.add_collection(p_goodyHuts)
+
+ax.autoscale_view(True, True, True)
+ax.set_aspect('equal', adjustable='box')
 
 def update(event):
     p_borders.set_visible(not p_borders.get_visible())
-    fig.canvas.draw_idle()
-
+    fig.canvas.draw()
+    fig.canvas.flush_events()
 button.on_clicked(update)
 
-def updateTurnSlider(val):
-    amp = sTurn.val
-    # l.set_ydata(amp*np.sin(2*np.pi*freq*t))
-    # fig.canvas.draw_idle()
-
+def updateTurnSlider(event):
+    hg_borders.set_ec_colors(gdh.borderColors[sTurn.val-1])
+    hg_borders.set_fc_colors(gdh.goodyHuts[sTurn.val-1])
+    collection_b = ax.collections[1]
+    collection_g = ax.collections[2]
+    collection_b.set_edgecolors(gdh.borderColors[sTurn.val-1])
+    collection_g.set_facecolors(gdh.goodyHuts[sTurn.val-1])
+    fig.canvas.draw()
+    fig.canvas.flush_events()
 sTurn.on_changed(updateTurnSlider)
 
 plt.show()

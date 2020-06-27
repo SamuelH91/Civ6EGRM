@@ -24,10 +24,10 @@ Rainforest:				57 84 17 233:		39 54 11 E9
 Woods:					68 9 34 10: 		44 09 22 0A
 March (grassland only):	195 89 85 35:		C3 59 55 23
 Oasis (desert only):	163 83 31 98:		A3 53 1F 62
-Floodlands(desert only):38 119 181 82:		26 77 B5 52
-Ice (ocean/coast):		148 3 236 91:		94 03 EC 5B
+Floodlands(desert only):38 119 181 82:		26 77 B5 52		226585075
+Ice (ocean/coast):		148 3 236 91:		94 03 EC 5B		5B EC 03 94		1542194068
 
-Goody hut: 									EA CD 58 15
+Goody hut: 									EA CD 58 15		1434118760
 Barb: ‭										BC 0A 2B DE		DE 2B 0A BC		3727362748
 
 Terrain2?:
