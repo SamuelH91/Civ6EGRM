@@ -47,4 +47,5 @@ These can be installed with pip e.g.
 1) Run end game replay code (check correct paths)
     > - 'python endGameReplay.py'
 
+## Special thanks for https://github.com/lucienmaloney/civ6save-editing
 
