@@ -1,10 +1,10 @@
 # Civ6EGRM
 Civilization 6 End Game Replay Map
 
-![Image 1](Picture/SmallMapEnvOnly.PNG)
-![Image 2](Picture/BigMapEnvOnly.PNG)
-![Image 3](Picture/BigMapWithRandomColorBorders.PNG)
-![Image 4](Picture/BigMapWithRandomColorBordersFewTurnsLater.PNG)
+![](Pictures/SmallMapEnvOnly.PNG?raw=true)
+![](Pictures/BigMapEnvOnly.PNG?raw=true)
+![](Pictures/BigMapWithRandomColorBorders.PNG?raw=true)
+![](Pictures/BigMapWithRandomColorBordersFewTurnsLater.PNG?raw=true)
 
 ## Main features
 - fileCopier.py which copies automatically all autosaves (Single/Multi)
