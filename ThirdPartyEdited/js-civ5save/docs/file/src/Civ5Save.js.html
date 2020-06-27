@@ -1,0 +1,1204 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <base data-ice="baseUrl" href="../../">
+  <title data-ice="title">src/Civ5Save.js | civ5save</title>
+  <link type="text/css" rel="stylesheet" href="css/style.css">
+  <link type="text/css" rel="stylesheet" href="css/prettify-tomorrow.css">
+  <script src="script/prettify/prettify.js"></script>
+  <script src="script/manual.js"></script>
+<meta name="description" content="Library for working with Civilization V save files"><meta property="twitter:card" content="summary"><meta property="twitter:title" content="civ5save"><meta property="twitter:description" content="Library for working with Civilization V save files"></head>
+<body class="layout-container" data-ice="rootContainer">
+
+<header>
+  <a href="./">Home</a>
+  
+  <a href="identifiers.html">Reference</a>
+  <a href="source.html">Source</a>
+  
+  <div class="search-box">
+  <span>
+    <img src="./image/search.png">
+    <span class="search-input-edge"></span><input class="search-input"><span class="search-input-edge"></span>
+  </span>
+    <ul class="search-result"></ul>
+  </div>
+<a style="position:relative; top:3px;" href="https://github.com/bmaupin/js-civ5save.git"><img width="20px" src="./image/github.png"></a></header>
+
+<nav class="navigation" data-ice="nav"><div>
+  <ul>
+    
+  <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/Civ5Save.js~Civ5Save.html">Civ5Save</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/Civ5Save.js~InvalidSignatureError.html">InvalidSignatureError</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/Civ5Save.js~ParseError.html">ParseError</a></span></span></li>
+</ul>
+</div>
+</nav>
+
+<div class="content" data-ice="content"><h1 data-ice="title">src/Civ5Save.js</h1>
+<pre class="source-code line-number raw-source-code"><code class="prettyprint linenums" data-ice="content">import Civ5SaveDataView from &apos;./Civ5SaveDataView&apos;;
+import Civ5SavePropertyDefinitions from &apos;./Civ5SavePropertyDefinitions.js&apos;;
+import Civ5SavePropertyFactory from &apos;./Civ5SavePropertyFactory&apos;;
+import ExtendableError from &apos;./ExtendableError&apos;;
+
+/**
+ * A Civilization V save file object.
+ */
+class Civ5Save {
+  /**
+   * Create a Civ5Save object.
+   *
+   * As an alternative, a static factory method is available for more convenient instantiation from a file:
+   * [fromFile](#static-method-fromFile)
+   * @param {DataView} saveData - The save file contents.
+   * @throws {InvalidSignatureError} Invalid file signature.
+   * @throws {ParseError} Error while parsing the save file.
+   */
+  constructor(saveData) {
+    /**
+     * @private
+     */
+    // TODO: Convert fields and methods starting with underscores to private once it makes it into the spec
+    // (https://github.com/tc39/proposals)
+    this._saveData = new Civ5SaveDataView(saveData.buffer);
+    /**
+     * @private
+     */
+    this._verifyFileSignature();
+    /**
+     * @private
+     */
+    this._properties = this._getProperties();
+  }
+
+  /**
+   * Create a Civ5Save object from a file.
+   *
+   * Reading data from a file needs to be done asynchronously; since the
+   * [constructor](#instance-constructor-constructor) cannot be async, this static factory is provided as an alternative
+   * way to instantiate a Civ5Save object from a file (https://stackoverflow.com/a/24686979/399105).
+   * @param {File} saveFile - A Civilization V save file.
+   * @return {Civ5Save} A Civ5Save object.
+   * @throws {InvalidSignatureError} Invalid file signature.
+   * @throws {ParseError} Error while parsing the save file.
+   * @example
+   * try {
+   *   let save = await Civ5Save.fromFile(saveFile);
+   *   ...
+   */
+  static async fromFile(saveFile) {
+    let saveData = await Civ5Save._loadData(saveFile);
+    return new Civ5Save(saveData);
+  }
+
+  /**
+   * @private
+   */
+  static _loadData(saveFile) {
+    return new Promise(function (resolve, reject) {
+      let reader = new FileReader();
+
+      reader.onload = function () {
+        // Use a DataView for the savegame data since the ArrayBuffer returned by reader.result can&apos;t be used to
+        // manipulate the data. A typed array such as Int8Array wouldn&apos;t be ideal either since the data contains types
+        // of variable lengths
+        resolve(new DataView(reader.result));
+      };
+      reader.onerror = function () {
+        reject(reader.error);
+      };
+
+      reader.readAsArrayBuffer(saveFile);
+    });
+  }
+
+  /**
+   * Write Civ5Save object to a blob.
+   * @return {Blob} The save file with any changes.
+   * @example
+   * let downloadURL = window.URL.createObjectURL(save.toBlob());
+   */
+  toBlob() {
+    return new Blob([this._saveData], {
+      type: &apos;application/octet-stream&apos;
+    });
+  }
+
+  /**
+   * @private
+   */
+  _verifyFileSignature() {
+    if (this._saveData.getString(0, 4) !== &apos;CIV5&apos;) {
+      throw new InvalidSignatureError(&apos;File signature does not match. Is this a Civ 5 savegame?&apos;);
+    }
+  }
+
+  /**
+   * @private
+   */
+  _getProperties() {
+    let previousPropertyName = null;
+    let previousPropertySection = 0;
+    let properties = new Map();
+    let saveGameVersion = null;
+    let sectionOffsets = null;
+
+    for (let propertyName in Civ5SavePropertyDefinitions) {
+      // Check for currentTurn since gameBuild may not be available as a property
+      if (propertyName === &apos;currentTurn&apos;) {
+        this._setGameBuild(properties.gameBuild);
+        sectionOffsets = this._getSectionOffsets(this.gameBuild);
+      }
+      if (previousPropertyName === &apos;saveGameVersion&apos;) {
+        saveGameVersion = properties.saveGameVersion.getValue(this._saveData);
+      }
+
+      // Make propertyDefinition a copy; otherwise it will modify the property for every instance of the Civ5Save class
+      let propertyDefinition = Object.assign({}, Civ5SavePropertyDefinitions[propertyName]);
+
+      let propertySection = this._getPropertySection(propertyDefinition, saveGameVersion, this.gameBuild);
+      // If propertySection is null, it means the property isn&apos;t available for the particular game build
+      if (this._isNullOrUndefined(propertySection)) {
+        continue;
+      }
+
+      let propertyLength = propertyDefinition.length;
+      if (propertyDefinition.hasOwnProperty(&apos;getLength&apos;)) {
+        propertyLength = propertyDefinition.getLength(
+          properties.enabledDLC.getArray(),
+          properties.enabledMods.getArray());
+      }
+
+      let propertyByteOffset = 0;
+      if (propertySection === previousPropertySection) {
+        let previousProperty = properties[previousPropertyName];
+        propertyByteOffset = previousProperty.byteOffset + previousProperty.length;
+
+      } else if (previousPropertyName !== null) {
+        propertyByteOffset = sectionOffsets[propertySection - 1].start + propertyDefinition.byteOffsetInSection;
+      }
+
+      try {
+        properties[propertyName] = Civ5SavePropertyFactory.fromType(
+          propertyDefinition.type,
+          propertyByteOffset,
+          propertyLength,
+          this._saveData);
+      } catch (e) {
+        throw new ParseError(`Failure parsing save at property ${propertyName}`);
+      }
+
+      previousPropertyName = propertyName;
+      previousPropertySection = propertySection;
+    }
+
+    return properties;
+  }
+
+  /**
+   * @private
+   */
+  _getSectionOffsets(gameBuild) {
+    const SECTION_DELIMITER = [0x40, 0, 0, 0];
+
+    const LAST_PROPERTY_DEFINITION = Civ5SavePropertyDefinitions[Object.keys(Civ5SavePropertyDefinitions)[Object.keys(
+      Civ5SavePropertyDefinitions).length - 1]];
+    const LAST_SECTION = LAST_PROPERTY_DEFINITION.sectionByBuild[Object.keys(
+      LAST_PROPERTY_DEFINITION.sectionByBuild)[Object.keys(
+      LAST_PROPERTY_DEFINITION.sectionByBuild).length - 1]];
+
+    let saveDataBytes = new Int8Array(this._saveData.buffer);
+    let sectionOffsets = [];
+    let section = {
+      start: 0,
+    };
+    sectionOffsets.push(section);
+
+    for (let byteOffset = 0; byteOffset &lt; saveDataBytes.length; byteOffset++) {
+      if (this._areArraysEqual(saveDataBytes.slice(byteOffset, byteOffset + 4), SECTION_DELIMITER)) {
+        // Player colour section before build 310700 contains hex values, which can include the section delimiter
+        if (Number(gameBuild) &lt; 310700) {
+          let playerColourSection = 23;
+          if (Number(gameBuild) &gt;= 262623) {
+            playerColourSection = 24;
+          }
+          if (sectionOffsets.length === playerColourSection) {
+            if (byteOffset - sectionOffsets[sectionOffsets.length - 1].start &lt; 270) {
+              continue;
+            }
+          }
+        }
+
+        let section = {
+          start: byteOffset,
+        };
+        sectionOffsets.push(section);
+        sectionOffsets[sectionOffsets.length - 2].end = byteOffset - 1;
+
+        if (sectionOffsets.length === LAST_SECTION) {
+          break;
+        }
+      }
+    }
+
+    return sectionOffsets;
+  }
+
+  /**
+   * @private
+   * @see https://stackoverflow.com/a/22395463/399105
+   */
+  _areArraysEqual(array1, array2) {
+    return (array1.length === array2.length) &amp;&amp; array1.every(function(element, index) {
+      return element === array2[index];
+    });
+  }
+
+  /**
+   * @private
+   */
+  _getPropertySection(propertyDefinition, saveGameVersion, gameBuild) {
+    if (propertyDefinition.hasOwnProperty(&apos;getSection&apos;)) {
+      return propertyDefinition.getSection(saveGameVersion);
+    }
+
+    let propertySection = null;
+
+    for (let build in propertyDefinition.sectionByBuild) {
+      if (Number.parseInt(gameBuild) &gt;= Number.parseInt(build)) {
+        propertySection = propertyDefinition.sectionByBuild[build];
+      }
+    }
+
+    return propertySection;
+  }
+
+  /**
+   * @private
+   */
+  _isNullOrUndefined(variable) {
+    return typeof variable === &apos;undefined&apos; || variable === null;
+  }
+
+  /**
+   * Game build number.
+   *
+   * Note that for games created or saved before build 230620, this will return the game build that was used to create
+   * the save file. Starting with build 230620, this will return the game build that was last used to save the save
+   * file.
+   * @type {string}
+   * @throws {ParseError} Error while parsing the save file.
+   */
+  get gameBuild() {
+    try {
+      return this._gameBuild;
+    } catch (e) {
+      throw new ParseError(&apos;Failure parsing save at property gameBuild&apos;);
+    }
+  }
+
+  /**
+   * @private
+   */
+  // Game build was only added to the beginning of the savegame in game version 1.0.2. This should be able to get the
+  // game build for all savegame versions
+  _getGameBuild() {
+    const GAME_BUILD_MARKER = &apos;FINAL_RELEASE&apos;;
+    const GAME_BUILD_MARKER_ARRAY = (function() {
+      let gameBuildMarkerArray = [];
+      for (let i = 0; i &lt; GAME_BUILD_MARKER.length; i++) {
+        gameBuildMarkerArray.push(GAME_BUILD_MARKER.charCodeAt(i));
+      }
+      return gameBuildMarkerArray;
+    }());
+
+    let gameBuildMarkerByteOffset = 0;
+    let saveDataBytes = new Int8Array(this._saveData.buffer);
+    for (let byteOffset = 0; byteOffset &lt;= saveDataBytes.length; byteOffset++) {
+      if (this._areArraysEqual(
+        saveDataBytes.slice(byteOffset, byteOffset + GAME_BUILD_MARKER_ARRAY.length),
+        GAME_BUILD_MARKER_ARRAY)) {
+        gameBuildMarkerByteOffset = byteOffset;
+        break;
+      }
+    }
+
+    let gameBuild = &apos;&apos;;
+    let byteOffset = gameBuildMarkerByteOffset - 2;
+    while (saveDataBytes.slice(byteOffset, byteOffset + 1)[0] !== 0) {
+      gameBuild = String.fromCharCode(saveDataBytes.slice(byteOffset, byteOffset + 1)) + gameBuild;
+      byteOffset--;
+    }
+
+    return gameBuild;
+  }
+
+  /**
+   * @private
+   */
+  _setGameBuild(gameBuildProperty) {
+    if (typeof gameBuildProperty !== &apos;undefined&apos;) {
+      /**
+       * @private
+       */
+      this._gameBuild = gameBuildProperty.getValue(this._saveData);
+
+      // Ugly hack to work around https://github.com/bmaupin/civ5save-editor/issues/15. C&apos;mon Aspyr! :P
+      if (this._gameBuild === &apos;180925&apos;) {
+        this._gameBuild = &apos;403694&apos;;
+      }
+    } else {
+      this._gameBuild = this._getGameBuild();
+    }
+  }
+
+  /**
+   * Game version.
+   *
+   * Note that this will be `undefined` if [gameBuild](#instance-get-gameBuild) is less than 230620. `undefined` is used
+   * instead of `null` because older save files do not have a spot for this information (`null` might incorrectly imply
+   * the spot is there but empty).
+   * @type {string|undefined}
+   * @throws {ParseError} Error while parsing the save file.
+   */
+  get gameVersion() {
+    return this._getPropertyIfDefined(&apos;gameVersion&apos;);
+  }
+
+  /**
+   * Current turn.
+   * @type {number}
+   * @throws {ParseError} Error while parsing the save file.
+   */
+  get currentTurn() {
+    return this._getPropertyIfDefined(&apos;currentTurn&apos;);
+  }
+
+  /**
+   * Game mode: one of `Civ5Save.GAME_MODES.SINGLE`, `Civ5Save.GAME_MODES.MULTI`, or `Civ5Save.GAME_MODES.HOTSEAT`.
+   *
+   * Note that this will be `undefined` if [gameBuild](#instance-get-gameBuild) is less than 230620 because the meaning
+   * of its value is unknown. `undefined` is used instead of `null` because `null` might incorrectly imply the value is
+   * empty.
+   * @type {string|undefined}
+   * @throws {ParseError} Error while parsing the save file.
+   */
+  get gameMode() {
+    if (Number(this.gameBuild) &gt;= 230620) {
+      try {
+        return Civ5SavePropertyDefinitions.gameMode.values[this._properties.gameMode.getValue(this._saveData)];
+      } catch (e) {
+        throw new ParseError(&apos;Failure parsing save at property gameMode&apos;);
+      }
+    }
+  }
+
+  /**
+   * Game difficulty.
+   * @type {string}
+   * @throws {ParseError} Error while parsing the save file.
+   */
+  get difficulty() {
+    return this._getBeautifiedPropertyIfDefined(&apos;difficulty&apos;);
+  }
+
+  /**
+   * Starting era.
+   * @type {string}
+   * @throws {ParseError} Error while parsing the save file.
+   */
+  get startingEra() {
+    return this._getBeautifiedPropertyIfDefined(&apos;startingEra&apos;);
+  }
+
+  /**
+   * Current era.
+   * @type {string}
+   * @throws {ParseError} Error while parsing the save file.
+   */
+  get currentEra() {
+    return this._getBeautifiedPropertyIfDefined(&apos;currentEra&apos;);
+  }
+
+  /**
+   * Game pace.
+   * @type {string}
+   * @throws {ParseError} Error while parsing the save file.
+   */
+  get gamePace() {
+    return this._getBeautifiedPropertyIfDefined(&apos;gamePace&apos;);
+  }
+
+  /**
+   * Map size.
+   * @type {string}
+   * @throws {ParseError} Error while parsing the save file.
+   */
+  get mapSize() {
+    return this._getBeautifiedPropertyIfDefined(&apos;mapSize&apos;);
+  }
+
+  /**
+   * Map file.
+   * @type {string}
+   * @throws {ParseError} Error while parsing the save file.
+   */
+  get mapFile() {
+    let mapFileValue = this._getPropertyIfDefined(&apos;mapFile&apos;);
+    if (!this._isNullOrUndefined(mapFileValue)) {
+      return this._beautifyMapFileValue(mapFileValue);
+    }
+  }
+
+  /**
+   * List of enabled DLC.
+   * @type {Array}
+   * @throws {ParseError} Error while parsing the save file.
+   */
+  get enabledDLC() {
+    if (this._properties.hasOwnProperty(&apos;enabledDLC&apos;)) {
+      try {
+        return this._properties.enabledDLC.getArray();
+      } catch (e) {
+        throw new ParseError(&apos;Failure parsing save at property enabledDLC&apos;);
+      }
+    }
+  }
+
+  /**
+   * List of enabled mods.
+   * @type {Array}
+   * @throws {ParseError} Error while parsing the save file.
+   */
+  get enabledMods() {
+    if (this._properties.hasOwnProperty(&apos;enabledMods&apos;)) {
+      try {
+        return this._properties.enabledMods.getArray();
+      } catch (e) {
+        throw new ParseError(&apos;Failure parsing save at property enabledMods&apos;);
+      }
+    }
+  }
+
+  /**
+   * List of players as objects with their civilization and status as properties.
+   *
+   * Civilization will be `undefined` if [gameBuild](#instance-get-gameBuild) is less than 310700.
+   *
+   * Status is one of `Civ5Save.PLAYER_STATUSES.AI`, `Civ5Save.PLAYER_STATUSES.DEAD`, `Civ5Save.PLAYER_STATUSES.HUMAN`,
+   *     `Civ5Save.PLAYER_STATUSES.NONE`.
+   * @type {Array.&lt;{civilization: string|undefined, status: number}&gt;}
+   * @throws {ParseError} Error while parsing the save file.
+   */
+  get players() {
+    if (this._isNullOrUndefined(this._players)) {
+      /**
+       * @private
+       */
+      this._players = new Array();
+      let playerStatuses = this._properties.playerStatuses.getArray();
+      for (let i = 0; i &lt; playerStatuses.length; i++) {
+        let player = new Object();
+        player.status = Civ5SavePropertyDefinitions.playerStatuses.values[playerStatuses[i]];
+
+        if (player.status === Civ5Save.PLAYER_STATUSES.NONE) {
+          break;
+        }
+
+        if (this._properties.hasOwnProperty(&apos;playerCivilizations&apos;)) {
+          if (this._properties.playerCivilizations.getArray()[i] === &apos;&apos;) {
+            break;
+          }
+          player.civilization = this._beautifyPropertyValue(this._properties.playerCivilizations.getArray()[i]);
+
+        } else if (i === 0 &amp;&amp; this._properties.hasOwnProperty(&apos;player1Civilization&apos;)) {
+          try {
+            player.civilization = this._beautifyPropertyValue(
+              this._properties.player1Civilization.getValue(this._saveData));
+          } catch (e) {
+            throw new ParseError(&apos;Failure parsing save at property players&apos;);
+          }
+        }
+
+        this._players.push(player);
+      }
+    }
+
+    return this._players;
+  }
+
+  /**
+   * Max turns.
+   * @type {number}
+   * @throws {ParseError} Error while parsing the save file.
+   */
+  get maxTurns() {
+    return this._getPropertyIfDefined(&apos;maxTurns&apos;);
+  }
+
+  /**
+   * Max turns.
+   * @type {number}
+   */
+  set maxTurns(newValue) {
+    this._properties.maxTurns.setValue(this._saveData, newValue);
+  }
+
+  /**
+   * Turn timer length for multiplayer games. If pitboss is enabled, this value represents turn timer in hours.
+   *     Otherwise, it is in minutes.
+   * @type {number}
+   * @throws {ParseError} Error while parsing the save file.
+   */
+  get turnTimerLength() {
+    return this._getPropertyIfDefined(&apos;turnTimerLength&apos;);
+  }
+
+  /**
+   * Turn timer length for multiplayer games. If pitboss is enabled, this value represents turn timer in hours.
+   *     Otherwise, it is in minutes.
+   * @type {number}
+   */
+  set turnTimerLength(newValue) {
+    this._properties.turnTimerLength.setValue(this._saveData, newValue);
+  }
+
+  /**
+   * Private setting for multiplayer games.
+   *
+   * Note that this will be `undefined` if [gameBuild](#instance-get-gameBuild) is less than 310700 because it isn&apos;t
+   * implemented. `undefined` is used instead of `null` because `null` might incorrectly imply the value is empty.
+   * @type {boolean}
+   * @throws {ParseError} Error while parsing the save file.
+   */
+  get privateGame() {
+    return this._getPropertyIfDefined(&apos;privateGame&apos;);
+  }
+
+  /**
+   * Private setting for multiplayer games.
+   * @type {boolean}
+   */
+  set privateGame(newValue) {
+    this._properties.privateGame.setValue(this._saveData, newValue);
+  }
+
+  /**
+   * Time victory.
+   * @type {boolean}
+   * @throws {ParseError} Error while parsing the save file.
+   */
+  get timeVictory() {
+    return this._getPropertyIfDefined(&apos;timeVictory&apos;);
+  }
+
+  /**
+   * Time victory.
+   * @type {boolean}
+   */
+  set timeVictory(newValue) {
+    this._properties.timeVictory.setValue(this._saveData, newValue);
+  }
+
+  /**
+   * Science victory.
+   * @type {boolean}
+   * @throws {ParseError} Error while parsing the save file.
+   */
+  get scienceVictory() {
+    return this._getPropertyIfDefined(&apos;scienceVictory&apos;);
+  }
+
+  /**
+   * Science victory.
+   * @type {boolean}
+   */
+  set scienceVictory(newValue) {
+    this._properties.scienceVictory.setValue(this._saveData, newValue);
+  }
+
+  /**
+   * Domination victory.
+   * @type {boolean}
+   * @throws {ParseError} Error while parsing the save file.
+   */
+  get dominationVictory() {
+    return this._getPropertyIfDefined(&apos;dominationVictory&apos;);
+  }
+
+  /**
+   * Domination victory.
+   * @type {boolean}
+   */
+  set dominationVictory(newValue) {
+    this._properties.dominationVictory.setValue(this._saveData, newValue);
+  }
+
+  /**
+   * Cultural victory.
+   * @type {boolean}
+   * @throws {ParseError} Error while parsing the save file.
+   */
+  get culturalVictory() {
+    return this._getPropertyIfDefined(&apos;culturalVictory&apos;);
+  }
+
+  /**
+   * Cultural victory.
+   * @type {boolean}
+   */
+  set culturalVictory(newValue) {
+    this._properties.culturalVictory.setValue(this._saveData, newValue);
+  }
+
+  /**
+   * Diplomatic victory.
+   * @type {boolean}
+   * @throws {ParseError} Error while parsing the save file.
+   */
+  get diplomaticVictory() {
+    return this._getPropertyIfDefined(&apos;diplomaticVictory&apos;);
+  }
+
+  /**
+   * Diplomatic victory.
+   * @type {boolean}
+   */
+  set diplomaticVictory(newValue) {
+    this._properties.diplomaticVictory.setValue(this._saveData, newValue);
+  }
+
+  /**
+   * Always peace.
+   * @type {boolean}
+   * @throws {ParseError} Error while parsing the save file.
+   */
+  get alwaysPeace() {
+    return this._getGameOption(&apos;GAMEOPTION_ALWAYS_PEACE&apos;);
+  }
+
+  /**
+   * Always peace.
+   * @type {boolean}
+   */
+  set alwaysPeace(newValue) {
+    this._setGameOption(&apos;GAMEOPTION_ALWAYS_PEACE&apos;, newValue);
+  }
+
+  /**
+   * Always war.
+   * @type {boolean}
+   * @throws {ParseError} Error while parsing the save file.
+   */
+  get alwaysWar() {
+    return this._getGameOption(&apos;GAMEOPTION_ALWAYS_WAR&apos;);
+  }
+
+  /**
+   * Always war.
+   * @type {boolean}
+   */
+  set alwaysWar(newValue) {
+    this._setGameOption(&apos;GAMEOPTION_ALWAYS_WAR&apos;, newValue);
+  }
+
+  /**
+   * Complete kills.
+   * @type {boolean}
+   * @throws {ParseError} Error while parsing the save file.
+   */
+  get completeKills() {
+    return this._getGameOption(&apos;GAMEOPTION_COMPLETE_KILLS&apos;);
+  }
+
+  /**
+   * Complete kills.
+   * @type {boolean}
+   */
+  set completeKills(newValue) {
+    this._setGameOption(&apos;GAMEOPTION_COMPLETE_KILLS&apos;, newValue);
+  }
+
+  /**
+   * Lock mods.
+   * @type {boolean}
+   * @throws {ParseError} Error while parsing the save file.
+   */
+  get lockMods() {
+    return this._getGameOption(&apos;GAMEOPTION_LOCK_MODS&apos;);
+  }
+
+  /**
+   * Lock mods.
+   * @type {boolean}
+   */
+  set lockMods(newValue) {
+    this._setGameOption(&apos;GAMEOPTION_LOCK_MODS&apos;, newValue);
+  }
+
+  /**
+   * New random seed.
+   * @type {boolean}
+   * @throws {ParseError} Error while parsing the save file.
+   */
+  get newRandomSeed() {
+    return this._getGameOption(&apos;GAMEOPTION_NEW_RANDOM_SEED&apos;);
+  }
+
+  /**
+   * New random seed.
+   * @type {boolean}
+   */
+  set newRandomSeed(newValue) {
+    this._setGameOption(&apos;GAMEOPTION_NEW_RANDOM_SEED&apos;, newValue);
+  }
+
+  /**
+   * No barbarians.
+   * @type {boolean}
+   * @throws {ParseError} Error while parsing the save file.
+   */
+  get noBarbarians() {
+    return this._getGameOption(&apos;GAMEOPTION_NO_BARBARIANS&apos;);
+  }
+
+  /**
+   * No barbarians.
+   * @type {boolean}
+   */
+  set noBarbarians(newValue) {
+    this._setGameOption(&apos;GAMEOPTION_NO_BARBARIANS&apos;, newValue);
+  }
+
+  /**
+   * No changing war or peace.
+   * @type {boolean}
+   * @throws {ParseError} Error while parsing the save file.
+   */
+  get noChangingWarPeace() {
+    return this._getGameOption(&apos;GAMEOPTION_NO_CHANGING_WAR_PEACE&apos;);
+  }
+
+  /**
+   * No changing war or peace.
+   * @type {boolean}
+   */
+  set noChangingWarPeace(newValue) {
+    this._setGameOption(&apos;GAMEOPTION_NO_CHANGING_WAR_PEACE&apos;, newValue);
+  }
+
+  /**
+   * No city razing.
+   * @type {boolean}
+   * @throws {ParseError} Error while parsing the save file.
+   */
+  get noCityRazing() {
+    return this._getGameOption(&apos;GAMEOPTION_NO_CITY_RAZING&apos;);
+  }
+
+  /**
+   * No city razing.
+   * @type {boolean}
+   */
+  set noCityRazing(newValue) {
+    this._setGameOption(&apos;GAMEOPTION_NO_CITY_RAZING&apos;, newValue);
+  }
+
+  /**
+   * No cultural overview UI.
+   * @type {boolean}
+   * @throws {ParseError} Error while parsing the save file.
+   */
+  get noCultureOverviewUI() {
+    return this._getGameOption(&apos;GAMEOPTION_NO_CULTURE_OVERVIEW_UI&apos;);
+  }
+
+  /**
+   * No cultural overview UI.
+   * @type {boolean}
+   */
+  set noCultureOverviewUI(newValue) {
+    this._setGameOption(&apos;GAMEOPTION_NO_CULTURE_OVERVIEW_UI&apos;, newValue);
+  }
+
+  /**
+   * No espionage.
+   * @type {boolean}
+   * @throws {ParseError} Error while parsing the save file.
+   */
+  get noEspionage() {
+    return this._getGameOption(&apos;GAMEOPTION_NO_ESPIONAGE&apos;);
+  }
+
+  /**
+   * No espionage.
+   * @type {boolean}
+   */
+  set noEspionage(newValue) {
+    this._setGameOption(&apos;GAMEOPTION_NO_ESPIONAGE&apos;, newValue);
+  }
+
+  /**
+   * No happiness.
+   * @type {boolean}
+   * @throws {ParseError} Error while parsing the save file.
+   */
+  get noHappiness() {
+    return this._getGameOption(&apos;GAMEOPTION_NO_HAPPINESS&apos;);
+  }
+
+  /**
+   * No happiness.
+   * @type {boolean}
+   */
+  set noHappiness(newValue) {
+    this._setGameOption(&apos;GAMEOPTION_NO_HAPPINESS&apos;, newValue);
+  }
+
+  /**
+   * No policies.
+   * @type {boolean}
+   * @throws {ParseError} Error while parsing the save file.
+   */
+  get noPolicies() {
+    return this._getGameOption(&apos;GAMEOPTION_NO_POLICIES&apos;);
+  }
+
+  /**
+   * No policies.
+   * @type {boolean}
+   */
+  set noPolicies(newValue) {
+    this._setGameOption(&apos;GAMEOPTION_NO_POLICIES&apos;, newValue);
+  }
+
+  /**
+   * No religion.
+   * @type {boolean}
+   * @throws {ParseError} Error while parsing the save file.
+   */
+  get noReligion() {
+    return this._getGameOption(&apos;GAMEOPTION_NO_RELIGION&apos;);
+  }
+
+  /**
+   * No religion.
+   * @type {boolean}
+   */
+  set noReligion(newValue) {
+    this._setGameOption(&apos;GAMEOPTION_NO_RELIGION&apos;, newValue);
+  }
+
+  /**
+   * No science.
+   * @type {boolean}
+   * @throws {ParseError} Error while parsing the save file.
+   */
+  get noScience() {
+    return this._getGameOption(&apos;GAMEOPTION_NO_SCIENCE&apos;);
+  }
+
+  /**
+   * No science.
+   * @type {boolean}
+   */
+  set noScience(newValue) {
+    this._setGameOption(&apos;GAMEOPTION_NO_SCIENCE&apos;, newValue);
+  }
+
+  /**
+   * No world congress.
+   * @type {boolean}
+   * @throws {ParseError} Error while parsing the save file.
+   */
+  get noWorldCongress() {
+    return this._getGameOption(&apos;GAMEOPTION_NO_LEAGUES&apos;);
+  }
+
+  /**
+   * No world congress.
+   * @type {boolean}
+   */
+  set noWorldCongress(newValue) {
+    this._setGameOption(&apos;GAMEOPTION_NO_LEAGUES&apos;, newValue);
+  }
+
+  /**
+   * One-city challenge.
+   * @type {boolean}
+   * @throws {ParseError} Error while parsing the save file.
+   */
+  get oneCityChallenge() {
+    return this._getGameOption(&apos;GAMEOPTION_ONE_CITY_CHALLENGE&apos;);
+  }
+
+  /**
+   * One-city challenge.
+   * @type {boolean}
+   */
+  set oneCityChallenge(newValue) {
+    this._setGameOption(&apos;GAMEOPTION_ONE_CITY_CHALLENGE&apos;, newValue);
+  }
+
+  /**
+   * Pitboss.
+   * @type {boolean}
+   * @throws {ParseError} Error while parsing the save file.
+   * @see https://github.com/Bownairo/Civ5SaveEditor
+   */
+  get pitboss() {
+    return this._getGameOption(&apos;GAMEOPTION_PITBOSS&apos;);
+  }
+
+  /**
+   * Pitboss.
+   * @type {boolean}
+   * @see https://github.com/Bownairo/Civ5SaveEditor
+   */
+  set pitboss(newValue) {
+    this._setGameOption(&apos;GAMEOPTION_PITBOSS&apos;, newValue);
+  }
+
+  /**
+   * Policy saving.
+   * @type {boolean}
+   * @throws {ParseError} Error while parsing the save file.
+   */
+  get policySaving() {
+    return this._getGameOption(&apos;GAMEOPTION_POLICY_SAVING&apos;);
+  }
+
+  /**
+   * Policy saving.
+   * @type {boolean}
+   */
+  set policySaving(newValue) {
+    this._setGameOption(&apos;GAMEOPTION_POLICY_SAVING&apos;, newValue);
+  }
+
+  /**
+   * Promotion saving.
+   * @type {boolean}
+   * @throws {ParseError} Error while parsing the save file.
+   */
+  get promotionSaving() {
+    return this._getGameOption(&apos;GAMEOPTION_PROMOTION_SAVING&apos;);
+  }
+
+  /**
+   * Promotion saving.
+   * @type {boolean}
+   */
+  set promotionSaving(newValue) {
+    this._setGameOption(&apos;GAMEOPTION_PROMOTION_SAVING&apos;, newValue);
+  }
+
+  /**
+   * Raging barbarians.
+   * @type {boolean}
+   * @throws {ParseError} Error while parsing the save file.
+   */
+  get ragingBarbarians() {
+    return this._getGameOption(&apos;GAMEOPTION_RAGING_BARBARIANS&apos;);
+  }
+
+  /**
+   * Raging barbarians.
+   * @type {boolean}
+   */
+  set ragingBarbarians(newValue) {
+    this._setGameOption(&apos;GAMEOPTION_RAGING_BARBARIANS&apos;, newValue);
+  }
+
+  /**
+   * Random personalities.
+   * @type {boolean}
+   * @throws {ParseError} Error while parsing the save file.
+   */
+  get randomPersonalities() {
+    return this._getGameOption(&apos;GAMEOPTION_RANDOM_PERSONALITIES&apos;);
+  }
+
+  /**
+   * Random personalities.
+   * @type {boolean}
+   */
+  set randomPersonalities(newValue) {
+    this._setGameOption(&apos;GAMEOPTION_RANDOM_PERSONALITIES&apos;, newValue);
+  }
+
+  /**
+   * Turn timer enabled.
+   * @type {boolean}
+   * @throws {ParseError} Error while parsing the save file.
+   */
+  get turnTimerEnabled() {
+    return this._getGameOption(&apos;GAMEOPTION_END_TURN_TIMER_ENABLED&apos;);
+  }
+
+  /**
+   * Turn timer enabled.
+   * @type {boolean}
+   */
+  set turnTimerEnabled(newValue) {
+    this._setGameOption(&apos;GAMEOPTION_END_TURN_TIMER_ENABLED&apos;, newValue);
+  }
+
+  /**
+   * Turn mode: one of `Civ5Save.TURN_MODES.HYBRID`, `Civ5Save.TURN_MODES.SEQUENTIAL`, or
+   *     `Civ5Save.TURN_MODES.SIMULTANEOUS`.
+   * @type {string}
+   * @throws {ParseError} Error while parsing the save file.
+   * @see http://blog.frank-mich.com/civilization-v-how-to-change-turn-type-of-a-started-game/
+   */
+  get turnMode() {
+    if (this._getGameOption(&apos;GAMEOPTION_DYNAMIC_TURNS&apos;) === true) {
+      return Civ5Save.TURN_MODES.HYBRID;
+    } else if (this._getGameOption(&apos;GAMEOPTION_SIMULTANEOUS_TURNS&apos;) === true) {
+      return Civ5Save.TURN_MODES.SIMULTANEOUS;
+    } else if (this._getGameOption(&apos;GAMEOPTION_DYNAMIC_TURNS&apos;) === false &amp;&amp;
+      this._getGameOption(&apos;GAMEOPTION_SIMULTANEOUS_TURNS&apos;) === false) {
+      return Civ5Save.TURN_MODES.SEQUENTIAL;
+    }
+  }
+
+  /**
+   * Turn mode: one of `Civ5Save.TURN_MODES.HYBRID`, `Civ5Save.TURN_MODES.SEQUENTIAL`, or
+   *     `Civ5Save.TURN_MODES.SIMULTANEOUS`.
+   * @type {string}
+   * @see http://blog.frank-mich.com/civilization-v-how-to-change-turn-type-of-a-started-game/
+   */
+  set turnMode(newValue) {
+    if (newValue === Civ5Save.TURN_MODES.HYBRID) {
+      this._setGameOption(&apos;GAMEOPTION_DYNAMIC_TURNS&apos;, true);
+      this._setGameOption(&apos;GAMEOPTION_SIMULTANEOUS_TURNS&apos;, false);
+    } else if (newValue === Civ5Save.TURN_MODES.SIMULTANEOUS) {
+      this._setGameOption(&apos;GAMEOPTION_DYNAMIC_TURNS&apos;, false);
+      this._setGameOption(&apos;GAMEOPTION_SIMULTANEOUS_TURNS&apos;, true);
+    } else if (newValue === Civ5Save.TURN_MODES.SEQUENTIAL) {
+      this._setGameOption(&apos;GAMEOPTION_DYNAMIC_TURNS&apos;, false);
+      this._setGameOption(&apos;GAMEOPTION_SIMULTANEOUS_TURNS&apos;, false);
+    }
+  }
+
+  /**
+   * @private
+   * @throws {ParseError} Error while parsing the save file.
+   */
+  _getPropertyIfDefined(propertyName) {
+    if (this._properties.hasOwnProperty(propertyName)) {
+      try {
+        return this._properties[propertyName].getValue(this._saveData);
+      } catch (e) {
+        throw new ParseError(`Failure parsing save at property ${propertyName}`);
+      }
+    }
+  }
+
+  /**
+   * @private
+   * @throws {ParseError} Error while parsing the save file.
+   */
+  _getBeautifiedPropertyIfDefined(propertyName) {
+    if (this._properties.hasOwnProperty(propertyName)) {
+      try {
+        return this._beautifyPropertyValue(this._properties[propertyName].getValue(this._saveData));
+      } catch (e) {
+        throw new ParseError(`Failure parsing save at property ${propertyName}`);
+      }
+    }
+  }
+
+  /**
+   * @private
+   */
+  _beautifyPropertyValue(propertyValue) {
+    propertyValue = propertyValue.split(&apos;_&apos;)[1];
+    propertyValue = propertyValue.toLowerCase();
+    propertyValue = propertyValue.charAt(0).toUpperCase() + propertyValue.slice(1);
+    return propertyValue;
+  }
+
+  /**
+   * @private
+   */
+  _beautifyMapFileValue(mapFileValue) {
+    mapFileValue = mapFileValue.split(&apos;/&apos;).slice(-1)[0];
+    mapFileValue = mapFileValue.split(&apos;\\&apos;).slice(-1)[0];
+    mapFileValue = mapFileValue.substring(0, mapFileValue.lastIndexOf(&apos;.&apos;));
+    mapFileValue = mapFileValue.replace(/_/g, &apos; &apos;);
+    return mapFileValue;
+  }
+
+  /**
+   * @private
+   * @throws {ParseError} Error while parsing the save file.
+   */
+  _getGameOption(gameOptionKey) {
+    try {
+      return this._properties.gameOptionsMap.getValue(this._saveData, gameOptionKey);
+    } catch (e) {
+      throw new ParseError(`Failure parsing save at property ${gameOptionKey}`);
+    }
+  }
+
+  /**
+   * @private
+   */
+  _setGameOption(gameOptionKey, gameOptionNewValue) {
+    let newSaveData = this._properties.gameOptionsMap.setValue(this._saveData, gameOptionKey, gameOptionNewValue);
+    if (!this._isNullOrUndefined(newSaveData)) {
+      this._saveData = newSaveData;
+    }
+  }
+}
+
+// TODO: Turn these into class fields once the proposal makes it into the spec (https://github.com/tc39/proposals)
+Civ5Save.GAME_MODES = {
+  SINGLE: &apos;Single player&apos;,
+  MULTI: &apos;Multiplayer&apos;,
+  HOTSEAT: &apos;Hotseat&apos;
+};
+
+Civ5Save.PLAYER_STATUSES = {
+  AI: &apos;AI&apos;,
+  DEAD: &apos;Dead&apos;,
+  HUMAN: &apos;Human&apos;,
+  NONE: &apos;None&apos;
+};
+
+Civ5Save.TURN_MODES = {
+  HYBRID: &apos;Hybrid&apos;,
+  SEQUENTIAL: &apos;Sequential&apos;,
+  SIMULTANEOUS: &apos;Simultaneous&apos;
+};
+
+export default Civ5Save;
+
+/**
+ * Error signifying the file signature is invalid for a Civ5Save file.
+ */
+export class InvalidSignatureError extends ExtendableError {}
+
+/**
+ * Error signifying there was a problem parsing the save file.
+ */
+export class ParseError extends ExtendableError {}
+</code></pre>
+
+</div>
+
+<footer class="footer">
+  Generated by <a href="https://esdoc.org">ESDoc<span data-ice="esdocVersion">(1.1.0)</span><img src="./image/esdoc-logo-mini-black.png"></a>
+</footer>
+
+<script src="script/search_index.js"></script>
+<script src="script/search.js"></script>
+<script src="script/pretty-print.js"></script>
+<script src="script/inherited-summary.js"></script>
+<script src="script/test-summary.js"></script>
+<script src="script/inner-link.js"></script>
+<script src="script/patch-for-local.js"></script>
+</body>
+</html>

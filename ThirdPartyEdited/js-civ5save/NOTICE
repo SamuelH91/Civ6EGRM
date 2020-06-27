@@ -1,0 +1,13 @@
+The following files are from external sources:
+
+src/__tests__/resources/1.0.0.17.Civ5Save
+Source: https://forums.civfanatics.com/threads/bug-unable-to-click-promote-buttons-screen-resolution.383273/ > test.Civ5Save
+
+src/__tests__/resources/1.0.1.135.Civ5Save
+Source: https://forums.civfanatics.com/threads/fixed-patch-1-0-1-135-science-calculation-bug.403086/ > Research.Civ5Save
+
+src/__tests__/resources/1.0.1.221.Civ5Save
+Source: https://forums.civfanatics.com/threads/1-0-1-221-new-world-scenario-3rd-china-trip-gives-no-points.419792/ > BUG New World After.Civ5Save
+
+src/__tests__/resources/1.0.2.13.Civ5Save
+Source: https://forums.civfanatics.com/threads/pathing-problem-not-using-optimum-path.479410/ > pathing problem.Civ5Save

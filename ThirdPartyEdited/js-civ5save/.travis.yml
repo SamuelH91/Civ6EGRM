@@ -1,0 +1,10 @@
+language: node_js
+node_js:
+  # "node" will install the latest stable version
+  # https://docs.travis-ci.com/user/languages/javascript-with-nodejs/
+  - "node"
+after_script:
+  # Send test coverage data to coveralls.io
+  - "cat ./coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js"
+  # Generate documentation at doc.esdoc.org
+  - "curl 'https://doc.esdoc.org/api/create' -X POST --data-urlencode 'gitUrl=git@github.com:bmaupin/js-civ5save.git'"

@@ -1,0 +1,6 @@
+coverage
+node_modules
+yarn-error.log
+
+# Ignore save files used for local testing
+src/__tests__/local/resources
