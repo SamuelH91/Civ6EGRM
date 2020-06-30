@@ -75,6 +75,9 @@ class GameDataHandler():
         self.goodyHuts = []
         self.fileExt = fileExt
         self.pColors = np.random.rand(20, 3)
+        self.X = -1
+        self.Y = -1
+        self.neighbours_list = []
 
     def parseData(self):
         snapshot = DirectorySnapshot(self.dataFolder, self.recursive)
@@ -122,17 +125,43 @@ class GameDataHandler():
                     print("x: {}, y: {}, type: {}".format(tile["x"], tile["y"], terrainType))
                     self.envColors.append(np.zeros(3,))
 
-    def calculateBorderColors(self):
+    def calculateBorderColors(self, outsideBordersOnly=False):
+        self.X, self.Y = self.getMapSize()
+        if outsideBordersOnly:
+            for ii in range(self.X*self.Y):
+                self.neighbours_list.append(self.getNeighbourIndexes(ii))
         for turn in self.gameData:
             borderColorsAtTurn = []
             for ii, tile in enumerate(turn["tiles"]):
-                if tile["OwnershipBuffer"] >= 64:
-                    tileBufferData = tile["buffer"]
-                    playerID = tileBufferData[-5]
-                    borderColorsAtTurn.append(np.append(self.pColors[playerID, :], 0.9))
+                playerID = self.getPlayerID(tile)
+                if playerID >= 0:
+                    if outsideBordersOnly:
+                        for neighbour in self.neighbours_list[ii]:
+                            if neighbour < self.X*self.Y:
+                                neighbourID = self.getPlayerID(turn["tiles"][neighbour])
+                                if neighbourID == playerID:
+                                    borderColorsAtTurn.append(np.zeros(4, ))
+                                else:
+                                    borderColorsAtTurn.append(np.append(self.pColors[playerID, :], 0.9))
+                            else:
+                                borderColorsAtTurn.append(np.append(self.pColors[playerID, :], 0.9))
+                    else:
+                        borderColorsAtTurn.append(np.append(self.pColors[playerID, :], 0.9))
                 else:
-                    borderColorsAtTurn.append(np.zeros(4, ))
+                    if outsideBordersOnly:
+                        for jj in range(6):
+                            borderColorsAtTurn.append(np.zeros(4, ))
+                    else:
+                        borderColorsAtTurn.append(np.zeros(4, ))
+
             self.borderColors.append(borderColorsAtTurn)
+
+    def getPlayerID(self, tile):
+        if tile["OwnershipBuffer"] >= 64:
+            tileBufferData = tile["buffer"]
+            return tileBufferData[-5]
+        else:
+            return -1
 
     def getMapSize(self):
         if len(self.gameData) != 0:
@@ -142,3 +171,58 @@ class GameDataHandler():
 
     def getTurnCount(self):
         return len(self.gameData)
+
+    def index2XY(self, index):
+        y = int(np.floor(index / self.X))
+        x = int(index % self.X)
+        if 0 <= y < self.Y:
+            return x, y
+        else:
+            return self.X, self.Y
+
+    #   5   0
+    # 4   x   1
+    #   3   2
+    def getNeighbourIndexes(self, index):
+        neighbours = np.array([index]*6)
+        nanvalue = self.X*self.Y
+        x, y = self.index2XY(index)
+
+        if y % 2 == 0:
+            offsets = np.array([self.X, 1, -self.X, -self.X-1, -1, self.X-1])
+        else:
+            offsets = np.array([self.X+1, 1, -self.X+1, -self.X, -1, self.X])
+
+        neighbours += offsets
+        if y == self.Y - 1:
+            # Top row, -> no 0, 5 neighbours
+            neighbours[0] = nanvalue
+            neighbours[5] = nanvalue
+        elif y == 0:
+            # Bottom row, -> no 2, 3 neighbours
+            neighbours[2] = nanvalue
+            neighbours[3] = nanvalue
+        if x % self.X == 0:
+            # First column, [4] += self.X
+            neighbours[4] += self.X
+            if (0 < y < self.Y - 1) and (y % 2 == 0):
+                # If not top/bottom row, and even row -> [3/5] += self.X
+                neighbours[3] += self.X
+                neighbours[5] += self.X
+        elif x % self.X == self.X - 1:
+            # Last column, [1] -= self.X
+            neighbours[1] -= self.X
+            if (0 < y < self.Y - 1) and (y % 2 == 1):
+                # If not top/bottom row, and uneven row -> [0/2] -= self.X
+                neighbours[0] -= self.X
+                neighbours[2] -= self.X
+        return neighbours
+
+    def randomCivColors(self, N):
+        oldColors = self.pColors
+        self.pColors = np.random.rand(N, 3)
+        for borderColorsAtTurn in self.borderColors:
+            for ii, color in enumerate(borderColorsAtTurn):
+                idx = np.where((oldColors[:, 0] == color[0]) & (oldColors[:, 1] == color[1]) & (oldColors[:, 2] == color[2]))[0]
+                if len(idx) > 0:
+                    borderColorsAtTurn[ii] = np.append(self.pColors[idx], 0.9)
