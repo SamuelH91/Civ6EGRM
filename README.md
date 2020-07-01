@@ -2,10 +2,6 @@
 Civilization 6 End Game Replay Map
 
 ![](endGameReplayMap.gif)
-![](Pictures/SmallMapEnvOnly.PNG?raw=true)
-![](Pictures/BigMapEnvOnly.PNG?raw=true)
-![](Pictures/BigMapWithRandomColorBorders.PNG?raw=true)
-![](Pictures/BigMapWithRandomColorBordersFewTurnsLater.PNG?raw=true)
 
 ## Main features
 - fileCopier.py which copies automatically all autosaves (Single/Multi) (not necessary if you have some other method to collect your save files)
