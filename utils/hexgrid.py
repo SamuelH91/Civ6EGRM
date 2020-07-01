@@ -60,9 +60,12 @@ class HexGrid:
             self.collection.set_lw(lw)
 
     def set_ec_colors(self, ecColors):
-        for ii, color in enumerate(ecColors):
-            if ii < len(self.patches_list):
-                self.patches_list[ii].set_ec(color)
         if self.collection:
             self.collection.set_edgecolors(ecColors)
+        else:
+            for ii, color in enumerate(ecColors):
+                if ii < len(self.patches_list):
+                    self.patches_list[ii].set_ec(color)
+                else:
+                    break
 

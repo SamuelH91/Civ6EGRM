@@ -17,7 +17,7 @@ from saveFileHandler.filehandler import *
 # tundra (mountains):		189 221 73 223:		3746160061     BD DD 49 DF    b'\xBD\xDD\x49\xDF'
 # snow: 					15 132 234 103:		1743422479     0F 84 EA 67    b'\x0F\x84\xEA\x67'
 # snow (hills): 			128 18 3 229:		3842183808     80 12 03 E5    b'\x80\x12\x03\xE5'
-# snow (mountains):		    244 70 177 41:		699483872      E0 46 B1 29    b'\xE0\x46\xB1\x29'
+# snow (mountains):		    244 70 177 41:		699483892      F4 46 B1 29    b'\xF4\x46\xB1\x29'
 # Ocean: 					221 9 201 71:		1204357597     DD 09 C9 47    b'\xDD\x09\xC9\x47'
 # Coast: 					17 122 112 74:		1248885265     11 7A 70 4A    b'\x11\x7A\x70\x4A'
 
@@ -36,17 +36,25 @@ Terrains = {
     3746160061: {"TerrainType": "tundra (mountains)",       "color": np.array([173, 137, 124]) / 255},
     1743422479: {"TerrainType": "snow",                     "color": np.array([204, 223, 243]) / 255},
     3842183808: {"TerrainType": "snow (hills)",             "color": np.array([204, 223, 243]) / 255},
-    699483872:  {"TerrainType": "snow (mountains)",         "color": np.array([173, 137, 124]) / 255},
+    699483892:  {"TerrainType": "snow (mountains)",         "color": np.array([173, 137, 124]) / 255},
     1204357597: {"TerrainType": "Ocean",                    "color": np.array([45, 49, 86]) / 255},
     1248885265: {"TerrainType": "Coast",                    "color": np.array([45, 89, 120]) / 255},
 }
 
-Features = {
+Features = {  # + goodyhut codes
     4294967295: {"FeatureType": "NoFeature",                "color": np.array([0, 0, 0])},
     1542194068: {"FeatureType": "Ice",                      "color": np.array([171, 188, 219]) / 255},
     226585075:  {"FeatureType": "Galapagos",                "color": np.array([243, 212, 1]) / 255},
     1434118760: {"FeatureType": "GoodyHut",                 "color": np.array([241, 209, 100]) / 255},
     3727362748: {"FeatureType": "BarbCamp",                 "color": np.array([183, 20, 20]) / 255},
+    1523996587: {"FeatureType": "Plantation",               "color": np.array([0, 0, 0])},
+    168372657:  {"FeatureType": "Farm",                     "color": np.array([0, 0, 0])},
+    2475408324: {"FeatureType": "Camp",                     "color": np.array([0, 0, 0])},
+    2048582848: {"FeatureType": "LumberMill",               "color": np.array([0, 0, 0])},
+    1001859687: {"FeatureType": "Mine",                     "color": np.array([0, 0, 0])},
+    4214473799: {"FeatureType": "Quarry",                   "color": np.array([0, 0, 0])},
+    154488225:  {"FeatureType": "Pasture",                  "color": np.array([0, 0, 0])},
+    578093457:  {"FeatureType": "FishingBoats",             "color": np.array([0, 0, 0])},
 }
 # Features:
 # No feature: 			    255 255 255 255:	FF FF FF FF
@@ -65,6 +73,99 @@ Features = {
 # Land:					    197 141 5 214:		C5 8D 05 D6
 # Snow:					    234 205 88 21:		EA CD 58 15
 
+# Replay files don't appear to include colors
+# window.CIV_COLORS = {
+# 	America:           {city: [255, 255, 255], territory: [ 31,  51, 120]},
+# 	Arabia:            {city: [146, 221,   9], territory: [ 43,  87,  45]},
+# 	Assyria:           {city: [255, 168,  12], territory: [255, 243, 173]},
+# 	Austria:           {city: [255, 255, 255], territory: [234,   0,   0]},
+# 	Babylon:           {city: [200, 248, 255], territory: [ 43,  81,  97]},
+# 	Brazil:            {city: [ 41,  83,  44], territory: [149, 221,  10]},
+# 	Byzantium:         {city: [ 60,   0, 108], territory: [113, 161, 232]},
+# 	Carthage:          {city: [ 80,   0, 136], territory: [204, 204, 204]},
+# 	China:             {city: [255, 255, 255], territory: [  0, 148,  82]},
+# 	Denmark:           {city: [239, 231, 179], territory: [108,  42,  20]},
+# 	Egypt:             {city: [ 82,   0, 208], territory: [255, 251,   3]},
+# 	England:           {city: [255, 255, 255], territory: [108,   2,   0]},
+# 	Ethiopia:          {city: [255,  45,  45], territory: [  1,  39,  14]},
+# 	France:            {city: [235, 235, 138], territory: [ 65, 141, 253]},
+# 	Germany:           {city: [ 36,  43,  32], territory: [179, 177, 184]},
+# 	Greece:            {city: [ 65, 141, 253], territory: [255, 255, 255]},
+# 	India:             {city: [255, 153,  49], territory: [ 18, 135,   6]},
+# 	Indonesia:         {city: [158,  46,  28], territory: [110, 210, 217]},
+# 	Japan:             {city: [184,   0,   0], territory: [255, 255, 255]},
+# 	Korea:             {city: [255,   0,   0], territory: [ 26,  32,  96]},
+# 	Mongolia:          {city: [255, 120,   0], territory: [ 81,   0,   8]},
+# 	Morocco:           {city: [ 39, 178,  79], territory: [144,   2,   0]},
+# 	Persia:            {city: [245, 230,  55], territory: [176,   7,   3]},
+# 	Poland:            {city: [ 56,   0,   0], territory: [244,   5,   0]},
+# 	Polynesia:         {city: [255, 255,  74], territory: [217,  88,   0]},
+# 	Portugal:          {city: [  3,  20, 124], territory: [255, 255, 255]},
+# 	Rome:              {city: [239, 198,   0], territory: [ 70,   0, 118]},
+# 	Russia:            {city: [  0,   0,   0], territory: [238, 238, 238]},
+# 	Siam:              {city: [176,   7,   3], territory: [245, 230,  55]},
+# 	Songhai:           {city: [ 90,   0,   9], territory: [213, 145,  19]},
+# 	Spain:             {city: [244, 168, 168], territory: [ 83,  26,  26]},
+# 	Sweden:            {city: [248, 246,   2], territory: [  7,   7, 165]},
+# 	Venice:            {city: [255, 254, 215], territory: [102,  33, 161]},
+# 	'The Aztecs':      {city: [136, 238, 212], territory: [161,  57,  34]},
+# 	'The Celts':       {city: [147, 169, 255], territory: [ 21,  91,  62]},
+# 	'The Huns':        {city: [ 69,   0,   3], territory: [179, 177, 163]},
+# 	'The Inca':        {city: [  6, 159, 119], territory: [255, 184,  33]},
+# 	'The Iroquois':    {city: [251, 201, 129], territory: [ 65,  86,  86]},
+# 	'The Maya':        {city: [ 23,  62,  65], territory: [197, 140,  98]},
+# 	'The Netherlands': {city: [255, 255, 255], territory: [255, 143,   0]},
+# 	'The Ottomans':    {city: [ 18,  82,  30], territory: [247, 248, 199]},
+# 	'The Shoshone':    {city: [ 24, 239, 206], territory: [ 73,  58,  45]},
+# 	'The Zulus':       {city: [106,  49,  24], territory: [255, 231, 213]}
+# }
+
+civColors = np.array([
+[ 31,  51, 120],
+[ 43,  87,  45],
+[255, 243, 173],
+[234,   0,   0],
+[ 43,  81,  97],
+[149, 221,  10],
+[113, 161, 232],
+[204, 204, 204],
+[  0, 148,  82],
+[108,  42,  20],
+[255, 251,   3],
+[108,   2,   0],
+[  1,  39,  14],
+[ 65, 141, 253],
+[179, 177, 184],
+[255, 255, 255],
+[ 18, 135,   6],
+[110, 210, 217],
+[255, 255, 255],
+[ 26,  32,  96],
+[ 81,   0,   8],
+[144,   2,   0],
+[176,   7,   3],
+[244,   5,   0],
+[217,  88,   0],
+[255, 255, 255],
+[ 70,   0, 118],
+[238, 238, 238],
+[245, 230,  55],
+[213, 145,  19],
+[ 83,  26,  26],
+[  7,   7, 165],
+[102,  33, 161],
+[161,  57,  34],
+[ 21,  91,  62],
+[179, 177, 163],
+[255, 184,  33],
+[ 65,  86,  86],
+[197, 140,  98],
+[255, 143,   0],
+[247, 248, 199],
+[ 73,  58,  45],
+[255, 231, 213]]
+) / 255
+
 class GameDataHandler():
     def __init__(self, dataFolder, fileExt=".Civ6Save"):
         self.dataFolder = dataFolder
@@ -72,9 +173,10 @@ class GameDataHandler():
         self.gameData = []
         self.borderColors = []
         self.envColors = []
+        self.riverColors = []
         self.goodyHuts = []
         self.fileExt = fileExt
-        self.pColors = np.random.rand(20, 3)
+        self.pColors = civColors
         self.X = -1
         self.Y = -1
         self.neighbours_list = []
@@ -124,6 +226,22 @@ class GameDataHandler():
                 except:
                     print("x: {}, y: {}, type: {}".format(tile["x"], tile["y"], terrainType))
                     self.envColors.append(np.zeros(3,))
+
+    def calculateRiverColors(self):
+        if len(self.gameData) != 0:
+            turn = self.gameData[0]
+            for ii, tile in enumerate(turn["tiles"]):
+                RiverBorders = tile["RiverBorders"]
+                if RiverBorders > 0:
+                    RiverBitMap = tile["RiverBitMap"]
+                    for ii in range(6):
+                        if RiverBitMap >> ii & 1:
+                            self.riverColors.append(np.array((45, 89, 120, 255)) / 255)
+                        else:
+                            self.riverColors.append(np.zeros(4, ))
+                else:
+                    for jj in range(6):
+                        self.riverColors.append(np.zeros(4, ))
 
     def calculateBorderColors(self, outsideBordersOnly=False):
         self.X, self.Y = self.getMapSize()

@@ -7,14 +7,13 @@ Civilization 6 End Game Replay Map
 ![](Pictures/BigMapWithRandomColorBordersFewTurnsLater.PNG?raw=true)
 
 ## Main features
-- fileCopier.py which copies automatically all autosaves (Single/Multi)
+- fileCopier.py which copies automatically all autosaves (Single/Multi) (not necessary if you have some other method to collect your save files)
 - endGameReplay.py visualizes all separately (autosaved) data
   - Visualized environment similar to the minimap in the game
   - Toggle borders on/off
   - Visualized goody huts and barb camps
   
 ## TODOs
-- Rivers, + improve: goody huts, barbarians, icebergs
 - Lock civ colors and city visualization
 - Include more natural wonders
 - Take actual turn number in use
@@ -40,7 +39,7 @@ These can be installed with pip e.g.
 
 ## Quickstart
 1) Start civ game
-1) Start file copier (set correct paths to code)
+1) Start file copier (set correct paths to code) (or use your own method to collect saves)
     > - Open cmd
     > - 'python runFileWatcher.py'
 1) Stop it when game has reached the point and all necessary files are copied
