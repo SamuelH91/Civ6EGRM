@@ -22,6 +22,7 @@ gdh.parseData()
 outerBordersOnly = True
 # Calculate border colors
 gdh.calculateBorderColors(outerBordersOnly)
+gdh.calculateCityColors()
 
 # Calculate environment colors
 gdh.calculateEnvColors()
@@ -57,30 +58,36 @@ hg_environment = HexGrid(M, N)
 hg_borders = HexGrid(M, N, 0.9, outerBordersOnly)
 hg_rivers = HexGrid(M, N, 1.0, outerBordersOnly)
 hg_goodyHut = HexGrid(M, N, 0.35)
+hg_cities = HexGrid(M, N, 0.5)
 
-hg_environment.set_fc_colors(gdh.envColors)
-hg_goodyHut.set_fc_colors(gdh.goodyHuts[0])
 hg_borders.set_fill(False)
 hg_borders.set_lw(4)
 hg_rivers.set_fill(False)
-hg_rivers.set_lw(4)
+hg_rivers.set_lw(8)
 
 hg_environment.createCollection(ax)
 hg_rivers.createCollection(ax)
 hg_borders.createCollection(ax)
 hg_goodyHut.createCollection(ax)
+hg_cities.createCollection(ax)
+
+hg_environment.set_fc_colors(gdh.envColors)
+hg_goodyHut.set_fc_colors(gdh.goodyHuts[0])
+hg_cities.set_fc_colors(gdh.cityColors[0])
+count = 0
+for color in gdh.cityColors[0]:
+    if color[3] > 0:
+        count += 1
+print(count)
+
+count = 0
+for color in gdh.cityColors[-1]:
+    if color[3] > 0:
+        count += 1
+print(count)
 
 hg_borders.set_ec_colors(gdh.borderColors[0])
 hg_rivers.set_ec_colors(gdh.riverColors)
-
-# p_env = PatchCollection(hg_environment.patches_list, match_original=True)
-# ax.add_collection(p_env)
-
-# p_borders = PatchCollection(hg_borders.patches_list, match_original=True)
-# ax.add_collection(p_borders)
-
-# p_goodyHuts = PatchCollection(hg_goodyHut.patches_list, match_original=True)
-# ax.add_collection(p_goodyHuts)
 
 ax.autoscale_view(True, True, True)
 ax.set_aspect('equal', adjustable='box')
@@ -107,17 +114,21 @@ button_toggleB.on_clicked(update)
 
 def randomColorsCivs(event):
     gdh.randomCivColors(20)
-    hg_borders.set_ec_colors(gdh.borderColors[sTurn.val-1])
-    hg_goodyHut.set_fc_colors(gdh.goodyHuts[sTurn.val-1])
-    fig.canvas.draw()
-    fig.canvas.flush_events()
+    updateTurnSlider(event)
 button_randomC.on_clicked(randomColorsCivs)
 
 def updateTurnSlider(event):
     hg_borders.set_ec_colors(gdh.borderColors[sTurn.val-1])
     hg_goodyHut.set_fc_colors(gdh.goodyHuts[sTurn.val-1])
+    hg_cities.set_fc_colors(gdh.cityColors[sTurn.val-1])
     fig.canvas.draw()
     fig.canvas.flush_events()
 sTurn.on_changed(updateTurnSlider)
 
 plt.show()
+
+# c0 = gdh.cityColors[0]
+# c_1 = gdh.cityColors[-1]
+# ce = 0
+# for c0, c1 in zip(c0, c_1):
+#     ce += c0-c1

@@ -35,14 +35,15 @@ class HexGrid:
         if self.outsideBordersOnly:
             self.collection = LineCollection(self.lines_list)
         else:
-            self.collection = PatchCollection(self.patches_list, match_original=True)
+            self.collection = PatchCollection(self.patches_list)  #, match_original=True
         ax.add_collection(self.collection)
 
     def set_fc_colors(self, fcColors):
-        for ii, color in enumerate(fcColors):
-            self.patches_list[ii].set_fc(color)
         if self.collection:
             self.collection.set_facecolors(fcColors)
+        else:
+            for ii, color in enumerate(fcColors):
+                self.patches_list[ii].set_fc(color)
 
     def set_fill(self, fill):
         # self.collection.set_fill(fill)

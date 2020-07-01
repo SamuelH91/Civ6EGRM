@@ -120,6 +120,52 @@ Features = {  # + goodyhut codes
 # 	'The Zulus':       {city: [106,  49,  24], territory: [255, 231, 213]}
 # }
 
+cityColors = np.array([
+[255, 255, 255],
+[146, 221,   9],
+[255, 168,  12],
+[255, 255, 255],
+[200, 248, 255],
+[ 41,  83,  44],
+[ 60,   0, 108],
+[ 80,   0, 136],
+[255, 255, 255],
+[239, 231, 179],
+[ 82,   0, 208],
+[255, 255, 255],
+[255,  45,  45],
+[235, 235, 138],
+[ 36,  43,  32],
+[ 65, 141, 253],
+[255, 153,  49],
+[158,  46,  28],
+[184,   0,   0],
+[255,   0,   0],
+[255, 120,   0],
+[ 39, 178,  79],
+[245, 230,  55],
+[ 56,   0,   0],
+[255, 255,  74],
+[  3,  20, 124],
+[239, 198,   0],
+[  0,   0,   0],
+[176,   7,   3],
+[ 90,   0,   9],
+[244, 168, 168],
+[248, 246,   2],
+[255, 254, 215],
+[136, 238, 212],
+[147, 169, 255],
+[ 69,   0,   3],
+[  6, 159, 119],
+[251, 201, 129],
+[ 23,  62,  65],
+[255, 255, 255],
+[ 18,  82,  30],
+[ 24, 239, 206],
+[106,  49,  24],
+])
+
 civColors = np.array([
 [ 31,  51, 120],
 [ 43,  87,  45],
@@ -170,8 +216,10 @@ class GameDataHandler():
     def __init__(self, dataFolder, fileExt=".Civ6Save"):
         self.dataFolder = dataFolder
         self.recursive = False
-        self.gameData = []
+        self.tileData = []
+        self.cityData = []
         self.borderColors = []
+        self.cityColors = []
         self.envColors = []
         self.riverColors = []
         self.goodyHuts = []
@@ -188,10 +236,12 @@ class GameDataHandler():
                 f = open(filePath, "rb")
                 data = f.read()
                 f.close()
-                self.gameData.append(save_to_map_json(data))
+                mainDecompressedData = decompress(data)
+                self.tileData.append(save_to_map_json(mainDecompressedData))
+                self.cityData.append(getCityData(mainDecompressedData))
 
     def calculateOtherStuff(self):
-        for turn in self.gameData:
+        for turn in self.tileData:
             goodyHutsAtTurn = []
             for ii, tile in enumerate(turn["tiles"]):
                 terrainType = tile["TerrainType"]
@@ -206,11 +256,15 @@ class GameDataHandler():
                 except:
                     print("x: {}, y: {}, goodyHut: {}".format(tile["x"], tile["y"], GoodyHut))
                     goodyHutsAtTurn.append(np.zeros(4,))
-                self.goodyHuts.append(goodyHutsAtTurn)
+            self.goodyHuts.append(np.copy(goodyHutsAtTurn))
+            # count = 0
+            # for color in goodyHutsAtTurn:
+            #     if color[2] > 0:
+            #         count += 1
 
     def calculateEnvColors(self):
-        if len(self.gameData) != 0:
-            turn = self.gameData[0]
+        if len(self.tileData) != 0:
+            turn = self.tileData[0]
             for ii, tile in enumerate(turn["tiles"]):
                 terrainType = tile["TerrainType"]
                 featureType = tile["FeatureType"]
@@ -228,8 +282,8 @@ class GameDataHandler():
                     self.envColors.append(np.zeros(3,))
 
     def calculateRiverColors(self):
-        if len(self.gameData) != 0:
-            turn = self.gameData[0]
+        if len(self.tileData) != 0:
+            turn = self.tileData[0]
             for ii, tile in enumerate(turn["tiles"]):
                 RiverBorders = tile["RiverBorders"]
                 if RiverBorders > 0:
@@ -248,7 +302,7 @@ class GameDataHandler():
         if outsideBordersOnly:
             for ii in range(self.X*self.Y):
                 self.neighbours_list.append(self.getNeighbourIndexes(ii))
-        for turn in self.gameData:
+        for turn in self.tileData:
             borderColorsAtTurn = []
             for ii, tile in enumerate(turn["tiles"]):
                 playerID = self.getPlayerID(tile)
@@ -274,6 +328,20 @@ class GameDataHandler():
 
             self.borderColors.append(borderColorsAtTurn)
 
+    def calculateCityColors(self):
+        cityColorsAtTurnEmpty = []
+        for ii in range(self.X*self.Y):
+            cityColorsAtTurnEmpty.append(np.zeros(4, ))
+        for turn in self.cityData:
+            cityColorsAtTurn = cityColorsAtTurnEmpty
+            for city in turn["cities"]:
+                cityColorsAtTurn[city["LocationIdx"]] = np.append(self.pColors[city["CivIndex"], :], 0.9)
+            self.cityColors.append(np.copy(cityColorsAtTurn))
+            # count = 0
+            # for color in cityColorsAtTurn:
+            #     if color[3] > 0:
+            #         count += 1
+
     def getPlayerID(self, tile):
         if tile["OwnershipBuffer"] >= 64:
             tileBufferData = tile["buffer"]
@@ -282,13 +350,13 @@ class GameDataHandler():
             return -1
 
     def getMapSize(self):
-        if len(self.gameData) != 0:
-            return self.gameData[0]["mapSize"][0], self.gameData[0]["mapSize"][1]
+        if len(self.tileData) != 0:
+            return self.tileData[0]["mapSize"][0], self.tileData[0]["mapSize"][1]
         else:
             return None
 
     def getTurnCount(self):
-        return len(self.gameData)
+        return len(self.tileData)
 
     def index2XY(self, index):
         y = int(np.floor(index / self.X))

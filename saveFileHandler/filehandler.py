@@ -268,8 +268,8 @@ MAPSIZEDATA = {
 #  * @param {buffer} savefile
 #  * @return {object} tiles
 #  */
-def save_to_map_json(saveFileBuffer):
-    bin = decompress(saveFileBuffer)
+def save_to_map_json(mainDecompressedData):
+    bin = mainDecompressedData
     mapstartindex = bin.index(b'\x0E\x00\x00\x00\x0F\x00\x00\x00\x06\x00\x00\x00')
     tiles = readInt32(bin, mapstartindex + 12)
     tileskey = str(tiles)
@@ -291,40 +291,75 @@ def save_to_map_json(saveFileBuffer):
 
         # See bin-structure.md for WIP documentation on what each of these values are
         map["tiles"].append({
-            'x': i % MAPSIZEDATA[tileskey]["x"],
-            'y': np.floor(i / MAPSIZEDATA[tileskey]["x"]),
-            'hexbin-location': mindex,
-            'tile-length': 55 + buflength,
-            'int16-1': readUInt16(bin, mindex),
-            'int16-2': readUInt16(bin, mindex + 2),
-            'int16-3': readUInt16(bin, mindex + 4),
-            'int16-4': readUInt16(bin, mindex + 6),
-            'Landmass': readUInt16(bin, mindex + 8),
-            'Landmass1': readUInt16(bin, mindex + 10),
-            'TerrainType': readUInt32(bin, mindex + 12),
-            'FeatureType': readUInt32(bin, mindex + 16),
-            '?-1': readUInt16(bin, mindex + 20),
-            'LandSnowSea': readUInt32(bin, mindex + 22),
-            '?-2': readUInt8(bin, mindex + 26),
-            'Resource': readUInt32(bin, mindex + 27),
-            'ResourceBoolean': readUInt16(bin, mindex + 31),
-            'GoodyHut': readUInt32(bin, mindex + 33),
-            '?-3': readUInt8(bin, mindex + 37),
-            'RoadLevel': readInt8(bin, mindex + 38),
-            '?-4': readUInt8(bin, mindex + 39),
-            'TileAppeal': readInt16(bin, mindex + 40),
-            '?-5': readUInt8(bin, mindex + 42),
-            '?-6': readUInt8(bin, mindex + 43),
-            '?-7': readUInt8(bin, mindex + 44),
-            'RiverBorders': readUInt8(bin, mindex + 45),
-            'RiverBitMap': readUInt8(bin, mindex + 46),  # bin.readUInt8(mindex + 46).toString(2).padStart(6, '0'),
-            'CliffBitMap': readUInt8(bin, mindex + 47),  # bin.readInt8(mindex + 47).toString(2).padStart(6, '0'),
-            '?-8': bin[mindex + 48:mindex + 51],
-            'OwnershipBuffer': OwnershipBuffer,
-            'TileOverlayNum': TileOverlayNum,
-            'buffer': bin[mindex + 55:mindex + 55 + buflength],
+            "x": i % MAPSIZEDATA[tileskey]["x"],
+            "y": np.floor(i / MAPSIZEDATA[tileskey]["x"]),
+            "hexbin-location": mindex,
+            "tile-length": 55 + buflength,
+            "int16-1": readUInt16(bin, mindex),
+            "int16-2": readUInt16(bin, mindex + 2),
+            "int16-3": readUInt16(bin, mindex + 4),
+            "int16-4": readUInt16(bin, mindex + 6),
+            "Landmass": readUInt16(bin, mindex + 8),
+            "Landmass1": readUInt16(bin, mindex + 10),
+            "TerrainType": readUInt32(bin, mindex + 12),
+            "FeatureType": readUInt32(bin, mindex + 16),
+            "?-1": readUInt16(bin, mindex + 20),
+            "LandSnowSea": readUInt32(bin, mindex + 22),
+            "?-2": readUInt8(bin, mindex + 26),
+            "Resource": readUInt32(bin, mindex + 27),
+            "ResourceBoolean": readUInt16(bin, mindex + 31),
+            "GoodyHut": readUInt32(bin, mindex + 33),
+            "?-3": readUInt8(bin, mindex + 37),
+            "RoadLevel": readInt8(bin, mindex + 38),
+            "?-4": readUInt8(bin, mindex + 39),
+            "TileAppeal": readInt16(bin, mindex + 40),
+            "?-5": readUInt8(bin, mindex + 42),
+            "?-6": readUInt8(bin, mindex + 43),
+            "?-7": readUInt8(bin, mindex + 44),
+            "RiverBorders": readUInt8(bin, mindex + 45),
+            "RiverBitMap": readUInt8(bin, mindex + 46),  # bin.readUInt8(mindex + 46).toString(2).padStart(6, "0"),
+            "CliffBitMap": readUInt8(bin, mindex + 47),  # bin.readInt8(mindex + 47).toString(2).padStart(6, "0"),
+            "?-8": bin[mindex + 48:mindex + 51],
+            "OwnershipBuffer": OwnershipBuffer,
+            "TileOverlayNum": TileOverlayNum,
+            "buffer": bin[mindex + 55:mindex + 55 + buflength],
         })
 
         mindex += 55 + buflength
 
     return map
+
+def getCityData(mainDecompressedData):
+    bin = mainDecompressedData
+    cities = {"cities": []}
+    try:
+        cityIndex = bin.index(b'\x04\x00\x00\x00\x43\x69\x74\x79')
+        # There is some religion info as well at same section
+        while cityIndex:
+            cityNameLength = readUInt32(bin, cityIndex + 8)
+            cityName = " ".join([x.capitalize() for x in bin[cityIndex + 12 + 14:cityIndex + 12 + cityNameLength].decode("utf-8").replace("_", " ").lower().split()])
+            idx = cityIndex + 12 + cityNameLength
+            cityCivIdx = readUInt16(bin, idx)
+            # Unknown 1xUInt16
+            civCityOrderIdx = readUInt16(bin, idx + 4)
+            civCityOrderIdx1 = readUInt16(bin, idx + 6)
+            cityLocationIdx = readUInt16(bin, idx + 8)
+            # could be 32
+            # 2x 00 00 00 00?
+            cityOrderIdx = readUInt16(bin, idx + 18)
+            cities["cities"].append({
+                "CityName": cityName,
+                "CivIndex": cityCivIdx,
+                "CivCityOrderIdx": civCityOrderIdx,
+                "CivCityOrderIdx1": civCityOrderIdx1,
+                "LocationIdx": cityLocationIdx,
+                "CityOrderIdx": cityOrderIdx,
+            })
+            try:
+                cityIndex = bin.index(b'\x04\x00\x00\x00\x43\x69\x74\x79', cityIndex + 8)
+            except:
+                break
+    except:
+        print("No cities!")
+        pass
+    return cities
