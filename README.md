@@ -1,6 +1,7 @@
 # Civ6EGRM
 Civilization 6 End Game Replay Map
 
+![](endGameReplayMap.gif)
 ![](Pictures/SmallMapEnvOnly.PNG?raw=true)
 ![](Pictures/BigMapEnvOnly.PNG?raw=true)
 ![](Pictures/BigMapWithRandomColorBorders.PNG?raw=true)
@@ -14,8 +15,8 @@ Civilization 6 End Game Replay Map
   - Visualized goody huts and barb camps
   
 ## TODOs
-- Lock civ colors and city visualization
-- Include more natural wonders
+- Lock civ colors
+- Include natural wonders
 - Take actual turn number in use
 
 - Nice to have stuff in future:
@@ -33,6 +34,7 @@ Civilization 6 End Game Replay Map
 - struct
 - watchdog
 - shutil
+- Pillow
 
 These can be installed with pip e.g. 
 > - 'pip install matplotlib'

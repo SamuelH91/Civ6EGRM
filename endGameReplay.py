@@ -5,9 +5,10 @@ from matplotlib.collections import PatchCollection
 from saveFileHandler.gameDataHandler import *
 from matplotlib.widgets import Button, Slider
 import os
+# import matplotlib.animation as manimation  # requires ffmpeg installed
+from matplotlib.animation import FuncAnimation, PillowWriter
 
-# TODO: Rivers, + improve: goody huts, barbarians, icebergs
-# TODO: Lock civ colors and city visualization
+# TODO: Lock civ colors
 # TODO: Include natural wonders
 # TODO: Take actual turn number in use
 
@@ -41,14 +42,16 @@ TurnCount = gdh.getTurnCount()
 fig, ax = plt.subplots()
 
 # Button for border toggling
-bax = fig.add_axes([0.1, 0.95, 0.2, 0.05])
+bax = fig.add_axes([0.05, 0.95, 0.15, 0.05])
 button_toggleB = Button(bax, "Toggle borders")
-bax2 = fig.add_axes([0.3, 0.95, 0.2, 0.05])
+bax2 = fig.add_axes([0.20, 0.95, 0.15, 0.05])
 button_randomC = Button(bax2, "Random colors")
-bax3 = fig.add_axes([0.5, 0.95, 0.2, 0.05])
+bax3 = fig.add_axes([0.35, 0.95, 0.15, 0.05])
 button_playB = Button(bax3, "Play")
-bax4 = fig.add_axes([0.7, 0.95, 0.2, 0.05])
+bax4 = fig.add_axes([0.50, 0.95, 0.15, 0.05])
 button_pauseB = Button(bax4, "Pause")
+bax5 = fig.add_axes([0.65, 0.95, 0.15, 0.05])
+button_movieB = Button(bax5, "Create gif")
 
 # Slider for turns
 axTurn = plt.axes([0.1, 0.03, 0.8, 0.02])
@@ -74,17 +77,6 @@ hg_cities.createCollection(ax)
 hg_environment.set_fc_colors(gdh.envColors)
 hg_goodyHut.set_fc_colors(gdh.goodyHuts[0])
 hg_cities.set_fc_colors(gdh.cityColors[0])
-count = 0
-for color in gdh.cityColors[0]:
-    if color[3] > 0:
-        count += 1
-print(count)
-
-count = 0
-for color in gdh.cityColors[-1]:
-    if color[3] > 0:
-        count += 1
-print(count)
 
 hg_borders.set_ec_colors(gdh.borderColors[0])
 hg_rivers.set_ec_colors(gdh.riverColors)
@@ -125,10 +117,21 @@ def updateTurnSlider(event):
     fig.canvas.flush_events()
 sTurn.on_changed(updateTurnSlider)
 
-plt.show()
+# def createMovie(event):
+#     FFMpegWriter = manimation.writers['ffmpeg']
+#     writer = FFMpegWriter(fps=10)
+#     with writer.saving(fig, "endGameReplayMap.mp4", TurnCount):
+#         for ii in range(1, TurnCount + 1):
+#             sTurn.set_val(ii)
+#         writer.grab_frame()
 
-# c0 = gdh.cityColors[0]
-# c_1 = gdh.cityColors[-1]
-# ce = 0
-# for c0, c1 in zip(c0, c_1):
-#     ce += c0-c1
+def setSlider(value):
+    sTurn.set_val(int(value))
+
+def createMovie(event):
+    ani = FuncAnimation(fig, setSlider, np.linspace(1, TurnCount, TurnCount))
+    writer = PillowWriter(fps=10)
+    ani.save("endGameReplayMap.gif", writer=writer)
+button_movieB.on_clicked(createMovie)
+
+plt.show()
