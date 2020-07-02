@@ -21,6 +21,7 @@ Civilization 6 End Game Replay Map
 
 ## Tested with
 - Base game: (Single + Multi)
+- Expansions: (RF + GS)
 - Python 3.8.3
 
 ## Dependencies
