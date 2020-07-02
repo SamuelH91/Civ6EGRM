@@ -5,7 +5,7 @@ from matplotlib.collections import PatchCollection
 from saveFileHandler.gameDataHandler import *
 from matplotlib.widgets import Button, Slider
 import os
-# import matplotlib.animation as manimation  # requires ffmpeg installed
+import matplotlib.animation as animation  # requires ffmpeg installed
 from matplotlib.animation import FuncAnimation, PillowWriter
 from pygifsicle import gifsicle
 
@@ -56,7 +56,9 @@ button_playB = Button(bax3, "Play")
 bax4 = fig.add_axes([0.50, 0.95, 0.15, 0.05])
 button_pauseB = Button(bax4, "Pause")
 bax5 = fig.add_axes([0.65, 0.95, 0.15, 0.05])
-button_movieB = Button(bax5, "Create gif")
+button_gifB = Button(bax5, "Create gif")
+bax6 = fig.add_axes([0.80, 0.95, 0.15, 0.05])
+button_movieB = Button(bax6, "Create mp4")
 
 # Slider for turns
 axTurn = plt.axes([0.1, 0.03, 0.8, 0.02])
@@ -122,13 +124,12 @@ def updateTurnSlider(event):
     fig.canvas.flush_events()
 sTurn.on_changed(updateTurnSlider)
 
-# def createMovie(event):
-#     FFMpegWriter = manimation.writers['ffmpeg']
-#     writer = FFMpegWriter(fps=10)
-#     with writer.saving(fig, "endGameReplayMap.mp4", TurnCount):
-#         for ii in range(1, TurnCount + 1):
-#             sTurn.set_val(ii)
-#         writer.grab_frame()
+def createMovie(event):
+    ani = FuncAnimation(fig, setSlider, np.linspace(1, TurnCount, TurnCount))
+    writervideo = animation.FFMpegWriter(fps=1)
+    ani.save("endGameReplayMap.mp4", writer=writervideo)
+    print("Mp4 done!")
+button_movieB.on_clicked(createMovie)
 
 def setSlider(value):
     sTurn.set_val(int(value))
@@ -145,6 +146,7 @@ def createGif(event):
             colors=256,  # Number of colors t use
             options=["--verbose", "--lossy", "-O3"],  # Options to use.
         )
-button_movieB.on_clicked(createGif)
+    print("Gif done!")
+button_gifB.on_clicked(createGif)
 
 plt.show()
