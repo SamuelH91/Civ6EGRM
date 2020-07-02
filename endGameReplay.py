@@ -7,6 +7,7 @@ from matplotlib.widgets import Button, Slider
 import os
 # import matplotlib.animation as manimation  # requires ffmpeg installed
 from matplotlib.animation import FuncAnimation, PillowWriter
+from pygifsicle import gifsicle
 
 # TODO: Lock civ colors
 # TODO: Include natural wonders
@@ -16,11 +17,15 @@ from matplotlib.animation import FuncAnimation, PillowWriter
 #       TODO: Optional visualize units
 #       TODO: List events (e.g. wars, wonders, great people)
 
+# Options
+OptimizeGif = True
+outerBordersOnly = True
+saveDataLocation = os.getcwd() + "/data/auto/"  # Default location where runFileWatcher copies all auto saves
+
 # Read and parse all files to memory
-gdh = GameDataHandler(os.getcwd() + "/data/auto/")
+gdh = GameDataHandler(saveDataLocation)
 gdh.parseData()
 
-outerBordersOnly = True
 # Calculate border colors
 gdh.calculateBorderColors(outerBordersOnly)
 gdh.calculateCityColors()
@@ -128,10 +133,18 @@ sTurn.on_changed(updateTurnSlider)
 def setSlider(value):
     sTurn.set_val(int(value))
 
-def createMovie(event):
+def createGif(event):
     ani = FuncAnimation(fig, setSlider, np.linspace(1, TurnCount, TurnCount))
     writer = PillowWriter(fps=10)
     ani.save("endGameReplayMap.gif", writer=writer)
-button_movieB.on_clicked(createMovie)
+    if OptimizeGif:
+        gifsicle(
+            sources=["endGameReplayMap.gif"],  # or a single_file.gif
+            destination="endGameReplayMapOptimized.gif",   # or just omit it and will use the first source provided.
+            optimize=False,  # Whetever to add the optimize flag of not
+            colors=256,  # Number of colors t use
+            options=["--verbose", "--lossy", "-O3"],  # Options to use.
+        )
+button_movieB.on_clicked(createGif)
 
 plt.show()

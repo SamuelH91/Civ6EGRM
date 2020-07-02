@@ -32,6 +32,7 @@ Civilization 6 End Game Replay Map
 - watchdog
 - shutil
 - Pillow
+- pygifsicle (to compress gifs, gifsicle.exe (64bit) included also)
 
 These can be installed with pip e.g. 
 > - 'pip install matplotlib'
