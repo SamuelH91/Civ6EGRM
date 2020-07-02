@@ -141,8 +141,8 @@ def createGif(event):
     if OptimizeGif:
         gifsicle(
             sources=["endGameReplayMap.gif"],  # or a single_file.gif
-            destination="endGameReplayMapOptimized.gif",   # or just omit it and will use the first source provided.
-            optimize=False,  # Whetever to add the optimize flag of not
+            destination="endGameReplayMap.gif",   # or just omit it and will use the first source provided.
+            optimize=False,  # Whetever to add the optimize flag of not, optimized with -O3 option
             colors=256,  # Number of colors t use
             options=["--verbose", "--lossy", "-O3"],  # Options to use.
         )
