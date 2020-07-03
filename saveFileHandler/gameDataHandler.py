@@ -57,6 +57,10 @@ Features = {  # + goodyhut codes
     578093457:  {"FeatureType": "FishingBoats",             "color": np.array([0, 0, 0])},
     2457279608: {"FeatureType": "Monastery",                "color": np.array([0, 0, 0])},
     3943953367: {"FeatureType": "Reef",                     "color": np.array([0, 0, 0])},
+    1957694686: {"FeatureType": "CheckThisLater1",          "color": np.array([0, 0, 0])},
+    3808671749: {"FeatureType": "CheckThisLater2",          "color": np.array([0, 0, 0])},
+    933499311:  {"FeatureType": "CheckThisLater3",          "color": np.array([0, 0, 0])},
+    1084731038: {"FeatureType": "CheckThisLater4",          "color": np.array([0, 0, 0])},
 }
 # Features:
 # No feature: 			    255 255 255 255:	FF FF FF FF

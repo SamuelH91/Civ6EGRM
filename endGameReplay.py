@@ -125,14 +125,15 @@ def updateTurnSlider(event):
 sTurn.on_changed(updateTurnSlider)
 
 def createMovie(event):
-    ani = FuncAnimation(fig, setSlider, np.linspace(1, TurnCount, TurnCount))
+    ani = FuncAnimation(fig, setSlider, np.linspace(1, TurnCount+2, TurnCount+2))  # some problem with ending, cuts out
     writervideo = animation.FFMpegWriter(fps=1)
     ani.save("endGameReplayMap.mp4", writer=writervideo)
     print("Mp4 done!")
 button_movieB.on_clicked(createMovie)
 
 def setSlider(value):
-    sTurn.set_val(int(value))
+    if value <= TurnCount:
+        sTurn.set_val(int(value))
 
 def createGif(event):
     ani = FuncAnimation(fig, setSlider, np.linspace(1, TurnCount, TurnCount))
