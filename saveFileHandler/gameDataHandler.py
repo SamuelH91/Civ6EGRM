@@ -221,6 +221,7 @@ civColors = np.array([
 [ 73,  58,  45],
 [255, 231, 213]]
 ) / 255
+civColors = np.concatenate((civColors, np.random.rand(20, 3)))
 
 class GameDataHandler():
     def __init__(self, dataFolder, fileExt=".Civ6Save"):
