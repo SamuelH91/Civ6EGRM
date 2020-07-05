@@ -290,7 +290,7 @@ def save_to_map_json(mainDecompressedData):
         if OwnershipBuffer >= 64:
             buflength += 17
 
-        # machu pichu or something else related to mountain, + mountain tunnel
+        # ski resort + mountain tunnel
         if GoodyHut == 2135005470 or GoodyHut == 3108964764:
             buflength += 20
 

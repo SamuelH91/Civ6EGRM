@@ -61,11 +61,9 @@ Features = {  # + goodyhut codes
     3943953367: {"FeatureType": "Reef",                     "color": np.array([0, 0, 0])},
     3583470385: {"FeatureType": "GreatBarrierReef",         "color": np.array([0, 0, 0])},
     1957694686: {"FeatureType": "CahokiaMounds",            "color": np.array([0, 0, 0])},
-    # 3808671749: {"FeatureType": "CheckThisLater2",          "color": np.array([0, 0, 0])},
-    # 933499311:  {"FeatureType": "CheckThisLater3",          "color": np.array([0, 0, 0])},
     1719494282: {"FeatureType": "Pairidaeza",               "color": np.array([0, 0, 0])},
     1694280827: {"FeatureType": "Fort",                     "color": np.array([0, 0, 0])},
-    2135005470: {"FeatureType": "CheckThisLater6+Buffer20", "color": np.array([0, 0, 0])},
+    2135005470: {"FeatureType": "SkiResort",                "color": np.array([0, 0, 0])},
     1084731038: {"FeatureType": "HalongBay",                "color": np.array([0, 0, 0])},
     1653648472: {"FeatureType": "GiantsCauseway",           "color": np.array([0, 0, 0])},
     2970879537: {"FeatureType": "Moai",                     "color": np.array([0, 0, 0])},
@@ -80,6 +78,12 @@ Features = {  # + goodyhut codes
     2686085371: {"FeatureType": "GolfCourse",               "color": np.array([0, 0, 0])},
     1195876395: {"FeatureType": "RomanFort",                "color": np.array([0, 0, 0])},
     662085235:  {"FeatureType": "Aerodome",                 "color": np.array([0, 0, 0])},
+    520634903:  {"FeatureType": "WindFarm",                 "color": np.array([0, 0, 0])},
+    1058336991: {"FeatureType": "OffshoreWindFarm",         "color": np.array([0, 0, 0])},
+    3808671749: {"FeatureType": "Kurgan",                   "color": np.array([0, 0, 0])},
+    933499311:  {"FeatureType": "MeteorSite",               "color": np.array([0, 0, 0])},
+    2939453696: {"FeatureType": "OilWell",                  "color": np.array([0, 0, 0])},
+    3898338829: {"FeatureType": "OffshoreOilRig",           "color": np.array([0, 0, 0])},
 }
 # Features:
 # No feature: 			    255 255 255 255:	FF FF FF FF
