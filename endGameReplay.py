@@ -145,7 +145,7 @@ def createGif(event):
             destination="endGameReplayMapOptimized.gif",   # or just omit it and will use the first source provided.
             optimize=False,  # Whetever to add the optimize flag of not, optimized with -O3 option
             colors=256,  # Number of colors t use
-            options=["--verbose", "--lossy", "-O3"],  # Options to use.
+            options=["--verbose", "-O3"],  # Options to use. "--lossy"
         )
     print("Gif done!")
 button_gifB.on_clicked(createGif)
