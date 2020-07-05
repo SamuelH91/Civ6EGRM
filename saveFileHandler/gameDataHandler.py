@@ -1,6 +1,8 @@
 from watchdog.utils.dirsnapshot import DirectorySnapshot
 import os
 from saveFileHandler.filehandler import *
+import time
+import multiprocessing as mp
 
 # Terrain types:
 # grassland: 				48 198 231 131:		2213004848     30 C6 E7 83    b'\x30\xC6\xE7\x83'
@@ -58,13 +60,26 @@ Features = {  # + goodyhut codes
     2457279608: {"FeatureType": "Monastery",                "color": np.array([0, 0, 0])},
     3943953367: {"FeatureType": "Reef",                     "color": np.array([0, 0, 0])},
     3583470385: {"FeatureType": "GreatBarrierReef",         "color": np.array([0, 0, 0])},
-    1957694686: {"FeatureType": "CheckThisLater1",          "color": np.array([0, 0, 0])},
-    3808671749: {"FeatureType": "CheckThisLater2",          "color": np.array([0, 0, 0])},
-    933499311:  {"FeatureType": "CheckThisLater3",          "color": np.array([0, 0, 0])},
-    1719494282: {"FeatureType": "CheckThisLater4",          "color": np.array([0, 0, 0])},
-    1694280827: {"FeatureType": "CheckThisLater5",          "color": np.array([0, 0, 0])},
+    1957694686: {"FeatureType": "CahokiaMounds",            "color": np.array([0, 0, 0])},
+    # 3808671749: {"FeatureType": "CheckThisLater2",          "color": np.array([0, 0, 0])},
+    # 933499311:  {"FeatureType": "CheckThisLater3",          "color": np.array([0, 0, 0])},
+    1719494282: {"FeatureType": "Pairidaeza",               "color": np.array([0, 0, 0])},
+    1694280827: {"FeatureType": "Fort",                     "color": np.array([0, 0, 0])},
     2135005470: {"FeatureType": "CheckThisLater6+Buffer20", "color": np.array([0, 0, 0])},
     1084731038: {"FeatureType": "HalongBay",                "color": np.array([0, 0, 0])},
+    1653648472: {"FeatureType": "GiantsCauseway",           "color": np.array([0, 0, 0])},
+    2970879537: {"FeatureType": "Moai",                     "color": np.array([0, 0, 0])},
+    2588244546: {"FeatureType": "Alcazar",                  "color": np.array([0, 0, 0])},
+    2176791945: {"FeatureType": "ColossalHead",             "color": np.array([0, 0, 0])},
+    570930386:  {"FeatureType": "SeasideResort",            "color": np.array([0, 0, 0])},
+    2414989200: {"FeatureType": "GreatWall",                "color": np.array([0, 0, 0])},
+    874973008:  {"FeatureType": "Kampung",                  "color": np.array([0, 0, 0])},
+    1163354216: {"FeatureType": "NazcaLine",                "color": np.array([0, 0, 0])},
+    3108964764: {"FeatureType": "MountainTunnel",           "color": np.array([0, 0, 0])},
+    2127465633: {"FeatureType": "SolarFarm",                "color": np.array([0, 0, 0])},
+    2686085371: {"FeatureType": "GolfCourse",               "color": np.array([0, 0, 0])},
+    1195876395: {"FeatureType": "RomanFort",                "color": np.array([0, 0, 0])},
+    662085235:  {"FeatureType": "Aerodome",                 "color": np.array([0, 0, 0])},
 }
 # Features:
 # No feature: 			    255 255 255 255:	FF FF FF FF
@@ -221,7 +236,16 @@ civColors = np.array([
 [ 73,  58,  45],
 [255, 231, 213]]
 ) / 255
-civColors = np.concatenate((civColors, np.random.rand(20, 3)))
+civColors = np.concatenate((civColors, np.random.rand(213, 3)))
+
+def fileWorker(idx, filePath):
+    f = open(filePath, "rb")
+    data = f.read()
+    f.close()
+    mainDecompressedData = decompress(data)
+    tileData = save_to_map_json(mainDecompressedData)
+    cityData = getCityData(mainDecompressedData)
+    return (idx, tileData, cityData)
 
 class GameDataHandler():
     def __init__(self, dataFolder, fileExt=".Civ6Save"):
@@ -242,16 +266,28 @@ class GameDataHandler():
 
     def parseData(self):
         snapshot = DirectorySnapshot(self.dataFolder, self.recursive)
+        count = 0
+        filePaths = []
         for filePath in sorted(snapshot.paths):
             if self.fileExt == os.path.splitext(filePath)[1]:
-                f = open(filePath, "rb")
-                data = f.read()
-                f.close()
-                mainDecompressedData = decompress(data)
-                self.tileData.append(save_to_map_json(mainDecompressedData))
-                self.cityData.append(getCityData(mainDecompressedData))
+                count += 1
+                filePaths.append(filePath)
+        self.tileData = [None] * count
+        self.cityData = [None] * count
+        t0 = time.time()
+        pool = mp.Pool()
+        for ii, filePath in enumerate(filePaths):
+            pool.apply_async(fileWorker, args=(ii, filePath), callback=self.saveResult)
+        pool.close()
+        pool.join()
+        print("Total time {} s for data parsing from {} files".format(time.time() - t0, count))
+
+    def saveResult(self, result):
+        self.tileData[result[0]] = result[1]
+        self.cityData[result[0]] = result[2]
 
     def calculateOtherStuff(self):
+        t0 = time.time()
         for turnIdx, turn in enumerate(self.tileData):
             goodyHutsAtTurn = []
             count = 0
@@ -270,12 +306,10 @@ class GameDataHandler():
                     print("turnIdx: {}, errorCount: {}, x: {}, y: {}, goodyHut: {}".format(turnIdx, count, tile["x"], tile["y"], GoodyHut))
                     goodyHutsAtTurn.append(np.zeros(4,))
             self.goodyHuts.append(np.copy(goodyHutsAtTurn))
-            # count = 0
-            # for color in goodyHutsAtTurn:
-            #     if color[2] > 0:
-            #         count += 1
+        print("Total time for goody huts / barb camps: {}".format(time.time() - t0))
 
     def calculateEnvColors(self):
+        t0 = time.time()
         if len(self.tileData) != 0:
             turn = self.tileData[0]
             count = 0
@@ -295,8 +329,10 @@ class GameDataHandler():
                     count += 1
                     print("errorCount: {}, x: {}, y: {}, terrainType: {}, featureType: {}".format(count, tile["x"], tile["y"], terrainType, featureType))
                     self.envColors.append(np.zeros(3,))
+        print("Total time for environment colors: {}".format(time.time() - t0))
 
     def calculateRiverColors(self):
+        t0 = time.time()
         if len(self.tileData) != 0:
             turn = self.tileData[0]
             for ii, tile in enumerate(turn["tiles"]):
@@ -311,8 +347,10 @@ class GameDataHandler():
                 else:
                     for jj in range(6):
                         self.riverColors.append(np.zeros(4, ))
+        print("Total time for river colors: {}".format(time.time() - t0))
 
     def calculateBorderColors(self, outsideBordersOnly=False):
+        t0 = time.time()
         self.X, self.Y = self.getMapSize()
         if outsideBordersOnly:
             for ii in range(self.X*self.Y):
@@ -342,20 +380,17 @@ class GameDataHandler():
                         borderColorsAtTurn.append(np.zeros(4, ))
 
             self.borderColors.append(borderColorsAtTurn)
+        print("Total time for border colors: {}".format(time.time() - t0))
 
     def calculateCityColors(self):
-        cityColorsAtTurnEmpty = []
-        for ii in range(self.X*self.Y):
-            cityColorsAtTurnEmpty.append(np.zeros(4, ))
+        t0 = time.time()
+        cityColorsAtTurnEmpty = np.zeros((self.X*self.Y, 4))
         for turn in self.cityData:
             cityColorsAtTurn = cityColorsAtTurnEmpty
             for city in turn["cities"]:
                 cityColorsAtTurn[city["LocationIdx"]] = np.append(self.pColors[city["CivIndex"], :], 0.9)
             self.cityColors.append(np.copy(cityColorsAtTurn))
-            # count = 0
-            # for color in cityColorsAtTurn:
-            #     if color[3] > 0:
-            #         count += 1
+        print("Total time for city colors: {}".format(time.time() - t0))
 
     def getPlayerID(self, tile):
         if tile["OwnershipBuffer"] >= 64:
