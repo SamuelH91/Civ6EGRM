@@ -273,13 +273,14 @@ def save_to_map_json(mainDecompressedData):
     mapstartindex = bin.index(b'\x0E\x00\x00\x00\x0F\x00\x00\x00\x06\x00\x00\x00')
     tiles = readInt32(bin, mapstartindex + 12)
     tileskey = str(tiles)
-    map = {"tiles": [], "mapSize": [MAPSIZEDATA[tileskey]["x"], MAPSIZEDATA[tileskey]["y"]]}
+    tilesmap = {"tiles": [], "mapSize": [MAPSIZEDATA[tileskey]["x"], MAPSIZEDATA[tileskey]["y"]]}
 
     mindex = mapstartindex + 16
 
     for i in range(tiles):
         OwnershipBuffer = readUInt8(bin, mindex + 49)
         TileOverlayNum = readUInt32(bin, mindex + 51)
+        GoodyHut = readUInt32(bin, mindex + 33)
         buflength = 0
 
         if TileOverlayNum == 1:
@@ -288,9 +289,11 @@ def save_to_map_json(mainDecompressedData):
             buflength += 44
         if OwnershipBuffer >= 64:
             buflength += 17
+        if GoodyHut == 2135005470:  # machu pichu or something else related to mountain
+            buflength += 20
 
         # See bin-structure.md for WIP documentation on what each of these values are
-        map["tiles"].append({
+        tilesmap["tiles"].append({
             "x": i % MAPSIZEDATA[tileskey]["x"],
             "y": np.floor(i / MAPSIZEDATA[tileskey]["x"]),
             "hexbin-location": mindex,
@@ -308,7 +311,7 @@ def save_to_map_json(mainDecompressedData):
             "?-2": readUInt8(bin, mindex + 26),
             "Resource": readUInt32(bin, mindex + 27),
             "ResourceBoolean": readUInt16(bin, mindex + 31),
-            "GoodyHut": readUInt32(bin, mindex + 33),
+            "GoodyHut": GoodyHut,
             "?-3": readUInt8(bin, mindex + 37),
             "RoadLevel": readInt8(bin, mindex + 38),
             "?-4": readUInt8(bin, mindex + 39),
@@ -327,7 +330,7 @@ def save_to_map_json(mainDecompressedData):
 
         mindex += 55 + buflength
 
-    return map
+    return tilesmap
 
 def getCityData(mainDecompressedData):
     bin = mainDecompressedData
