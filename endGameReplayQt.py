@@ -8,6 +8,7 @@ from saveFileHandler.gameDataHandler import *
 import io
 from PIL import Image
 from pygifsicle import gifsicle
+import subprocess as sp
 
 # pg.setConfigOptions(antialias=True)
 
@@ -230,6 +231,25 @@ class MainWindow(QtWidgets.QMainWindow):
             options=["--verbose", "-O3"],  # Options to use. "--lossy"
         )
         print("Gif done!")
+
+    # def createMp4(self):
+    #     M = len(self.imageList)
+    #     if M == 0:
+    #         self.createImages()
+    #     M = len(self.imageList)
+    #     print("Please wait patiently saving mp4!")
+    #     command = ['ffmpeg.exe',
+    #                '-y',  # (optional) overwrite output file if it exists
+    #                '-f', 'rawvideo',
+    #                '-vcodec', 'rawvideo',
+    #                '-s', '420x360',  # size of one frame
+    #                '-pix_fmt', 'rgb24',
+    #                '-r', '24',  # frames per second
+    #                '-i', '-',  # The imput comes from a pipe
+    #                '-an',  # Tells FFMPEG not to expect any audio
+    #                '-vcodec', 'mpeg',
+    #                'my_output_videofile.mp4']
+
 
     def createImages(self):
         for ii in range(1, self.TurnCount + 1):
