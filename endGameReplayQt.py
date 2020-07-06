@@ -1,11 +1,13 @@
 from PyQt5 import QtWidgets
-from PyQt5.QtGui import QScreen
 from utils.hexgridQt import *
 from pyqtgraph import PlotWidget, plot
 import pyqtgraph as pg
 import sys  # We need sys so that we can pass argv to QApplication
 import os
 from saveFileHandler.gameDataHandler import *
+import io
+from PIL import Image
+from pygifsicle import gifsicle
 
 # pg.setConfigOptions(antialias=True)
 
@@ -35,7 +37,7 @@ class MapVisualizerWidget(QtWidgets.QWidget):
         self.riversHG.generatePicture()
         self.graphWidget.addItem(self.riversHG)
 
-        self.bordersHG = HexGrid(M, N, 0.9, outerBordersOnly)
+        self.bordersHG = HexGrid(M, N, 0.85, outerBordersOnly)
         self.bordersHG.set_ec_colors(borderColors)
         self.bordersHG.generatePicture()
         self.graphWidget.addItem(self.bordersHG)
@@ -90,7 +92,7 @@ class ButtonsWidget(QtWidgets.QWidget):
 
         button_toggle = QtWidgets.QPushButton('Toggle borders', self)
         button_layout.addWidget(button_toggle)
-        # button_toggle.clicked.connect(self.parent.plot_widget.button_pressed)
+        button_toggle.clicked.connect(self.parent.toggleBorders)
 
         button_play = QtWidgets.QPushButton('Play', self)
         button_layout.addWidget(button_play)
@@ -120,6 +122,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.timerCount = 0
         self.timerCurrentCount = 0
         self.imageList = []
+        self.hidden = False
 
         # Options
         self.OptimizeGif = True
@@ -180,21 +183,6 @@ class MainWindow(QtWidgets.QMainWindow):
         t1 = time.time()
         print("City update took {} s".format(t1 - t0))
 
-    # def start_timer(self, func, count=1, interval=1000):
-    #     counter = 0
-    #
-    #     def handler():
-    #         nonlocal counter
-    #         counter += 1
-    #         func()
-    #         if counter >= count:
-    #             timer.stop()
-    #             timer.deleteLater()
-    #
-    #     timer = QtCore.QTimer()
-    #     timer.timeout.connect(handler)
-    #     timer.start(interval)
-
     def start_timer(self, count=1, interval=1000):
         if self.current_timer:
             self.current_timer.stop()
@@ -213,28 +201,46 @@ class MainWindow(QtWidgets.QMainWindow):
             self.current_timer.stop()
             self.current_timer = None
 
+    def toggleBorders(self):
+        self.currentIdx = self.slider_widget.turnSlider.sliderPosition()
+        if self.hidden:
+            self.plot_widget.bordersHG.set_ec_colors(self.gdh.borderColors[self.currentIdx - 1])
+            self.hidden = False
+        else:
+            self.plot_widget.bordersHG.set_ec_colors([emptyPen] * len(self.gdh.borderColors[self.currentIdx - 1]))
+            self.hidden = True
+
     def play(self):
         self.pause = False
         self.currentIdx = self.slider_widget.turnSlider.sliderPosition()
         self.start_timer(self.TurnCount-self.currentIdx+1, 100)
 
     def createGif(self):
-        if len(self.imageList) > 0:
-            pass
-        else:
+        M = len(self.imageList)
+        if M == 0:
             self.createImages()
+        M = len(self.imageList)
+        print("Please wait patiently saving and optimising gif!")
+        self.imageList[0].save('endGameReplayMapQt.gif', save_all=True, append_images=self.imageList[1:], optimize=False, duration=M, loop=0)
+        gifsicle(
+            sources=["endGameReplayMapQt.gif"],  # or a single_file.gif
+            destination="endGameReplayMapQt.gif",   # or just omit it and will use the first source provided.
+            optimize=False,  # Whetever to add the optimize flag of not, optimized with -O3 option
+            colors=256,  # Number of colors t use
+            options=["--verbose", "-O3"],  # Options to use. "--lossy"
+        )
+        print("Gif done!")
 
     def createImages(self):
-        targetDir = os.getcwd() + "/data/temp/"
-        if not os.path.exists(targetDir):
-            os.makedirs(targetDir)
         for ii in range(1, self.TurnCount + 1):
             self.slider_widget.turnSlider.setValue(ii)
             self._main.update()
-            tempfile = targetDir + "temp_" + str(ii).zfill(5) + ".png"
-            self.imageList.append(tempfile)
+            QtWidgets.QApplication.processEvents()
             screenshot = self._main.grab()
-            screenshot.save(tempfile, "png")
+            buffer = QtCore.QBuffer()
+            buffer.open(QtCore.QBuffer.ReadWrite)
+            screenshot.save(buffer, "png")
+            self.imageList.append(Image.open(io.BytesIO(buffer.data())))
 
     def setPause(self):
         self.pause = True
