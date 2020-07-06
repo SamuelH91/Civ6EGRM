@@ -1,7 +1,7 @@
 # Civ6EGRM
 Civilization 6 End Game Replay Map
 
-![](endGameReplayMap.gif)
+![](endGameReplayMapQt.gif)
 
 ## Main features
 - fileCopier.py which copies automatically all autosaves (Single/Multi) (not necessary if you have some other method to collect your save files)
@@ -25,7 +25,7 @@ Civilization 6 End Game Replay Map
 - Python 3.8.3
 
 ## Dependencies
-- matplotlib
+- PyQt5 (previous version used matplotlib)
 - numpy
 - zlib
 - struct
