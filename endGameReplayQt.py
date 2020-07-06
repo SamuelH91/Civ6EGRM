@@ -31,13 +31,11 @@ class MapVisualizerWidget(QtWidgets.QWidget):
 
         self.riversHG = HexGrid(M, N, 1.0, True)
         self.riversHG.set_ec_colors(riverColors)
-        self.riversHG.set_lw(4)
         self.riversHG.generatePicture()
         self.graphWidget.addItem(self.riversHG)
 
         self.bordersHG = HexGrid(M, N, 0.9, outerBordersOnly)
         self.bordersHG.set_ec_colors(borderColors)
-        self.bordersHG.set_lw(3)
         self.bordersHG.generatePicture()
         self.graphWidget.addItem(self.bordersHG)
 
@@ -53,40 +51,6 @@ class MapVisualizerWidget(QtWidgets.QWidget):
         self.goodyHutHG.generatePicture()
         self.graphWidget.addItem(self.goodyHutHG)
 
-        # dynamic_canvas = FigureCanvas(Figure(figsize=(10, 10)))
-        # layout.addWidget(dynamic_canvas)
-        #
-        # self._dynamic_ax = dynamic_canvas.figure.subplots()
-        # dynamic_canvas.figure.canvas.mpl_connect('button_press_event', onclick)
-        # self._dynamic_ax.grid()
-        # self._timer = dynamic_canvas.new_timer(
-        #     100, [(self._update_window, (), {})])
-        # self._timer.start()
-
-    # def button_pressed(self):
-    #     if self.sender().text() == 'Stop':
-    #         self._timer.stop()
-    #     if self.sender().text() == 'Start':
-    #         self._timer.start()
-    #
-    # def _update_window(self):
-    #     self._dynamic_ax.clear()
-    #     global x, y1, y2, y3, N, count_iter, last_number_clicks
-    #     x.append(x[count_iter] + 0.01)
-    #     y1.append(np.random.random())
-    #     idx_inf = max([count_iter-N, 0])
-    #     if last_number_clicks < len(clicks):
-    #         for new_click in clicks[last_number_clicks:(len(clicks))]:
-    #             rowPosition = self.parent.table_widget.table_clicks.rowCount()
-    #             self.parent.table_widget.table_clicks.insertRow(rowPosition)
-    #             self.parent.table_widget.table_clicks.setItem(rowPosition,0, QtWidgets.QTableWidgetItem(str(new_click)))
-    #             self.parent.table_widget.table_clicks.setItem(rowPosition,1, QtWidgets.QTableWidgetItem("Descripcion"))
-    #         last_number_clicks = len(clicks)
-    #     self._dynamic_ax.plot(x[idx_inf:count_iter], y1[idx_inf:count_iter],'-o', color='b')
-    #     count_iter += 1
-    #     self._dynamic_ax.figure.canvas.draw()
-
-
 class TurnWidget(QtWidgets.QWidget):
     def __init__(self, parent, turnCount, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -98,19 +62,19 @@ class TurnWidget(QtWidgets.QWidget):
         layout.addWidget(slider_widget)
         slider_layout = QtWidgets.QHBoxLayout(slider_widget)
 
-        turnSlider = QtWidgets.QSlider(QtCore.Qt.Horizontal, self)
-        turnSlider.setMinimum(1)
-        turnSlider.setMaximum(turnCount)
-        turnSlider.setValue(1)
-        turnSlider.setTickPosition(QtWidgets.QSlider.TicksBelow)
-        turnSlider.setTickInterval(1)
-        slider_layout.addWidget(turnSlider)
-        turnSlider.valueChanged.connect(self.parent.updateTurn)
+        self.turnSlider = QtWidgets.QSlider(QtCore.Qt.Horizontal, self)
+        self.turnSlider.setMinimum(1)
+        self.turnSlider.setMaximum(turnCount)
+        self.turnSlider.setValue(1)
+        self.turnSlider.setTickPosition(QtWidgets.QSlider.TicksBelow)
+        self.turnSlider.setTickInterval(1)
+        slider_layout.addWidget(self.turnSlider)
+        self.turnSlider.valueChanged.connect(self.parent.updateTurn)
 
         slider_value = QtWidgets.QLabel(self)
         slider_layout.addWidget(slider_value)
         slider_value.setNum(1)
-        turnSlider.valueChanged.connect(slider_value.setNum)
+        self.turnSlider.valueChanged.connect(slider_value.setNum)
 
 
 class ButtonsWidget(QtWidgets.QWidget):
@@ -129,11 +93,11 @@ class ButtonsWidget(QtWidgets.QWidget):
 
         button_play = QtWidgets.QPushButton('Play', self)
         button_layout.addWidget(button_play)
-        # button_play.clicked.connect(self.parent.plot_widget.button_pressed)
+        button_play.clicked.connect(self.parent.play)
 
         button_pause = QtWidgets.QPushButton('Pause', self)
         button_layout.addWidget(button_pause)
-        # button_pause.clicked.connect(self.parent.plot_widget.button_pressed)
+        button_pause.clicked.connect(self.parent.setPause)
 
         button_gif = QtWidgets.QPushButton('Create gif', self)
         button_layout.addWidget(button_gif)
@@ -145,9 +109,15 @@ class ButtonsWidget(QtWidgets.QWidget):
 
 class MainWindow(QtWidgets.QMainWindow):
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, app, *args, **kwargs):
         super(MainWindow, self).__init__(*args, **kwargs)
         self.setWindowTitle("Civ VI End Game Replay Map")
+        self.app = app
+        self.pause = False
+        self.currentIdx = 0
+        self.current_timer = None
+        self.timerCount = 0
+        self.timerCurrentCount = 0
 
         # Options
         self.OptimizeGif = True
@@ -160,7 +130,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.gdh.parseData()
 
         # Calculate border colors
-        self.gdh.calculateBorderColors(self.outerBordersOnly)
+        self.gdh.calculateBorderColors(3, self.outerBordersOnly)
         self.gdh.calculateCityColors()
 
         # Calculate environment colors
@@ -185,8 +155,8 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.plot_widget = \
             MapVisualizerWidget(self, self.M, self.N, self.gdh.envColors, self.gdh.riverColors,
-                                self.outerBordersOnly, self.gdh.borderColors[1],
-                                self.gdh.cityColors[1], self.gdh.goodyHuts[1])
+                                self.outerBordersOnly, self.gdh.borderColors[0],
+                                self.gdh.cityColors[0], self.gdh.goodyHuts[0])
         main_layout.addWidget(self.plot_widget)
 
         self.slider_widget = TurnWidget(self, self.TurnCount)
@@ -197,29 +167,65 @@ class MainWindow(QtWidgets.QMainWindow):
     def updateTurn(self, turn):
         t0 = time.time()
         self.plot_widget.bordersHG.set_ec_colors(self.gdh.borderColors[turn - 1])
-        self.plot_widget.bordersHG.generatePicture()
-        self.plot_widget.update()
         t1 = time.time()
         print("Border update took {} s".format(t1 - t0))
-        # t0 = t1
-        # hg_goodyHut.set_fc_colors(gdh.goodyHuts[sTurn.val - 1])
-        # t1 = time.time()
-        # print("GoodyHut update took {} s".format(t1 - t0))
-        # t0 = t1
-        # hg_cities.set_fc_colors(gdh.cityColors[sTurn.val - 1])
-        # t1 = time.time()
-        # print("City update took {} s".format(t1 - t0))
-        # t0 = t1
-        # # fig.canvas.draw()
-        # fig.canvas.flush_events()
-        # t1 = time.time()
-        # print("Draw update took {} s".format(t1 - t0))
+        t0 = t1
+        self.plot_widget.goodyHutHG.set_fc_colors(self.gdh.goodyHuts[turn - 1])
+        t1 = time.time()
+        print("GoodyHut update took {} s".format(t1 - t0))
+        t0 = t1
+        self.plot_widget.citiesHG.set_fc_colors(self.gdh.cityColors[turn - 1])
+        t1 = time.time()
+        print("City update took {} s".format(t1 - t0))
 
+    # def start_timer(self, func, count=1, interval=1000):
+    #     counter = 0
+    #
+    #     def handler():
+    #         nonlocal counter
+    #         counter += 1
+    #         func()
+    #         if counter >= count:
+    #             timer.stop()
+    #             timer.deleteLater()
+    #
+    #     timer = QtCore.QTimer()
+    #     timer.timeout.connect(handler)
+    #     timer.start(interval)
+
+    def start_timer(self, count=1, interval=1000):
+        if self.current_timer:
+            self.current_timer.stop()
+            self.current_timer = None
+        self.timerCount = count
+        self.timerCurrentCount = 0
+        self.current_timer = QtCore.QTimer()
+        self.current_timer.timeout.connect(self.handler)
+        self.current_timer.start(interval)
+
+    def handler(self):
+        self.timerCurrentCount += 1
+        self.updateSlider(self.currentIdx)
+        self.currentIdx += 1
+        if self.timerCurrentCount >= self.timerCount or self.pause:
+            self.current_timer.stop()
+            self.current_timer = None
+
+    def play(self):
+        self.pause = False
+        self.currentIdx = self.slider_widget.turnSlider.sliderPosition()
+        self.start_timer(self.TurnCount-self.currentIdx+1, 100)
+
+    def setPause(self):
+        self.pause = True
+
+    def updateSlider(self, idx):
+        self.slider_widget.turnSlider.setValue(idx)
 
 
 def main():
     app = QtWidgets.QApplication(sys.argv)
-    main = MainWindow()
+    main = MainWindow(app)
     main.show()
     sys.exit(app.exec_())
 

@@ -3,6 +3,8 @@ import os
 from saveFileHandler.filehandler import *
 import time
 import multiprocessing as mp
+import pyqtgraph as pg
+import copy
 
 # Terrain types:
 # grassland: 				48 198 231 131:		2213004848     30 C6 E7 83    b'\x30\xC6\xE7\x83'
@@ -24,66 +26,66 @@ import multiprocessing as mp
 # Coast: 					17 122 112 74:		1248885265     11 7A 70 4A    b'\x11\x7A\x70\x4A'
 
 Terrains = {
-    2213004848: {"TerrainType": "grassland",                "color": np.array([103, 125, 48])},
-    1855786096: {"TerrainType": "grassland (hills)",        "color": np.array([103, 125, 48])},
-    1602466867: {"TerrainType": "grassland (mountains)",    "color": np.array([132, 133, 134])},
-    4226188894: {"TerrainType": "plains",                   "color": np.array([159, 159, 53])},
-    3872285854: {"TerrainType": "plains (hills)",           "color": np.array([159, 159, 53])},
-    2746853616: {"TerrainType": "plains (mountains)",       "color": np.array([132, 133, 134])},
-    3852995116: {"TerrainType": "desert",                   "color": np.array([236, 196, 111])},
-    3108058291: {"TerrainType": "desert (hills)",           "color": np.array([236, 196, 111])},
-    1418772217: {"TerrainType": "desert (mountains)",       "color": np.array([132, 133, 134])},
-    1223859883: {"TerrainType": "tundra",                   "color": np.array([171, 170, 139])},
-    3949113590: {"TerrainType": "tundra (hills)",           "color": np.array([171, 170, 139])},
-    3746160061: {"TerrainType": "tundra (mountains)",       "color": np.array([132, 133, 134])},
-    1743422479: {"TerrainType": "snow",                     "color": np.array([204, 223, 243])},
-    3842183808: {"TerrainType": "snow (hills)",             "color": np.array([204, 223, 243])},
-    699483892:  {"TerrainType": "snow (mountains)",         "color": np.array([132, 133, 134])},
-    1204357597: {"TerrainType": "Ocean",                    "color": np.array([45, 49, 86])},
-    1248885265: {"TerrainType": "Coast",                    "color": np.array([45, 89, 120])},
+    2213004848: {"TerrainType": "grassland",                "color": pg.mkBrush(pg.mkColor(np.array([103, 125, 48])))},
+    1855786096: {"TerrainType": "grassland (hills)",        "color": pg.mkBrush(pg.mkColor(np.array([103, 125, 48])))},
+    1602466867: {"TerrainType": "grassland (mountains)",    "color": pg.mkBrush(pg.mkColor(np.array([132, 133, 134])))},
+    4226188894: {"TerrainType": "plains",                   "color": pg.mkBrush(pg.mkColor(np.array([159, 159, 53])))},
+    3872285854: {"TerrainType": "plains (hills)",           "color": pg.mkBrush(pg.mkColor(np.array([159, 159, 53])))},
+    2746853616: {"TerrainType": "plains (mountains)",       "color": pg.mkBrush(pg.mkColor(np.array([132, 133, 134])))},
+    3852995116: {"TerrainType": "desert",                   "color": pg.mkBrush(pg.mkColor(np.array([236, 196, 111])))},
+    3108058291: {"TerrainType": "desert (hills)",           "color": pg.mkBrush(pg.mkColor(np.array([236, 196, 111])))},
+    1418772217: {"TerrainType": "desert (mountains)",       "color": pg.mkBrush(pg.mkColor(np.array([132, 133, 134])))},
+    1223859883: {"TerrainType": "tundra",                   "color": pg.mkBrush(pg.mkColor(np.array([171, 170, 139])))},
+    3949113590: {"TerrainType": "tundra (hills)",           "color": pg.mkBrush(pg.mkColor(np.array([171, 170, 139])))},
+    3746160061: {"TerrainType": "tundra (mountains)",       "color": pg.mkBrush(pg.mkColor(np.array([132, 133, 134])))},
+    1743422479: {"TerrainType": "snow",                     "color": pg.mkBrush(pg.mkColor(np.array([204, 223, 243])))},
+    3842183808: {"TerrainType": "snow (hills)",             "color": pg.mkBrush(pg.mkColor(np.array([204, 223, 243])))},
+    699483892:  {"TerrainType": "snow (mountains)",         "color": pg.mkBrush(pg.mkColor(np.array([132, 133, 134])))},
+    1204357597: {"TerrainType": "Ocean",                    "color": pg.mkBrush(pg.mkColor(np.array([45, 49, 86])))},
+    1248885265: {"TerrainType": "Coast",                    "color": pg.mkBrush(pg.mkColor(np.array([45, 89, 120])))},
 }
 
 Features = {  # + goodyhut codes
-    4294967295: {"FeatureType": "NoFeature",                "color": np.array([0, 0, 0])},
-    1542194068: {"FeatureType": "Ice",                      "color": np.array([171, 188, 219])},
-    226585075:  {"FeatureType": "Galapagos",                "color": np.array([243, 212, 1])},
-    1434118760: {"FeatureType": "GoodyHut",                 "color": np.array([241, 209, 100])},
-    3727362748: {"FeatureType": "BarbCamp",                 "color": np.array([183, 20, 20])},
-    1523996587: {"FeatureType": "Plantation",               "color": np.array([0, 0, 0])},
-    168372657:  {"FeatureType": "Farm",                     "color": np.array([0, 0, 0])},
-    2475408324: {"FeatureType": "Camp",                     "color": np.array([0, 0, 0])},
-    2048582848: {"FeatureType": "LumberMill",               "color": np.array([0, 0, 0])},
-    1001859687: {"FeatureType": "Mine",                     "color": np.array([0, 0, 0])},
-    4214473799: {"FeatureType": "Quarry",                   "color": np.array([0, 0, 0])},
-    154488225:  {"FeatureType": "Pasture",                  "color": np.array([0, 0, 0])},
-    578093457:  {"FeatureType": "FishingBoats",             "color": np.array([0, 0, 0])},
-    2457279608: {"FeatureType": "Monastery",                "color": np.array([0, 0, 0])},
-    3943953367: {"FeatureType": "Reef",                     "color": np.array([0, 0, 0])},
-    3583470385: {"FeatureType": "GreatBarrierReef",         "color": np.array([0, 0, 0])},
-    1957694686: {"FeatureType": "CahokiaMounds",            "color": np.array([0, 0, 0])},
-    1719494282: {"FeatureType": "Pairidaeza",               "color": np.array([0, 0, 0])},
-    1694280827: {"FeatureType": "Fort",                     "color": np.array([0, 0, 0])},
-    2135005470: {"FeatureType": "SkiResort",                "color": np.array([0, 0, 0])},
-    1084731038: {"FeatureType": "HalongBay",                "color": np.array([0, 0, 0])},
-    1653648472: {"FeatureType": "GiantsCauseway",           "color": np.array([0, 0, 0])},
-    2970879537: {"FeatureType": "Moai",                     "color": np.array([0, 0, 0])},
-    2588244546: {"FeatureType": "Alcazar",                  "color": np.array([0, 0, 0])},
-    2176791945: {"FeatureType": "ColossalHead",             "color": np.array([0, 0, 0])},
-    570930386:  {"FeatureType": "SeasideResort",            "color": np.array([0, 0, 0])},
-    2414989200: {"FeatureType": "GreatWall",                "color": np.array([0, 0, 0])},
-    874973008:  {"FeatureType": "Kampung",                  "color": np.array([0, 0, 0])},
-    1163354216: {"FeatureType": "NazcaLine",                "color": np.array([0, 0, 0])},
-    3108964764: {"FeatureType": "MountainTunnel",           "color": np.array([0, 0, 0])},
-    2127465633: {"FeatureType": "SolarFarm",                "color": np.array([0, 0, 0])},
-    2686085371: {"FeatureType": "GolfCourse",               "color": np.array([0, 0, 0])},
-    1195876395: {"FeatureType": "RomanFort",                "color": np.array([0, 0, 0])},
-    662085235:  {"FeatureType": "Aerodome",                 "color": np.array([0, 0, 0])},
-    520634903:  {"FeatureType": "WindFarm",                 "color": np.array([0, 0, 0])},
-    1058336991: {"FeatureType": "OffshoreWindFarm",         "color": np.array([0, 0, 0])},
-    3808671749: {"FeatureType": "Kurgan",                   "color": np.array([0, 0, 0])},
-    933499311:  {"FeatureType": "MeteorSite",               "color": np.array([0, 0, 0])},
-    2939453696: {"FeatureType": "OilWell",                  "color": np.array([0, 0, 0])},
-    3898338829: {"FeatureType": "OffshoreOilRig",           "color": np.array([0, 0, 0])},
+    4294967295: {"FeatureType": "NoFeature",                "color": pg.mkBrush(pg.mkColor(np.array([0, 0, 0])))},
+    1542194068: {"FeatureType": "Ice",                      "color": pg.mkBrush(pg.mkColor(np.array([171, 188, 219])))},
+    226585075:  {"FeatureType": "Galapagos",                "color": pg.mkBrush(pg.mkColor(np.array([243, 212, 1])))},
+    1434118760: {"FeatureType": "GoodyHut",                 "color": pg.mkBrush(pg.mkColor(np.array([241, 209, 100])))},
+    3727362748: {"FeatureType": "BarbCamp",                 "color": pg.mkBrush(pg.mkColor(np.array([183, 20, 20])))},
+    1523996587: {"FeatureType": "Plantation",               "color": pg.mkBrush(pg.mkColor(np.array([0, 0, 0])))},
+    168372657:  {"FeatureType": "Farm",                     "color": pg.mkBrush(pg.mkColor(np.array([0, 0, 0])))},
+    2475408324: {"FeatureType": "Camp",                     "color": pg.mkBrush(pg.mkColor(np.array([0, 0, 0])))},
+    2048582848: {"FeatureType": "LumberMill",               "color": pg.mkBrush(pg.mkColor(np.array([0, 0, 0])))},
+    1001859687: {"FeatureType": "Mine",                     "color": pg.mkBrush(pg.mkColor(np.array([0, 0, 0])))},
+    4214473799: {"FeatureType": "Quarry",                   "color": pg.mkBrush(pg.mkColor(np.array([0, 0, 0])))},
+    154488225:  {"FeatureType": "Pasture",                  "color": pg.mkBrush(pg.mkColor(np.array([0, 0, 0])))},
+    578093457:  {"FeatureType": "FishingBoats",             "color": pg.mkBrush(pg.mkColor(np.array([0, 0, 0])))},
+    2457279608: {"FeatureType": "Monastery",                "color": pg.mkBrush(pg.mkColor(np.array([0, 0, 0])))},
+    3943953367: {"FeatureType": "Reef",                     "color": pg.mkBrush(pg.mkColor(np.array([0, 0, 0])))},
+    3583470385: {"FeatureType": "GreatBarrierReef",         "color": pg.mkBrush(pg.mkColor(np.array([0, 0, 0])))},
+    1957694686: {"FeatureType": "CahokiaMounds",            "color": pg.mkBrush(pg.mkColor(np.array([0, 0, 0])))},
+    1719494282: {"FeatureType": "Pairidaeza",               "color": pg.mkBrush(pg.mkColor(np.array([0, 0, 0])))},
+    1694280827: {"FeatureType": "Fort",                     "color": pg.mkBrush(pg.mkColor(np.array([0, 0, 0])))},
+    2135005470: {"FeatureType": "SkiResort",                "color": pg.mkBrush(pg.mkColor(np.array([0, 0, 0])))},
+    1084731038: {"FeatureType": "HalongBay",                "color": pg.mkBrush(pg.mkColor(np.array([0, 0, 0])))},
+    1653648472: {"FeatureType": "GiantsCauseway",           "color": pg.mkBrush(pg.mkColor(np.array([0, 0, 0])))},
+    2970879537: {"FeatureType": "Moai",                     "color": pg.mkBrush(pg.mkColor(np.array([0, 0, 0])))},
+    2588244546: {"FeatureType": "Alcazar",                  "color": pg.mkBrush(pg.mkColor(np.array([0, 0, 0])))},
+    2176791945: {"FeatureType": "ColossalHead",             "color": pg.mkBrush(pg.mkColor(np.array([0, 0, 0])))},
+    570930386:  {"FeatureType": "SeasideResort",            "color": pg.mkBrush(pg.mkColor(np.array([0, 0, 0])))},
+    2414989200: {"FeatureType": "GreatWall",                "color": pg.mkBrush(pg.mkColor(np.array([0, 0, 0])))},
+    874973008:  {"FeatureType": "Kampung",                  "color": pg.mkBrush(pg.mkColor(np.array([0, 0, 0])))},
+    1163354216: {"FeatureType": "NazcaLine",                "color": pg.mkBrush(pg.mkColor(np.array([0, 0, 0])))},
+    3108964764: {"FeatureType": "MountainTunnel",           "color": pg.mkBrush(pg.mkColor(np.array([0, 0, 0])))},
+    2127465633: {"FeatureType": "SolarFarm",                "color": pg.mkBrush(pg.mkColor(np.array([0, 0, 0])))},
+    2686085371: {"FeatureType": "GolfCourse",               "color": pg.mkBrush(pg.mkColor(np.array([0, 0, 0])))},
+    1195876395: {"FeatureType": "RomanFort",                "color": pg.mkBrush(pg.mkColor(np.array([0, 0, 0])))},
+    662085235:  {"FeatureType": "Aerodome",                 "color": pg.mkBrush(pg.mkColor(np.array([0, 0, 0])))},
+    520634903:  {"FeatureType": "WindFarm",                 "color": pg.mkBrush(pg.mkColor(np.array([0, 0, 0])))},
+    1058336991: {"FeatureType": "OffshoreWindFarm",         "color": pg.mkBrush(pg.mkColor(np.array([0, 0, 0])))},
+    3808671749: {"FeatureType": "Kurgan",                   "color": pg.mkBrush(pg.mkColor(np.array([0, 0, 0])))},
+    933499311:  {"FeatureType": "MeteorSite",               "color": pg.mkBrush(pg.mkColor(np.array([0, 0, 0])))},
+    2939453696: {"FeatureType": "OilWell",                  "color": pg.mkBrush(pg.mkColor(np.array([0, 0, 0])))},
+    3898338829: {"FeatureType": "OffshoreOilRig",           "color": pg.mkBrush(pg.mkColor(np.array([0, 0, 0])))},
 }
 # Features:
 # No feature: 			    255 255 255 255:	FF FF FF FF
@@ -242,6 +244,18 @@ civColors = np.array([
 )
 civColors = np.concatenate((civColors, np.random.rand(213, 3) * 255))
 
+civColorsPen = []
+civColorsBrush = []
+for color in civColors:
+    qcolor = pg.mkColor(color)
+    civColorsPen.append(pg.mkPen(qcolor, width=3))
+    civColorsBrush.append(pg.mkBrush(qcolor))
+
+riverPen = pg.mkPen(pg.mkColor(np.array((45, 89, 120, 255))), width=4)
+
+emptyBrush = pg.mkBrush(pg.mkColor(np.zeros(4, )))
+emptyPen = pg.mkPen(pg.mkColor(np.zeros(4, )))
+
 def fileWorker(idx, filePath):
     f = open(filePath, "rb")
     data = f.read()
@@ -304,12 +318,12 @@ class GameDataHandler():
                             Features[GoodyHut]["FeatureType"] == "BarbCamp":
                         goodyHutsAtTurn.append(Features[GoodyHut]["color"])
                     else:
-                        goodyHutsAtTurn.append(np.zeros(4, ))
+                        goodyHutsAtTurn.append(emptyBrush)
                 except:
                     count += 1
                     print("turnIdx: {}, errorCount: {}, x: {}, y: {}, goodyHut: {}".format(turnIdx, count, tile["x"], tile["y"], GoodyHut))
-                    goodyHutsAtTurn.append(np.zeros(4,))
-            self.goodyHuts.append(np.copy(goodyHutsAtTurn))
+                    goodyHutsAtTurn.append(emptyBrush)
+            self.goodyHuts.append(copy.copy(goodyHutsAtTurn))
         print("Total time for goody huts / barb camps: {}".format(time.time() - t0))
 
     def calculateEnvColors(self):
@@ -332,10 +346,10 @@ class GameDataHandler():
                 except:
                     count += 1
                     print("errorCount: {}, x: {}, y: {}, terrainType: {}, featureType: {}".format(count, tile["x"], tile["y"], terrainType, featureType))
-                    self.envColors.append(np.zeros(3,))
+                    self.envColors.append(pg.mkBrush(pg.mkColor(np.zeros(3,))))
         print("Total time for environment colors: {}".format(time.time() - t0))
 
-    def calculateRiverColors(self):
+    def calculateRiverColors(self, lw=4):
         t0 = time.time()
         if len(self.tileData) != 0:
             turn = self.tileData[0]
@@ -345,15 +359,15 @@ class GameDataHandler():
                     RiverBitMap = tile["RiverBitMap"]
                     for ii in range(6):
                         if RiverBitMap >> ii & 1:
-                            self.riverColors.append(np.array((45, 89, 120, 255)))
+                            self.riverColors.append(riverPen)
                         else:
-                            self.riverColors.append(np.zeros(4, ))
+                            self.riverColors.append(emptyPen)
                 else:
                     for jj in range(6):
-                        self.riverColors.append(np.zeros(4, ))
+                        self.riverColors.append(emptyPen)
         print("Total time for river colors: {}".format(time.time() - t0))
 
-    def calculateBorderColors(self, outsideBordersOnly=False):
+    def calculateBorderColors(self, lw=3, outsideBordersOnly=False):
         t0 = time.time()
         self.X, self.Y = self.getMapSize()
         if outsideBordersOnly:
@@ -369,31 +383,30 @@ class GameDataHandler():
                             if neighbour < self.X*self.Y:
                                 neighbourID = self.getPlayerID(turn["tiles"][neighbour])
                                 if neighbourID == playerID:
-                                    borderColorsAtTurn.append(np.zeros(4, ))
+                                    borderColorsAtTurn.append(emptyPen)
                                 else:
-                                    borderColorsAtTurn.append(np.append(self.pColors[playerID, :], 255))
+                                    borderColorsAtTurn.append(civColorsPen[playerID])
                             else:
-                                borderColorsAtTurn.append(np.append(self.pColors[playerID, :], 255))
+                                borderColorsAtTurn.append(civColorsPen[playerID])
                     else:
-                        borderColorsAtTurn.append(np.append(self.pColors[playerID, :], 255))
+                        borderColorsAtTurn.append(civColorsBrush[playerID])
                 else:
                     if outsideBordersOnly:
                         for jj in range(6):
-                            borderColorsAtTurn.append(np.zeros(4, ))
+                            borderColorsAtTurn.append(emptyPen)
                     else:
-                        borderColorsAtTurn.append(np.zeros(4, ))
-
+                        borderColorsAtTurn.append(emptyBrush)
             self.borderColors.append(borderColorsAtTurn)
         print("Total time for border colors: {}".format(time.time() - t0))
 
     def calculateCityColors(self):
         t0 = time.time()
-        cityColorsAtTurnEmpty = np.zeros((self.X*self.Y, 4))
+        cityColorsAtTurnEmpty = [emptyBrush] * self.X*self.Y
         for turn in self.cityData:
             cityColorsAtTurn = cityColorsAtTurnEmpty
             for city in turn["cities"]:
-                cityColorsAtTurn[city["LocationIdx"]] = np.append(self.pColors[city["CivIndex"], :], 255)
-            self.cityColors.append(np.copy(cityColorsAtTurn))
+                cityColorsAtTurn[city["LocationIdx"]] = civColorsBrush[city["CivIndex"]]
+            self.cityColors.append(copy.copy(cityColorsAtTurn))
         print("Total time for city colors: {}".format(time.time() - t0))
 
     def getPlayerID(self, tile):

@@ -12,7 +12,7 @@ X1 = 0.0
 X2 = 0.5
 
 
-class HexGrid(pg.GraphicsObject):
+class HexGrid(pg.GraphicsObject):  # pg.GraphicsItem
     def __init__(self, x, y, scale=1.0, outsideBordersOnly=False, parent=None):
         super().__init__(parent)
         # self.figure = figure , figure
@@ -39,8 +39,6 @@ class HexGrid(pg.GraphicsObject):
                 xy = hexagon.get_xy()
                 for jj in range(6):
                     self.lines.append(QtCore.QLineF(xy[jj, 0], xy[jj, 1], xy[(jj + 1) % 6, 0], xy[(jj + 1) % 6, 1]))
-                    #self.lines_list[ii*6+jj, :, :] = np.array([xy[jj, :], xy[(jj + 1) % 6, :]])
-        # self.generatePicture()
 
     def generatePicture(self):
         # pre-computing a QPicture object allows paint() to run much more quickly,
@@ -48,7 +46,7 @@ class HexGrid(pg.GraphicsObject):
         p = QtGui.QPainter(self.picture)
         if self.outsideBordersOnly:
             for ii, line in enumerate(self.lines):
-                p.setPen(pg.mkPen(pg.mkColor(self.ec_colors[ii]), width=self.lw))
+                p.setPen(self.ec_colors[ii])
                 p.drawLine(line)
         else:
             if self.edgesVisible:
@@ -56,9 +54,10 @@ class HexGrid(pg.GraphicsObject):
             else:
                 p.setPen(pg.mkPen(None))
             for ii, hexagon in enumerate(self.hexagons):
-                p.setBrush(pg.mkBrush(pg.mkColor(self.fc_colors[ii])))  # None
+                p.setBrush(self.fc_colors[ii])  # None
                 p.drawPolygon(hexagon)
         p.end()
+        self.update()
 
     def paint(self, p, *args):
         p.drawPicture(0, 0, self.picture)
@@ -71,9 +70,7 @@ class HexGrid(pg.GraphicsObject):
 
     def set_fc_colors(self, fcColors):
         self.fc_colors = fcColors
-
-    def set_fill(self, fill):
-        pass
+        self.generatePicture()
 
     def set_edges_visible(self, visible):
         self.edgesVisible = visible
@@ -83,4 +80,4 @@ class HexGrid(pg.GraphicsObject):
 
     def set_ec_colors(self, ecColors):
         self.ec_colors = ecColors
-
+        self.generatePicture()
