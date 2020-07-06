@@ -24,31 +24,31 @@ import multiprocessing as mp
 # Coast: 					17 122 112 74:		1248885265     11 7A 70 4A    b'\x11\x7A\x70\x4A'
 
 Terrains = {
-    2213004848: {"TerrainType": "grassland",                "color": np.array([103, 125, 48]) / 255},
-    1855786096: {"TerrainType": "grassland (hills)",        "color": np.array([103, 125, 48]) / 255},
-    1602466867: {"TerrainType": "grassland (mountains)",    "color": np.array([132, 133, 134]) / 255},
-    4226188894: {"TerrainType": "plains",                   "color": np.array([159, 159, 53]) / 255},
-    3872285854: {"TerrainType": "plains (hills)",           "color": np.array([159, 159, 53]) / 255},
-    2746853616: {"TerrainType": "plains (mountains)",       "color": np.array([132, 133, 134]) / 255},
-    3852995116: {"TerrainType": "desert",                   "color": np.array([236, 196, 111]) / 255},
-    3108058291: {"TerrainType": "desert (hills)",           "color": np.array([236, 196, 111]) / 255},
-    1418772217: {"TerrainType": "desert (mountains)",       "color": np.array([132, 133, 134]) / 255},
-    1223859883: {"TerrainType": "tundra",                   "color": np.array([171, 170, 139]) / 255},
-    3949113590: {"TerrainType": "tundra (hills)",           "color": np.array([171, 170, 139]) / 255},
-    3746160061: {"TerrainType": "tundra (mountains)",       "color": np.array([132, 133, 134]) / 255},
-    1743422479: {"TerrainType": "snow",                     "color": np.array([204, 223, 243]) / 255},
-    3842183808: {"TerrainType": "snow (hills)",             "color": np.array([204, 223, 243]) / 255},
-    699483892:  {"TerrainType": "snow (mountains)",         "color": np.array([132, 133, 134]) / 255},
-    1204357597: {"TerrainType": "Ocean",                    "color": np.array([45, 49, 86]) / 255},
-    1248885265: {"TerrainType": "Coast",                    "color": np.array([45, 89, 120]) / 255},
+    2213004848: {"TerrainType": "grassland",                "color": np.array([103, 125, 48])},
+    1855786096: {"TerrainType": "grassland (hills)",        "color": np.array([103, 125, 48])},
+    1602466867: {"TerrainType": "grassland (mountains)",    "color": np.array([132, 133, 134])},
+    4226188894: {"TerrainType": "plains",                   "color": np.array([159, 159, 53])},
+    3872285854: {"TerrainType": "plains (hills)",           "color": np.array([159, 159, 53])},
+    2746853616: {"TerrainType": "plains (mountains)",       "color": np.array([132, 133, 134])},
+    3852995116: {"TerrainType": "desert",                   "color": np.array([236, 196, 111])},
+    3108058291: {"TerrainType": "desert (hills)",           "color": np.array([236, 196, 111])},
+    1418772217: {"TerrainType": "desert (mountains)",       "color": np.array([132, 133, 134])},
+    1223859883: {"TerrainType": "tundra",                   "color": np.array([171, 170, 139])},
+    3949113590: {"TerrainType": "tundra (hills)",           "color": np.array([171, 170, 139])},
+    3746160061: {"TerrainType": "tundra (mountains)",       "color": np.array([132, 133, 134])},
+    1743422479: {"TerrainType": "snow",                     "color": np.array([204, 223, 243])},
+    3842183808: {"TerrainType": "snow (hills)",             "color": np.array([204, 223, 243])},
+    699483892:  {"TerrainType": "snow (mountains)",         "color": np.array([132, 133, 134])},
+    1204357597: {"TerrainType": "Ocean",                    "color": np.array([45, 49, 86])},
+    1248885265: {"TerrainType": "Coast",                    "color": np.array([45, 89, 120])},
 }
 
 Features = {  # + goodyhut codes
     4294967295: {"FeatureType": "NoFeature",                "color": np.array([0, 0, 0])},
-    1542194068: {"FeatureType": "Ice",                      "color": np.array([171, 188, 219]) / 255},
-    226585075:  {"FeatureType": "Galapagos",                "color": np.array([243, 212, 1]) / 255},
-    1434118760: {"FeatureType": "GoodyHut",                 "color": np.array([241, 209, 100]) / 255},
-    3727362748: {"FeatureType": "BarbCamp",                 "color": np.array([183, 20, 20]) / 255},
+    1542194068: {"FeatureType": "Ice",                      "color": np.array([171, 188, 219])},
+    226585075:  {"FeatureType": "Galapagos",                "color": np.array([243, 212, 1])},
+    1434118760: {"FeatureType": "GoodyHut",                 "color": np.array([241, 209, 100])},
+    3727362748: {"FeatureType": "BarbCamp",                 "color": np.array([183, 20, 20])},
     1523996587: {"FeatureType": "Plantation",               "color": np.array([0, 0, 0])},
     168372657:  {"FeatureType": "Farm",                     "color": np.array([0, 0, 0])},
     2475408324: {"FeatureType": "Camp",                     "color": np.array([0, 0, 0])},
@@ -239,8 +239,8 @@ civColors = np.array([
 [247, 248, 199],
 [ 73,  58,  45],
 [255, 231, 213]]
-) / 255
-civColors = np.concatenate((civColors, np.random.rand(213, 3)))
+)
+civColors = np.concatenate((civColors, np.random.rand(213, 3) * 255))
 
 def fileWorker(idx, filePath):
     f = open(filePath, "rb")
@@ -345,7 +345,7 @@ class GameDataHandler():
                     RiverBitMap = tile["RiverBitMap"]
                     for ii in range(6):
                         if RiverBitMap >> ii & 1:
-                            self.riverColors.append(np.array((45, 89, 120, 255)) / 255)
+                            self.riverColors.append(np.array((45, 89, 120, 255)))
                         else:
                             self.riverColors.append(np.zeros(4, ))
                 else:
@@ -371,11 +371,11 @@ class GameDataHandler():
                                 if neighbourID == playerID:
                                     borderColorsAtTurn.append(np.zeros(4, ))
                                 else:
-                                    borderColorsAtTurn.append(np.append(self.pColors[playerID, :], 0.9))
+                                    borderColorsAtTurn.append(np.append(self.pColors[playerID, :], 255))
                             else:
-                                borderColorsAtTurn.append(np.append(self.pColors[playerID, :], 0.9))
+                                borderColorsAtTurn.append(np.append(self.pColors[playerID, :], 255))
                     else:
-                        borderColorsAtTurn.append(np.append(self.pColors[playerID, :], 0.9))
+                        borderColorsAtTurn.append(np.append(self.pColors[playerID, :], 255))
                 else:
                     if outsideBordersOnly:
                         for jj in range(6):
@@ -392,7 +392,7 @@ class GameDataHandler():
         for turn in self.cityData:
             cityColorsAtTurn = cityColorsAtTurnEmpty
             for city in turn["cities"]:
-                cityColorsAtTurn[city["LocationIdx"]] = np.append(self.pColors[city["CivIndex"], :], 0.9)
+                cityColorsAtTurn[city["LocationIdx"]] = np.append(self.pColors[city["CivIndex"], :], 255)
             self.cityColors.append(np.copy(cityColorsAtTurn))
         print("Total time for city colors: {}".format(time.time() - t0))
 

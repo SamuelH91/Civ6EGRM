@@ -21,6 +21,7 @@ if __name__ == '__main__':
     # Options
     OptimizeGif = True
     outerBordersOnly = True
+    riversOn = True
     saveDataLocation = os.getcwd() + "/data/auto/"  # Default location where runFileWatcher copies all auto saves
 
     # Read and parse all files to memory
@@ -67,7 +68,7 @@ if __name__ == '__main__':
 
     hg_environment = HexGrid(M, N)
     hg_borders = HexGrid(M, N, 0.9, outerBordersOnly)
-    hg_rivers = HexGrid(M, N, 1.0, outerBordersOnly)
+    hg_rivers = HexGrid(M, N, 1.0, riversOn)
     hg_goodyHut = HexGrid(M, N, 0.35)
     hg_cities = HexGrid(M, N, 0.5)
 
