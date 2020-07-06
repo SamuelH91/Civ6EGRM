@@ -1,4 +1,5 @@
 from PyQt5 import QtWidgets
+from PyQt5.QtGui import QScreen
 from utils.hexgridQt import *
 from pyqtgraph import PlotWidget, plot
 import pyqtgraph as pg
@@ -101,7 +102,7 @@ class ButtonsWidget(QtWidgets.QWidget):
 
         button_gif = QtWidgets.QPushButton('Create gif', self)
         button_layout.addWidget(button_gif)
-        # button_gif.clicked.connect(self.parent.plot_widget.button_pressed)
+        button_gif.clicked.connect(self.parent.createGif)
 
         button_mp4 = QtWidgets.QPushButton('Create mp4', self)
         button_layout.addWidget(button_mp4)
@@ -118,6 +119,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.current_timer = None
         self.timerCount = 0
         self.timerCurrentCount = 0
+        self.imageList = []
 
         # Options
         self.OptimizeGif = True
@@ -215,6 +217,24 @@ class MainWindow(QtWidgets.QMainWindow):
         self.pause = False
         self.currentIdx = self.slider_widget.turnSlider.sliderPosition()
         self.start_timer(self.TurnCount-self.currentIdx+1, 100)
+
+    def createGif(self):
+        if len(self.imageList) > 0:
+            pass
+        else:
+            self.createImages()
+
+    def createImages(self):
+        targetDir = os.getcwd() + "/data/temp/"
+        if not os.path.exists(targetDir):
+            os.makedirs(targetDir)
+        for ii in range(1, self.TurnCount + 1):
+            self.slider_widget.turnSlider.setValue(ii)
+            self._main.update()
+            tempfile = targetDir + "temp_" + str(ii).zfill(5) + ".png"
+            self.imageList.append(tempfile)
+            screenshot = self._main.grab()
+            screenshot.save(tempfile, "png")
 
     def setPause(self):
         self.pause = True

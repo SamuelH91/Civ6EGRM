@@ -15,7 +15,6 @@ X2 = 0.5
 class HexGrid(pg.GraphicsObject):  # pg.GraphicsItem
     def __init__(self, x, y, scale=1.0, outsideBordersOnly=False, parent=None):
         super().__init__(parent)
-        # self.figure = figure , figure
         self.picture = QtGui.QPicture()
         self.X = x
         self.Y = y
