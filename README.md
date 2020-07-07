@@ -1,7 +1,7 @@
 # Civ6EGRM
 Civilization 6 End Game Replay Map
 
-![](endGameReplayMapQt.gif)
+![](endGameReplayMap.gif)
 
 ## Main features
 - fileCopier.py which copies automatically all autosaves (Single/Multi) (not necessary if you have some other method to collect your save files)
@@ -34,7 +34,6 @@ Civilization 6 End Game Replay Map
 - Pillow
 - pygifsicle (to compress gifs, gifsicle.exe (64bit) included also)
 - ffmpeg (included exe)
-- opencv-python
 
 These can be installed with pip e.g. 
 > - 'pip install matplotlib'
