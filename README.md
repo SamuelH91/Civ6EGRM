@@ -11,6 +11,14 @@ Civilization 6 End Game Replay Map
   - Visualized goody huts and barb camps
   - Create gif or mp4 (custom fps)
   
+## Quick start
+- Start game
+- python runFileWatcher.py
+- Stop game
+- python endGameReplay.py
+
+More detailed instruction and installation guide under
+  
 ## TODOs
 - Lock civ colors (and modify them away from close ocean blue or land green)
 - Include natural wonders and other tile improvement data (some custom visualization?)
@@ -42,15 +50,20 @@ These can be installed with pip e.g.
     - ffmpeg (to create mp4, included exe)
     - ifsicle.exe (to compress gifs) (64bit) included also
 
-## Quickstart
+## How to
 1) Start civ game
-1) Start file copier (set correct paths to code) (or use your own method to collect saves)
+1) Start file copier (or use your own method to collect saves)
+    - Set correct path to 'runFileWatcher.py' with your text editor
+      - 'watchDir = os.path.expanduser("~/Documents/My Games/Sid Meier's Civilization VI/Saves/Multi/auto/")'
+      - Set Multi or Single (and/or (Epic) if you don't play it via Steam)
     - Open cmd
     - 'python runFileWatcher.py'
+    - Check within 10 turns that saves are going to target directory ('./data/auto')
     - Remember to (re)move old autosaves from './data/auto' to somewhere else (especially if you want to continue later)
 1) Stop it when you have done playing the game
     - You can continue it later, just check that './data/auto' has correct files
 1) Run end game replay map code
+    - check that './data/auto' has correct files
     - 'python endGameReplay.py'
     - Save your game as gif or mp4 (with custom fps) (endGameReplayMap.gif/mp4)
     - Share it with your friends
