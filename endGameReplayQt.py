@@ -8,7 +8,7 @@ from saveFileHandler.gameDataHandler import *
 import io
 from PIL import Image
 from pygifsicle import gifsicle
-import subprocess as sp
+import cv2
 
 # pg.setConfigOptions(antialias=True)
 
@@ -38,6 +38,10 @@ class ButtonsWidget(QtWidgets.QWidget):
         button_layout.addWidget(button_gif)
         button_gif.clicked.connect(self.parent.createGif)
 
+        button_mp4 = QtWidgets.QPushButton('Create mp4', self)
+        button_layout.addWidget(button_mp4)
+        button_mp4.clicked.connect(self.parent.createMp4)
+
         coordinate_widget = QtWidgets.QWidget(self)
         button_layout.addWidget(coordinate_widget)
         coordinate_layout = QtWidgets.QHBoxLayout(coordinate_widget)
@@ -50,9 +54,6 @@ class ButtonsWidget(QtWidgets.QWidget):
         coordinate_layout.addWidget(self.y_value)
         self.y_value.setNum(0)
 
-        # button_mp4 = QtWidgets.QPushButton('Create mp4', self)
-        # button_layout.addWidget(button_mp4)
-        # button_mp4.clicked.connect(self.parent.createMp4)
 
 class MapVisualizerWidget(QtWidgets.QWidget):
     def __init__(self, parent, M, N, envColors, riverColors, outerBordersOnly, borderColors, citiesColors,
@@ -265,6 +266,31 @@ class MainWindow(QtWidgets.QMainWindow):
     #         pipe.stdin.write(imgByteArr.read())
     #     pipe.stdin.close()
     #     pipe.kill()
+
+    def createMp4(self):
+        M = len(self.imageList)
+        if M == 0:
+            self.createImages()
+        M = len(self.imageList)
+        width, height = self.imageList[0].size
+
+        videodims = (width, height)
+        fourcc = cv2.VideoWriter_fourcc(*'avc1')  # MJPG, MP4V, avc1, xvid
+        fps = 10
+        video = cv2.VideoWriter("endGameReplayMapQt.mp4", fourcc, fps, videodims)
+
+        print("Please wait patiently saving mp4!")
+        for ii in range(0, M):
+            imtemp = self.imageList[ii].copy()
+            video.write(cv2.cvtColor(np.array(imtemp), cv2.COLOR_RGB2BGR))
+
+        for ii in range(M % fps + 1):
+            imtemp = self.imageList[M-1].copy()
+            video.write(cv2.cvtColor(np.array(imtemp), cv2.COLOR_RGB2BGR))
+
+        video.release()
+        print("Video done!")
+
 
     def createImages(self):
         for ii in range(1, self.TurnCount + 1):

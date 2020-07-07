@@ -25,7 +25,7 @@ Civilization 6 End Game Replay Map
 - Python 3.8.3
 
 ## Dependencies
-- PyQt5 (previous version used matplotlib)
+- PyQt5
 - numpy
 - zlib
 - struct
@@ -34,6 +34,7 @@ Civilization 6 End Game Replay Map
 - Pillow
 - pygifsicle (to compress gifs, gifsicle.exe (64bit) included also)
 - ffmpeg (included exe)
+- opencv-python
 
 These can be installed with pip e.g. 
 > - 'pip install matplotlib'
