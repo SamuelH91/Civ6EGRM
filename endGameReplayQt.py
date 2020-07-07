@@ -12,9 +12,51 @@ import subprocess as sp
 
 # pg.setConfigOptions(antialias=True)
 
+class ButtonsWidget(QtWidgets.QWidget):
+    def __init__(self, parent, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.parent = parent
+        layout = QtWidgets.QHBoxLayout(self)
+
+        button_widget = QtWidgets.QWidget(self)
+        layout.addWidget(button_widget)
+        button_layout = QtWidgets.QHBoxLayout(button_widget)
+
+        button_toggle = QtWidgets.QPushButton('Toggle borders', self)
+        button_layout.addWidget(button_toggle)
+        button_toggle.clicked.connect(self.parent.toggleBorders)
+
+        button_play = QtWidgets.QPushButton('Play', self)
+        button_layout.addWidget(button_play)
+        button_play.clicked.connect(self.parent.play)
+
+        button_pause = QtWidgets.QPushButton('Pause', self)
+        button_layout.addWidget(button_pause)
+        button_pause.clicked.connect(self.parent.setPause)
+
+        button_gif = QtWidgets.QPushButton('Create gif', self)
+        button_layout.addWidget(button_gif)
+        button_gif.clicked.connect(self.parent.createGif)
+
+        coordinate_widget = QtWidgets.QWidget(self)
+        button_layout.addWidget(coordinate_widget)
+        coordinate_layout = QtWidgets.QHBoxLayout(coordinate_widget)
+
+        self.x_value = QtWidgets.QLabel(self)
+        coordinate_layout.addWidget(self.x_value)
+        self.x_value.setNum(0)
+
+        self.y_value = QtWidgets.QLabel(self)
+        coordinate_layout.addWidget(self.y_value)
+        self.y_value.setNum(0)
+
+        # button_mp4 = QtWidgets.QPushButton('Create mp4', self)
+        # button_layout.addWidget(button_mp4)
+        # button_mp4.clicked.connect(self.parent.createMp4)
+
 class MapVisualizerWidget(QtWidgets.QWidget):
     def __init__(self, parent, M, N, envColors, riverColors, outerBordersOnly, borderColors, citiesColors,
-                 goodyHutColors, *args, **kwargs):
+                 goodyHutColors, turnCount, *args, **kwargs):
         super().__init__(parent, *args, **kwargs)
         self.parent = parent
 
@@ -25,6 +67,11 @@ class MapVisualizerWidget(QtWidgets.QWidget):
         self.graphWidget.setAspectLocked(True)
         self.graphWidget.setAntialiasing(True)
         self.graphWidget.setBackground((0, 0, 0, 0))
+        self.graphWidget.getPlotItem().hideAxis('bottom')
+        self.graphWidget.getPlotItem().hideAxis('left')
+        self.graphWidget.scene().sigMouseClicked.connect(self.parent.mouse_clicked)
+        self.graphWidget.setMouseTracking(True)
+        # self.graphWidget.scene().sigMouseMoved.connect(self.parent.mouseMoved)
 
         self.environmentHG = HexGrid(M, N)
         self.environmentHG.set_fc_colors(envColors)
@@ -55,13 +102,6 @@ class MapVisualizerWidget(QtWidgets.QWidget):
         self.goodyHutHG.generatePicture()
         self.graphWidget.addItem(self.goodyHutHG)
 
-class TurnWidget(QtWidgets.QWidget):
-    def __init__(self, parent, turnCount, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.parent = parent
-
-        layout = QtWidgets.QVBoxLayout(self)
-
         slider_widget = QtWidgets.QWidget(self)
         layout.addWidget(slider_widget)
         slider_layout = QtWidgets.QHBoxLayout(slider_widget)
@@ -80,36 +120,6 @@ class TurnWidget(QtWidgets.QWidget):
         slider_value.setNum(1)
         self.turnSlider.valueChanged.connect(slider_value.setNum)
 
-
-class ButtonsWidget(QtWidgets.QWidget):
-    def __init__(self, parent, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.parent = parent
-        layout = QtWidgets.QHBoxLayout(self)
-
-        button_widget = QtWidgets.QWidget(self)
-        layout.addWidget(button_widget)
-        button_layout = QtWidgets.QHBoxLayout(button_widget)
-
-        button_toggle = QtWidgets.QPushButton('Toggle borders', self)
-        button_layout.addWidget(button_toggle)
-        button_toggle.clicked.connect(self.parent.toggleBorders)
-
-        button_play = QtWidgets.QPushButton('Play', self)
-        button_layout.addWidget(button_play)
-        button_play.clicked.connect(self.parent.play)
-
-        button_pause = QtWidgets.QPushButton('Pause', self)
-        button_layout.addWidget(button_pause)
-        button_pause.clicked.connect(self.parent.setPause)
-
-        button_gif = QtWidgets.QPushButton('Create gif', self)
-        button_layout.addWidget(button_gif)
-        button_gif.clicked.connect(self.parent.createGif)
-
-        button_mp4 = QtWidgets.QPushButton('Create mp4', self)
-        button_layout.addWidget(button_mp4)
-        # button_mp4.clicked.connect(self.parent.plot_widget.button_pressed)
 
 class MainWindow(QtWidgets.QMainWindow):
 
@@ -162,11 +172,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.plot_widget = \
             MapVisualizerWidget(self, self.M, self.N, self.gdh.envColors, self.gdh.riverColors,
                                 self.outerBordersOnly, self.gdh.borderColors[0],
-                                self.gdh.cityColors[0], self.gdh.goodyHuts[0])
+                                self.gdh.cityColors[0], self.gdh.goodyHuts[0], self.TurnCount)
         main_layout.addWidget(self.plot_widget)
-
-        self.slider_widget = TurnWidget(self, self.TurnCount)
-        main_layout.addWidget(self.slider_widget)
 
         self.showMaximized()
 
@@ -203,7 +210,7 @@ class MainWindow(QtWidgets.QMainWindow):
             self.current_timer = None
 
     def toggleBorders(self):
-        self.currentIdx = self.slider_widget.turnSlider.sliderPosition()
+        self.currentIdx = self.plot_widget.turnSlider.sliderPosition()
         if self.hidden:
             self.plot_widget.bordersHG.set_ec_colors(self.gdh.borderColors[self.currentIdx - 1])
             self.hidden = False
@@ -213,7 +220,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def play(self):
         self.pause = False
-        self.currentIdx = self.slider_widget.turnSlider.sliderPosition()
+        self.currentIdx = self.plot_widget.turnSlider.sliderPosition()
         self.start_timer(self.TurnCount-self.currentIdx+1, 100)
 
     def createGif(self):
@@ -221,7 +228,7 @@ class MainWindow(QtWidgets.QMainWindow):
         if M == 0:
             self.createImages()
         M = len(self.imageList)
-        print("Please wait patiently saving and optimising gif!")
+        print("Please wait patiently: saving and optimising gif!")
         self.imageList[0].save('endGameReplayMapQt.gif', save_all=True, append_images=self.imageList[1:], optimize=False, duration=M, loop=0)
         gifsicle(
             sources=["endGameReplayMapQt.gif"],  # or a single_file.gif
@@ -237,26 +244,34 @@ class MainWindow(QtWidgets.QMainWindow):
     #     if M == 0:
     #         self.createImages()
     #     M = len(self.imageList)
+    #     width, height = self.imageList[0].size
     #     print("Please wait patiently saving mp4!")
-    #     command = ['ffmpeg.exe',
-    #                '-y',  # (optional) overwrite output file if it exists
-    #                '-f', 'rawvideo',
-    #                '-vcodec', 'rawvideo',
-    #                '-s', '420x360',  # size of one frame
-    #                '-pix_fmt', 'rgb24',
-    #                '-r', '24',  # frames per second
-    #                '-i', '-',  # The imput comes from a pipe
-    #                '-an',  # Tells FFMPEG not to expect any audio
-    #                '-vcodec', 'mpeg',
-    #                'my_output_videofile.mp4']
-
+    #     command = ["ffmpeg.exe",
+    #                "-y",  # (optional) overwrite output file if it exists
+    #                "-f", "rawvideo",
+    #                "-vcodec", "rawvideo",
+    #                "-s", str(width) + "x" + str(height),  # size of one frame
+    #                "-pix_fmt", "rgb24",
+    #                "-r", "10",  # frames per second
+    #                "-i", "-",  # The imput comes from a pipe
+    #                "-an",  # Tells FFMPEG not to expect any audio
+    #                "-vcodec", "mpeg4",
+    #                "endGameReplayMapQt.mp4"]
+    #     pipe = sp.Popen(command, stdin=sp.PIPE, stderr=sp.PIPE)
+    #     for image in self.imageList:
+    #         imgByteArr = io.BytesIO()
+    #         image.save(imgByteArr, format='PNG')
+    #         imgByteArr.seek(0)
+    #         pipe.stdin.write(imgByteArr.read())
+    #     pipe.stdin.close()
+    #     pipe.kill()
 
     def createImages(self):
         for ii in range(1, self.TurnCount + 1):
-            self.slider_widget.turnSlider.setValue(ii)
+            self.plot_widget.turnSlider.setValue(ii)
             self._main.update()
             QtWidgets.QApplication.processEvents()
-            screenshot = self._main.grab()
+            screenshot = self.plot_widget.grab()
             buffer = QtCore.QBuffer()
             buffer.open(QtCore.QBuffer.ReadWrite)
             screenshot.save(buffer, "png")
@@ -266,8 +281,25 @@ class MainWindow(QtWidgets.QMainWindow):
         self.pause = True
 
     def updateSlider(self, idx):
-        self.slider_widget.turnSlider.setValue(idx)
+        self.plot_widget.turnSlider.setValue(idx)
 
+    def mouse_clicked(self, mouseClickEvent):
+        # mouseClickEvent is a pyqtgraph.GraphicsScene.mouseEvents.MouseClickEvent
+        pos = mouseClickEvent.pos()
+        if self.plot_widget.graphWidget.sceneBoundingRect().contains(pos):
+            mousePoint = self.plot_widget.graphWidget.plotItem.vb.mapSceneToView(pos)
+            # print("x: {}, y {}".format(mousePoint.x(), mousePoint.y()))
+            yidx = np.floor((mousePoint.y() + 1/np.sqrt(3)) / (np.sqrt(3) / 2))
+            xidx = np.floor(mousePoint.x() + (yidx % 2) * 0.5)
+            print("x: {}, y {}".format(xidx, yidx))
+            self.buttons_widget.x_value.setNum(xidx)
+            self.buttons_widget.y_value.setNum(yidx)
+
+    # def mouseMoved(self, evt):
+    #     pos = evt
+    #     if self.plot_widget.graphWidget.sceneBoundingRect().contains(pos):
+    #         mousePoint = self.plot_widget.graphWidget.plotItem.vb.mapSceneToView(pos)
+    #         print("x: {}, y {}".format(mousePoint.x(), mousePoint.y()))
 
 def main():
     app = QtWidgets.QApplication(sys.argv)

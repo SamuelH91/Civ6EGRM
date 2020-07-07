@@ -24,7 +24,7 @@ class HexGrid(pg.GraphicsObject):  # pg.GraphicsItem
         self.ec_colors = None
         self.fc_colors = None
         self.edgesVisible = True
-        self.lw = 0.1
+        self.lw = 0.2
         self.neigbours_list = []
         self.outsideBordersOnly = outsideBordersOnly
         for yy in range(y):
