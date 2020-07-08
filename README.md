@@ -36,10 +36,8 @@ More detailed instruction and installation guide under
 ## Dependencies
 - PyQt5
 - numpy
-- zlib
-- struct
+- raw-zlib
 - watchdog
-- shutil
 - Pillow
 - pygifsicle
 
