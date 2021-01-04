@@ -12,8 +12,9 @@ CHUNKSIZE = 64 * 1024
 #  */
 def decompress(saveFileBuffer):
     civsav = saveFileBuffer
+    # just skip this part for now
     header, idxH = parseHeader(saveFileBuffer)
-    jsons = parseJson(saveFileBuffer, idxH)
+    # jsons = parseJson(saveFileBuffer, idxH)
     modindex = civsav.rfind(b'MOD_TITLE')
     bufstartindex = civsav.index(b'\x78\x9c', modindex)
     bufendindex = civsav.rindex(b'\x00\x00\xFF\xFF')
@@ -263,6 +264,8 @@ MAPSIZEDATA = {
     '4536': {"x": 84, "y": 54},
     '5760': {"x": 96, "y": 60},
     '6996': {"x": 106, "y": 66},
+    # Some mods
+    '6656': {"x": 128, "y": 80},
 }
 
 
@@ -273,10 +276,22 @@ MAPSIZEDATA = {
 #  */
 def save_to_map_json(mainDecompressedData):
     bin = mainDecompressedData
-    mapstartindex = bin.index(b'\x0E\x00\x00\x00\x0F\x00\x00\x00\x06\x00\x00\x00')
+    try:
+        mapstartindex = bin.index(b'\x0E\x00\x00\x00\x0F\x00\x00\x00\x06\x00\x00\x00')
+    except:
+        try:
+            print("Warning default map start index not found, you might be using some mods!!!")
+            mapstartindex = bin.index(b'\x16\x00\x00\x00\x17\x00\x00\x00\x06\x00\x00\x00')  # just a guess
+        except:
+            print("Couldn't find map start idx, contact support with autosave files + mods what are you using")
+
     tiles = readInt32(bin, mapstartindex + 12)
     tileskey = str(tiles)
     tilesmap = {"tiles": [], "mapSize": [MAPSIZEDATA[tileskey]["x"], MAPSIZEDATA[tileskey]["y"]]}
+
+    # Mods breaks this rule
+    if tileskey == '6656':  # Yet (not) Another Maps Pack, Earth Map
+        tiles = 10240
 
     mindex = mapstartindex + 16
 
