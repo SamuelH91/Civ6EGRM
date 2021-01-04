@@ -293,8 +293,10 @@ def save_to_map_json(mainDecompressedData):
         if OwnershipBuffer >= 64:
             buflength += 17
 
-        # ski resort + mountain tunnel
-        if GoodyHut == 2135005470 or GoodyHut == 3108964764:
+        FeatureType = readUInt32(bin, mindex + 16)
+
+        # ski resort + mountain tunnel + galapagos (check this)
+        if GoodyHut == 2135005470 or GoodyHut == 3108964764 or FeatureType == 226585075:
             buflength += 20
 
         # See bin-structure.md for WIP documentation on what each of these values are
@@ -310,7 +312,7 @@ def save_to_map_json(mainDecompressedData):
             "Landmass": readUInt16(bin, mindex + 8),
             "Landmass1": readUInt16(bin, mindex + 10),
             "TerrainType": readUInt32(bin, mindex + 12),
-            "FeatureType": readUInt32(bin, mindex + 16),
+            "FeatureType": FeatureType,
             "?-1": readUInt16(bin, mindex + 20),
             "LandSnowSea": readUInt32(bin, mindex + 22),
             "?-2": readUInt8(bin, mindex + 26),
