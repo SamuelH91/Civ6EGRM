@@ -86,6 +86,7 @@ Features = {  # + goodyhut codes
     933499311:  {"FeatureType": "MeteorSite",               "color": pg.mkBrush(pg.mkColor(np.array([0, 0, 0])))},
     2939453696: {"FeatureType": "OilWell",                  "color": pg.mkBrush(pg.mkColor(np.array([0, 0, 0])))},
     3898338829: {"FeatureType": "OffshoreOilRig",           "color": pg.mkBrush(pg.mkColor(np.array([0, 0, 0])))},
+    1151932567: {"FeatureType": "OutbackStation",           "color": pg.mkBrush(pg.mkColor(np.array([0, 0, 0])))},
 }
 # Features:
 # No feature: 			    255 255 255 255:	FF FF FF FF
