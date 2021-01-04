@@ -70,3 +70,10 @@ Any feedback or suggestions are appreciated.
 
 ## Special thanks for https://github.com/lucienmaloney/civ6save-editing
 
+
+## Troubleshoot
+If following error at the start of endGameReplay.py file
+"qt.qpa.plugin: Could not find the Qt platform plugin "windows" in ""
+This application failed to start because no Qt platform plugin could be initialized. Reinstalling the application may fix this problem."
+Set following entry to your system environment variable (at least one confirmed case in windows 7)
+QT_PLUGIN_PATH  C:\Python38\Lib\site-packages\PyQt5\Qt\plugins  (change the path according to your installation location)
