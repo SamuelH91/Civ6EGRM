@@ -296,6 +296,7 @@ class GameDataHandler():
         pool = mp.Pool()
         for ii, filePath in enumerate(filePaths):
             pool.apply_async(fileWorker, args=(ii, filePath), callback=self.saveResult)
+            # self.saveResult(fileWorker(ii, filePath))  # debugging single thread
         pool.close()
         pool.join()
         print("Total time {} s for data parsing from {} files".format(time.time() - t0, count))

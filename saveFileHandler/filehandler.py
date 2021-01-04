@@ -87,7 +87,9 @@ def revealMap(decompressedData):
 
 def parseHeader(saveFileBuffer):
     gamespeedlen = readUInt16(saveFileBuffer, 20)
-    idx1 = 28 + gamespeedlen
+    idx0 = 28 + gamespeedlen
+    # After game speed there might be some json information about modes
+    idx1 = saveFileBuffer.index(b'\x40\x5C\x83\x0B\x05\x00\x00\x00')
     mapsizelen = readUInt16(saveFileBuffer, idx1 + 8)
     idx2 = idx1 + mapsizelen + 16
     header = {
@@ -99,7 +101,8 @@ def parseHeader(saveFileBuffer):
         "GameSpeedLen": gamespeedlen,
         "GameSpeedLen1_": readUInt16(saveFileBuffer, 22),
         "GameSpeedLen2_": readUInt32(saveFileBuffer, 24),
-        "GameSpeed": saveFileBuffer[28:idx1],
+        "GameSpeed": saveFileBuffer[28:idx0],
+        # some json about modes
         "h5_": readUInt32(saveFileBuffer, idx1),
         "h6_": readUInt32(saveFileBuffer, idx1 + 4),
         "MapSizeLen": mapsizelen,
