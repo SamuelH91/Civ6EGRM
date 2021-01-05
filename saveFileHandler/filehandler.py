@@ -1,6 +1,7 @@
 import zlib
 import numpy as np
 from utils.binaryconvert import *
+from saveFileHandler.features import Terrains, Features
 
 CHUNKSIZE = 64 * 1024
 
@@ -263,9 +264,9 @@ MAPSIZEDATA = {
     '3404': {"x": 74, "y": 46},
     '4536': {"x": 84, "y": 54},
     '5760': {"x": 96, "y": 60},
+    '6656': {"x": 104, "y": 64},  # YnAMP - Greatest Earth Map
     '6996': {"x": 106, "y": 66},
-    # Some mods
-    '6656': {"x": 128, "y": 80},
+
 }
 
 
@@ -289,10 +290,6 @@ def save_to_map_json(mainDecompressedData):
     tileskey = str(tiles)
     tilesmap = {"tiles": [], "mapSize": [MAPSIZEDATA[tileskey]["x"], MAPSIZEDATA[tileskey]["y"]]}
 
-    # Mods breaks this rule
-    if tileskey == '6656':  # Yet (not) Another Maps Pack, Earth Map
-        tiles = 10240
-
     mindex = mapstartindex + 16
 
     for i in range(tiles):
@@ -309,10 +306,20 @@ def save_to_map_json(mainDecompressedData):
             buflength += 17
 
         FeatureType = readUInt32(bin, mindex + 16)
+        TerrainType = readUInt32(bin, mindex + 12)
 
-        # ski resort + mountain tunnel + galapagos (check this)
+        # ski resort + mountain tunnel + galapagos (initial guess)
         if GoodyHut == 2135005470 or GoodyHut == 3108964764 or FeatureType == 226585075:
             buflength += 20
+
+        # galapagos heuristic check, that confirms correct buffer length by testing next feature and terrain validity
+        if FeatureType == 226585075:
+            # print("Galapagos on map, check for black tiles, remove this comment later if no issues")
+            # Check validity of next feature
+            NextFeatureType = readUInt32(bin, mindex + 55 + buflength + 16)
+            NextTerrainType = readUInt32(bin, mindex + 55 + buflength + 12)
+            if NextFeatureType not in Features or NextTerrainType not in Terrains:
+                buflength -= 20
 
         # See bin-structure.md for WIP documentation on what each of these values are
         tilesmap["tiles"].append({
@@ -326,7 +333,7 @@ def save_to_map_json(mainDecompressedData):
             "int16-4": readUInt16(bin, mindex + 6),
             "Landmass": readUInt16(bin, mindex + 8),
             "Landmass1": readUInt16(bin, mindex + 10),
-            "TerrainType": readUInt32(bin, mindex + 12),
+            "TerrainType": TerrainType,
             "FeatureType": FeatureType,
             "?-1": readUInt16(bin, mindex + 20),
             "LandSnowSea": readUInt32(bin, mindex + 22),

@@ -1,6 +1,7 @@
 from watchdog.utils.dirsnapshot import DirectorySnapshot
 import os
 from saveFileHandler.filehandler import *
+from saveFileHandler.features import Terrains, Features
 import time
 import multiprocessing as mp
 import pyqtgraph as pg
@@ -25,69 +26,6 @@ import copy
 # Ocean: 					221 9 201 71:		1204357597     DD 09 C9 47    b'\xDD\x09\xC9\x47'
 # Coast: 					17 122 112 74:		1248885265     11 7A 70 4A    b'\x11\x7A\x70\x4A'
 
-Terrains = {
-    2213004848: {"TerrainType": "grassland",                "color": pg.mkBrush(pg.mkColor(np.array([103, 125, 48])))},
-    1855786096: {"TerrainType": "grassland (hills)",        "color": pg.mkBrush(pg.mkColor(np.array([103, 125, 48])))},
-    1602466867: {"TerrainType": "grassland (mountains)",    "color": pg.mkBrush(pg.mkColor(np.array([132, 133, 134])))},
-    4226188894: {"TerrainType": "plains",                   "color": pg.mkBrush(pg.mkColor(np.array([159, 159, 53])))},
-    3872285854: {"TerrainType": "plains (hills)",           "color": pg.mkBrush(pg.mkColor(np.array([159, 159, 53])))},
-    2746853616: {"TerrainType": "plains (mountains)",       "color": pg.mkBrush(pg.mkColor(np.array([132, 133, 134])))},
-    3852995116: {"TerrainType": "desert",                   "color": pg.mkBrush(pg.mkColor(np.array([236, 196, 111])))},
-    3108058291: {"TerrainType": "desert (hills)",           "color": pg.mkBrush(pg.mkColor(np.array([236, 196, 111])))},
-    1418772217: {"TerrainType": "desert (mountains)",       "color": pg.mkBrush(pg.mkColor(np.array([132, 133, 134])))},
-    1223859883: {"TerrainType": "tundra",                   "color": pg.mkBrush(pg.mkColor(np.array([171, 170, 139])))},
-    3949113590: {"TerrainType": "tundra (hills)",           "color": pg.mkBrush(pg.mkColor(np.array([171, 170, 139])))},
-    3746160061: {"TerrainType": "tundra (mountains)",       "color": pg.mkBrush(pg.mkColor(np.array([132, 133, 134])))},
-    1743422479: {"TerrainType": "snow",                     "color": pg.mkBrush(pg.mkColor(np.array([204, 223, 243])))},
-    3842183808: {"TerrainType": "snow (hills)",             "color": pg.mkBrush(pg.mkColor(np.array([204, 223, 243])))},
-    699483892:  {"TerrainType": "snow (mountains)",         "color": pg.mkBrush(pg.mkColor(np.array([132, 133, 134])))},
-    1204357597: {"TerrainType": "Ocean",                    "color": pg.mkBrush(pg.mkColor(np.array([45, 49, 86])))},
-    1248885265: {"TerrainType": "Coast",                    "color": pg.mkBrush(pg.mkColor(np.array([45, 89, 120])))},
-}
-
-Features = {  # + goodyhut codes
-    4294967295: {"FeatureType": "NoFeature",                "color": pg.mkBrush(pg.mkColor(np.array([0, 0, 0])))},
-    1542194068: {"FeatureType": "Ice",                      "color": pg.mkBrush(pg.mkColor(np.array([171, 188, 219])))},
-    226585075:  {"FeatureType": "Galapagos",                "color": pg.mkBrush(pg.mkColor(np.array([243, 212, 1])))},
-    1434118760: {"FeatureType": "GoodyHut",                 "color": pg.mkBrush(pg.mkColor(np.array([241, 209, 100])))},
-    3727362748: {"FeatureType": "BarbCamp",                 "color": pg.mkBrush(pg.mkColor(np.array([183, 20, 20])))},
-    1523996587: {"FeatureType": "Plantation",               "color": pg.mkBrush(pg.mkColor(np.array([0, 0, 0])))},
-    168372657:  {"FeatureType": "Farm",                     "color": pg.mkBrush(pg.mkColor(np.array([0, 0, 0])))},
-    2475408324: {"FeatureType": "Camp",                     "color": pg.mkBrush(pg.mkColor(np.array([0, 0, 0])))},
-    2048582848: {"FeatureType": "LumberMill",               "color": pg.mkBrush(pg.mkColor(np.array([0, 0, 0])))},
-    1001859687: {"FeatureType": "Mine",                     "color": pg.mkBrush(pg.mkColor(np.array([0, 0, 0])))},
-    4214473799: {"FeatureType": "Quarry",                   "color": pg.mkBrush(pg.mkColor(np.array([0, 0, 0])))},
-    154488225:  {"FeatureType": "Pasture",                  "color": pg.mkBrush(pg.mkColor(np.array([0, 0, 0])))},
-    578093457:  {"FeatureType": "FishingBoats",             "color": pg.mkBrush(pg.mkColor(np.array([0, 0, 0])))},
-    2457279608: {"FeatureType": "Monastery",                "color": pg.mkBrush(pg.mkColor(np.array([0, 0, 0])))},
-    3943953367: {"FeatureType": "Reef",                     "color": pg.mkBrush(pg.mkColor(np.array([0, 0, 0])))},
-    3583470385: {"FeatureType": "GreatBarrierReef",         "color": pg.mkBrush(pg.mkColor(np.array([0, 0, 0])))},
-    1957694686: {"FeatureType": "CahokiaMounds",            "color": pg.mkBrush(pg.mkColor(np.array([0, 0, 0])))},
-    1719494282: {"FeatureType": "Pairidaeza",               "color": pg.mkBrush(pg.mkColor(np.array([0, 0, 0])))},
-    1694280827: {"FeatureType": "Fort",                     "color": pg.mkBrush(pg.mkColor(np.array([0, 0, 0])))},
-    2135005470: {"FeatureType": "SkiResort",                "color": pg.mkBrush(pg.mkColor(np.array([0, 0, 0])))},
-    1084731038: {"FeatureType": "HalongBay",                "color": pg.mkBrush(pg.mkColor(np.array([0, 0, 0])))},
-    1653648472: {"FeatureType": "GiantsCauseway",           "color": pg.mkBrush(pg.mkColor(np.array([0, 0, 0])))},
-    2970879537: {"FeatureType": "Moai",                     "color": pg.mkBrush(pg.mkColor(np.array([0, 0, 0])))},
-    2588244546: {"FeatureType": "Alcazar",                  "color": pg.mkBrush(pg.mkColor(np.array([0, 0, 0])))},
-    2176791945: {"FeatureType": "ColossalHead",             "color": pg.mkBrush(pg.mkColor(np.array([0, 0, 0])))},
-    570930386:  {"FeatureType": "SeasideResort",            "color": pg.mkBrush(pg.mkColor(np.array([0, 0, 0])))},
-    2414989200: {"FeatureType": "GreatWall",                "color": pg.mkBrush(pg.mkColor(np.array([0, 0, 0])))},
-    874973008:  {"FeatureType": "Kampung",                  "color": pg.mkBrush(pg.mkColor(np.array([0, 0, 0])))},
-    1163354216: {"FeatureType": "NazcaLine",                "color": pg.mkBrush(pg.mkColor(np.array([0, 0, 0])))},
-    3108964764: {"FeatureType": "MountainTunnel",           "color": pg.mkBrush(pg.mkColor(np.array([0, 0, 0])))},
-    2127465633: {"FeatureType": "SolarFarm",                "color": pg.mkBrush(pg.mkColor(np.array([0, 0, 0])))},
-    2686085371: {"FeatureType": "GolfCourse",               "color": pg.mkBrush(pg.mkColor(np.array([0, 0, 0])))},
-    1195876395: {"FeatureType": "RomanFort",                "color": pg.mkBrush(pg.mkColor(np.array([0, 0, 0])))},
-    662085235:  {"FeatureType": "Aerodome",                 "color": pg.mkBrush(pg.mkColor(np.array([0, 0, 0])))},
-    520634903:  {"FeatureType": "WindFarm",                 "color": pg.mkBrush(pg.mkColor(np.array([0, 0, 0])))},
-    1058336991: {"FeatureType": "OffshoreWindFarm",         "color": pg.mkBrush(pg.mkColor(np.array([0, 0, 0])))},
-    3808671749: {"FeatureType": "Kurgan",                   "color": pg.mkBrush(pg.mkColor(np.array([0, 0, 0])))},
-    933499311:  {"FeatureType": "MeteorSite",               "color": pg.mkBrush(pg.mkColor(np.array([0, 0, 0])))},
-    2939453696: {"FeatureType": "OilWell",                  "color": pg.mkBrush(pg.mkColor(np.array([0, 0, 0])))},
-    3898338829: {"FeatureType": "OffshoreOilRig",           "color": pg.mkBrush(pg.mkColor(np.array([0, 0, 0])))},
-    1151932567: {"FeatureType": "OutbackStation",           "color": pg.mkBrush(pg.mkColor(np.array([0, 0, 0])))},
-}
 # Features:
 # No feature: 			    255 255 255 255:	FF FF FF FF
 # Rainforest:				57 84 17 233:		39 54 11 E9
