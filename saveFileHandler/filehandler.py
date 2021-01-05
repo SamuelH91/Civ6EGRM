@@ -288,8 +288,10 @@ def save_to_map_json(mainDecompressedData):
 
     tiles = readInt32(bin, mapstartindex + 12)
     tileskey = str(tiles)
-    tilesmap = {"tiles": [], "mapSize": [MAPSIZEDATA[tileskey]["x"], MAPSIZEDATA[tileskey]["y"]]}
-
+    try:
+        tilesmap = {"tiles": [], "mapSize": [MAPSIZEDATA[tileskey]["x"], MAPSIZEDATA[tileskey]["y"]]}
+    except:
+        print(f"Unknown map size: {tileskey} -> the program will crash!!!")
     mindex = mapstartindex + 16
 
     for i in range(tiles):
