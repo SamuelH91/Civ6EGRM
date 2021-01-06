@@ -258,6 +258,46 @@ def parseJson(saveFileBuffer, idxH):
 #
 #
 
+def get_civ_data(data):
+
+    civ_id_start_key = b'\x54\xB4\x8A\x0D\x02'
+    civ_id_end_key = b'\x2F\x52\x96\x1A\x02'  # Just before this one
+    civ_adjective_key = b'\x31\xEB\x88\x62'
+
+    bin = data
+    civs = []
+    try:
+        civNameIndex = bin.index(civ_adjective_key)
+        # There is some religion info as well at same section
+        while civNameIndex:
+            civNameLength = readUInt16(bin, civNameIndex + 8)
+            civName = bin[civNameIndex + 16 + 17:civNameIndex + 16 + civNameLength - 11].decode("utf-8")
+            try:
+                civIndex = bin.rfind(civ_id_end_key, 0, civNameIndex) - 4
+                civIdx = readUInt16(bin, civIndex)
+            except:
+                print("Error finding civ index")
+                civIdx = -1
+            civs.append({
+                "CivName": civName,
+                "CivIndex": civIdx,
+            })
+            try:
+                civNameIndex = bin.index(civ_adjective_key, civNameIndex + 8)
+            except:
+                break
+    except:
+        print("Error no civs!!!")
+        pass
+    civsOrdered = [None] * len(civs)
+    for civ in civs:
+        idx = civ["CivIndex"]
+        civsOrdered[idx] = civ["CivName"]
+    return civsOrdered
+
+
+    mapstartindex = bin.index(key)
+
 MAPSIZEDATA = {
     '1144': {"x": 44, "y": 26},
     '2280': {"x": 60, "y": 38},
@@ -312,12 +352,6 @@ def save_to_map_json(mainDecompressedData, idx):
                 # mapstartindex = bin.index(b'\x00\x00\x01\x00\x00\x00\x01\x00\xFF\xFF\xFF\xFF') - 16
                 print(f"File #{idx}: Couldn't find map start idx, contact support with autosave files + mods what are you using")
 
-    # tiles = readInt32(bin, mapstartindex + 12)
-    # tileskey = str(tiles)
-    # try:
-    #     tilesmap = {"tiles": [], "mapSize": [MAPSIZEDATA[tileskey]["x"], MAPSIZEDATA[tileskey]["y"]]}
-    # except:
-    #     print(f"Unknown map size: {tiles} -> the program will crash!!!")
     SX = MAPSIZEDATA[tileskey]["x"]
     SY = MAPSIZEDATA[tileskey]["y"]
 

@@ -152,6 +152,7 @@ class MainWindow(QtWidgets.QMainWindow):
         # Options
         self.OptimizeGif = True
         self.outerBordersOnly = True
+        self.useCivColors = True
         self.riversOn = True
         self.saveDataLocation = os.getcwd() + "/data/auto/"  # Default location where runFileWatcher copies all auto saves
 
@@ -160,7 +161,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.gdh.parseData()
 
         # Calculate border colors
-        self.gdh.calculateBorderColors(3, self.outerBordersOnly)
+        self.gdh.calculateBorderColors(3, self.outerBordersOnly, self.useCivColors)
         self.gdh.calculateCityColors()
 
         # Calculate environment colors
