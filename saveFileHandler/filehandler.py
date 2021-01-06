@@ -262,37 +262,64 @@ MAPSIZEDATA = {
     '1144': {"x": 44, "y": 26},
     '2280': {"x": 60, "y": 38},
     '3404': {"x": 74, "y": 46},
+    '3696': {"x": 84, "y": 44},  # YnAMP - Small
     '4536': {"x": 84, "y": 54},
+    '4800': {"x": 96, "y": 50},  # YnAMP - Standard
     '5760': {"x": 96, "y": 60},
+    '5767': {"x": 79, "y": 73},  # YnAMP - Large Europe
+    '6048': {"x": 108, "y": 56},  # YnAMP - Large
     '6656': {"x": 104, "y": 64},  # YnAMP - Greatest Earth Map
     '6996': {"x": 106, "y": 66},
-
+    '7344': {"x": 108, "y": 68},  # YnAMP - Huge Europe
+    '7440': {"x": 120, "y": 62},  # YnAMP - Huge
+    '10360': {"x": 140, "y": 74},  # YnAMP - Enormous
+    '16920': {"x": 180, "y": 94},  # YnAMP - Giant
+    '20800': {"x": 200, "y": 104},  # YnAMP - Ludicrous
+    '26680': {"x": 230, "y": 116},  # YnAMP - Largest Earth Map
 }
 
+def find_mapstart_idx(bin, key, offset=0):
+    mapstartindex = bin.index(key)
+    tiles = readInt32(bin, mapstartindex + len(key) + offset)
+    tileskey = str(tiles)
+    tilesmap = {"tiles": [], "mapSize": [MAPSIZEDATA[tileskey]["x"], MAPSIZEDATA[tileskey]["y"]]}
+    mindex = mapstartindex + len(key) + 4
+    return mindex, tiles, tileskey, tilesmap
 
 # /**
 #  * Convert compressed tile data in .Civ6Save file into json format
 #  * @param {buffer} savefile
 #  * @return {object} tiles
 #  */
-def save_to_map_json(mainDecompressedData):
+def save_to_map_json(mainDecompressedData, idx):
     bin = mainDecompressedData
     try:
-        mapstartindex = bin.index(b'\x0E\x00\x00\x00\x0F\x00\x00\x00\x06\x00\x00\x00')
+        mindex, tiles, tileskey, tilesmap =\
+            find_mapstart_idx(bin, b'\x0E\x00\x00\x00\x0F\x00\x00\x00\x06\x00\x00\x00')
     except:
         try:
-            print("Warning default map start index not found, you might be using some mods!!!")
-            mapstartindex = bin.index(b'\x16\x00\x00\x00\x17\x00\x00\x00\x06\x00\x00\x00')  # just a guess
+            print(f"File #{idx}: Warning default map start index not found, trying second guess!!!")
+            mindex, tiles, tileskey, tilesmap =\
+                find_mapstart_idx(bin, b'\x16\x00\x00\x00\x17\x00\x00\x00\x06\x00\x00\x00')
         except:
-            print("Couldn't find map start idx, contact support with autosave files + mods what are you using")
+            try:
+                print(f"File #{idx}: Warning default map start index not found, trying third guess!!!")
+                mindex, tiles, tileskey, tilesmap =\
+                    find_mapstart_idx(bin, b'\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x06\x00\x00\x00')
+            except:
+                # Print("Try some heuristic search")
+                # Usually something like this at the beginning of tiles
+                # mapstartindex = bin.index(b'\x00\x00\x01\x00\x00\x00\x01\x00\xFF\xFF\xFF\xFF') - 16
+                print(f"File #{idx}: Couldn't find map start idx, contact support with autosave files + mods what are you using")
 
-    tiles = readInt32(bin, mapstartindex + 12)
-    tileskey = str(tiles)
-    try:
-        tilesmap = {"tiles": [], "mapSize": [MAPSIZEDATA[tileskey]["x"], MAPSIZEDATA[tileskey]["y"]]}
-    except:
-        print(f"Unknown map size: {tileskey} -> the program will crash!!!")
-    mindex = mapstartindex + 16
+    # tiles = readInt32(bin, mapstartindex + 12)
+    # tileskey = str(tiles)
+    # try:
+    #     tilesmap = {"tiles": [], "mapSize": [MAPSIZEDATA[tileskey]["x"], MAPSIZEDATA[tileskey]["y"]]}
+    # except:
+    #     print(f"Unknown map size: {tiles} -> the program will crash!!!")
+    SX = MAPSIZEDATA[tileskey]["x"]
+    SY = MAPSIZEDATA[tileskey]["y"]
 
     for i in range(tiles):
         OwnershipBuffer = readUInt8(bin, mindex + 49)
@@ -309,6 +336,8 @@ def save_to_map_json(mainDecompressedData):
 
         FeatureType = readUInt32(bin, mindex + 16)
         TerrainType = readUInt32(bin, mindex + 12)
+        if FeatureType not in Features:
+            print(f"Add to dict: Feature: {FeatureType}, x: {i % SX}, y: {np.floor(i / SX)}")
 
         # ski resort + mountain tunnel + galapagos (initial guess)
         if GoodyHut == 2135005470 or GoodyHut == 3108964764 or FeatureType == 226585075:
@@ -326,8 +355,8 @@ def save_to_map_json(mainDecompressedData):
 
         # See bin-structure.md for WIP documentation on what each of these values are
         tilesmap["tiles"].append({
-            "x": i % MAPSIZEDATA[tileskey]["x"],
-            "y": np.floor(i / MAPSIZEDATA[tileskey]["x"]),
+            "x": i % SX,
+            "y": np.floor(i / SX),
             "hexbin-location": mindex,
             "tile-length": 55 + buflength,
             "int16-1": readUInt16(bin, mindex),

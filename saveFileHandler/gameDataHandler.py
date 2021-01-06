@@ -200,7 +200,7 @@ def fileWorker(idx, filePath):
     data = f.read()
     f.close()
     mainDecompressedData = decompress(data)
-    tileData = save_to_map_json(mainDecompressedData)
+    tileData = save_to_map_json(mainDecompressedData, idx)
     cityData = getCityData(mainDecompressedData)
     return (idx, tileData, cityData)
 
