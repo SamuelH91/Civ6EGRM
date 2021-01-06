@@ -318,10 +318,11 @@ def save_to_map_json(mainDecompressedData):
         if FeatureType == 226585075:
             # print("Galapagos on map, check for black tiles, remove this comment later if no issues")
             # Check validity of next feature
-            NextFeatureType = readUInt32(bin, mindex + 55 + buflength + 16)
-            NextTerrainType = readUInt32(bin, mindex + 55 + buflength + 12)
-            if NextFeatureType not in Features or NextTerrainType not in Terrains:
-                buflength -= 20
+            if i < tiles - 1:
+                NextFeatureType = readUInt32(bin, mindex + 55 + buflength + 16)
+                NextTerrainType = readUInt32(bin, mindex + 55 + buflength + 12)
+                if NextFeatureType not in Features or NextTerrainType not in Terrains:
+                    buflength -= 20
 
         # See bin-structure.md for WIP documentation on what each of these values are
         tilesmap["tiles"].append({

@@ -275,11 +275,21 @@ class MainWindow(QtWidgets.QMainWindow):
         print("Gif done!")
 
     def createMp4(self):
+        remove_row = False
+        remove_column = False
         M = len(self.imageList)
         if M == 0:
             self.createImages()
         M = len(self.imageList)
         width, height = self.imageList[0].size
+
+        # To fix error when odd width/height size (in windows 7 version)
+        if height % 2 == 1:
+            remove_row = True
+            height -= 1
+        if width % 2 == 1:
+            remove_column = True
+            width -= 1
         fps = self.outputFps
         print("Creating mp4, please wait")
         self.updateStatus("Status: Creating mp4, please wait")
@@ -297,12 +307,20 @@ class MainWindow(QtWidgets.QMainWindow):
 
         pipe = sp.Popen(command, stdin=sp.PIPE, stderr=sp.PIPE)
         for image in self.imageList:
-            imtemp = image.copy()
-            pipe.stdin.write(np.array(imtemp).tobytes())
+            imtemp = np.array(image.copy())
+            if remove_row:
+                imtemp = np.delete(imtemp, 0, 0)
+            if remove_column:
+                imtemp = np.delete(imtemp, 0, 1)
+            pipe.stdin.write(imtemp.tobytes())
 
-        imtemp = self.imageList[M - 1]
         for ii in range(M % fps + 1):
-            pipe.stdin.write(np.array(imtemp).tobytes())
+            imtemp = np.array(self.imageList[M - 1].copy())
+            if remove_row:
+                imtemp = np.delete(imtemp, 0, 0)
+            if remove_column:
+                imtemp = np.delete(imtemp, 0, 1)
+            pipe.stdin.write(imtemp.tobytes())
 
         self.updateStatus("Status: Mp4 done!")
         print("Mp4 done!")
