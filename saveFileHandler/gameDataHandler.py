@@ -151,7 +151,8 @@ emptyPen = pg.mkPen(pg.mkColor(np.zeros(4, )))
 
 def map_civ_colors(civdata):
     added_colors = []
-    print(f"Civilization colors are determined by first-come-first-serve")
+    print(f"Civilization colors are still work in progress and currently determined by first-come-first-serve")
+    print(f"according to the jerseys used in civ6 wiki, but it seems that they are not updated there either")
     for i, civ in enumerate(civdata):
         for ii in range(4):
             color = CIV_COLORS[civ][ii]["territory"]

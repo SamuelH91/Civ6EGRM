@@ -338,12 +338,12 @@ def save_to_map_json(mainDecompressedData, idx):
             find_mapstart_idx(bin, b'\x0E\x00\x00\x00\x0F\x00\x00\x00\x06\x00\x00\x00')
     except:
         try:
-            print(f"File #{idx}: Warning default map start index not found, trying second guess!!!")
+            # print(f"File #{idx}: Warning default map start index not found, trying second guess!!!")
             mindex, tiles, tileskey, tilesmap =\
                 find_mapstart_idx(bin, b'\x16\x00\x00\x00\x17\x00\x00\x00\x06\x00\x00\x00')
         except:
             try:
-                print(f"File #{idx}: Warning default map start index not found, trying third guess!!!")
+                # print(f"File #{idx}: Warning default map start index not found, trying third guess!!!")
                 mindex, tiles, tileskey, tilesmap =\
                     find_mapstart_idx(bin, b'\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x06\x00\x00\x00')
             except:
