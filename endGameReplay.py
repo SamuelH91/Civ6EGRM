@@ -350,7 +350,7 @@ class MainWindow(QtWidgets.QMainWindow):
             mousePoint = self.plot_widget.graphWidget.plotItem.vb.mapSceneToView(pos)
             # print("x: {}, y {}".format(mousePoint.x(), mousePoint.y()))
             yidx = np.floor((mousePoint.y() + 1/np.sqrt(3)) / (np.sqrt(3) / 2))
-            xidx = np.floor(mousePoint.x() + (yidx % 2) * 0.5)
+            xidx = np.floor(mousePoint.x() + 0.5 - (yidx % 2) * 0.5)
             # print("x: {}, y {}".format(xidx, yidx))
             self.buttons_widget.x_value.setNum(xidx)
             self.buttons_widget.y_value.setNum(yidx)
