@@ -18,7 +18,7 @@ def decompress(saveFileBuffer):
     # jsons = parseJson(saveFileBuffer, idxH)
     modindex = civsav.rfind(b'MOD_TITLE')
     bufstartindex = civsav.index(b'\x78\x9c', modindex)
-    bufendindex = civsav.rindex(b'\x00\x00\xFF\xFF')
+    bufendindex = civsav.index(b'\x00\x00\xFF\xFF', bufstartindex)  # Find next end flag
 
     data = civsav[bufstartindex:bufendindex]
 
