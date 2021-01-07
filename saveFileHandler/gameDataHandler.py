@@ -149,20 +149,26 @@ riverPen = pg.mkPen(pg.mkColor(np.array((45, 89, 120, 255))), width=4)
 emptyBrush = pg.mkBrush(pg.mkColor(np.zeros(4, )))
 emptyPen = pg.mkPen(pg.mkColor(np.zeros(4, )))
 
+
 def map_civ_colors(civdata):
     added_colors = []
     print(f"Civilization colors are still work in progress and currently determined by first-come-first-serve")
     print(f"according to the jerseys used in civ6 wiki, but it seems that they are not updated there either")
     for i, civ in enumerate(civdata):
-        for ii in range(4):
-            color = CIV_COLORS[civ][ii]["territory"]
-            if color not in added_colors:
-                added_colors.append(color)
-                print(f"{civ} border color set to {color} (option #{ii})")
-                break
+        try:
+            for ii in range(4):
+                color = CIV_COLORS[civ][ii]["territory"]
+                if color not in added_colors:
+                    added_colors.append(color)
+                    print(f"{civ} border color set to {color} (option #{ii})")
+                    break
+        except:
+            print(f"{civ} border color not set (not defined)")
+            continue
         qcolor = pg.mkColor(color)
         civColorsPen[i] = pg.mkPen(qcolor, width=3)
         civColorsBrush[i] = pg.mkBrush(qcolor)
+
 
 def fileWorker(idx, filePath):
     f = open(filePath, "rb")
@@ -176,6 +182,7 @@ def fileWorker(idx, filePath):
     tileData = save_to_map_json(mainDecompressedData, idx)
     cityData = getCityData(mainDecompressedData)
     return (idx, tileData, cityData, civdata)
+
 
 class GameDataHandler():
     def __init__(self, dataFolder, fileExt=".Civ6Save"):
