@@ -26,6 +26,10 @@ class ButtonsWidget(QtWidgets.QWidget):
         button_layout.addWidget(button_toggle)
         button_toggle.clicked.connect(self.parent.toggleBorders)
 
+        button_toggle_water_borders = QtWidgets.QPushButton('Water Borders', self)
+        button_layout.addWidget(button_toggle_water_borders)
+        button_toggle_water_borders.clicked.connect(self.parent.toggleWaterBorders)
+
         button_play = QtWidgets.QPushButton('Play', self)
         button_layout.addWidget(button_play)
         button_play.clicked.connect(self.parent.play)
@@ -74,6 +78,10 @@ class MapVisualizerWidget(QtWidgets.QWidget):
         self.parent = parent
 
         layout = QtWidgets.QVBoxLayout(self)
+
+        # Civilization names
+        self.civNames = QtWidgets.QLabel(self)
+        self.civNames.setWordWrap(True)
 
         self.graphWidget = pg.PlotWidget()
         layout.addWidget(self.graphWidget)
@@ -244,6 +252,12 @@ class MainWindow(QtWidgets.QMainWindow):
         else:
             self.plot_widget.bordersHG.set_ec_colors([emptyPen] * len(self.gdh.borderColors[self.currentIdx - 1]))
             self.hidden = True
+
+    def toggleWaterBorders(self):
+        self.drawWaterBorders = not self.drawWaterBorders
+        self.gdh.calculateBorderColors(3, self.outerBordersOnly, self.useCivColors, self.drawWaterBorders)
+        self.currentIdx = self.plot_widget.turnSlider.sliderPosition()
+        self.updateTurn(self.currentIdx)
 
     def play(self):
         self.pause = False

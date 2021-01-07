@@ -295,6 +295,8 @@ class GameDataHandler():
             map_civ_colors(self.civData[0])
         t0 = time.time()
         self.X, self.Y = self.getMapSize()
+        self.neighbours_list = []
+        self.borderColors = []
         if outsideBordersOnly:
             for ii in range(self.X*self.Y):
                 self.neighbours_list.append(self.getNeighbourIndexes(ii))
