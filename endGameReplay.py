@@ -255,7 +255,11 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def toggleWaterBorders(self):
         self.drawWaterBorders = not self.drawWaterBorders
+        print("Recalculating borders")
+        self.updateStatus("Status: Recalculating borders")
         self.gdh.calculateBorderColors(3, self.outerBordersOnly, self.useCivColors, self.drawWaterBorders)
+        print("Borders calculated")
+        self.updateStatus("Status: Ready")
         self.currentIdx = self.plot_widget.turnSlider.sliderPosition()
         self.updateTurn(self.currentIdx)
 
