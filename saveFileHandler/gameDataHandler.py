@@ -290,7 +290,7 @@ class GameDataHandler():
                         self.riverColors.append(emptyPen)
         print("Total time for river colors: {}".format(time.time() - t0))
 
-    def calculateBorderColors(self, lw=3, outsideBordersOnly=False, use_civ_colors=True):
+    def calculateBorderColors(self, lw=3, outsideBordersOnly=False, use_civ_colors=True, drawWaterBorders=True):
         if use_civ_colors:
             map_civ_colors(self.civData[0])
         t0 = time.time()
@@ -301,6 +301,20 @@ class GameDataHandler():
         for turn in self.tileData:
             borderColorsAtTurn = []
             for ii, tile in enumerate(turn["tiles"]):
+                if not drawWaterBorders:
+                    terrainType = tile["TerrainType"]
+                    try:
+                        if (Terrains[terrainType]["TerrainType"] == "Ocean" or
+                                Terrains[terrainType]["TerrainType"] == "Coast"):
+                            if outsideBordersOnly:
+                                for jj in range(6):
+                                    borderColorsAtTurn.append(emptyPen)
+                            else:
+                                borderColorsAtTurn.append(emptyBrush)
+                            continue
+                    except:
+                        print("drawWaterBorders failure ...")
+                        pass
                 playerID = self.getPlayerID(tile)
                 if playerID >= 0:
                     if outsideBordersOnly:
