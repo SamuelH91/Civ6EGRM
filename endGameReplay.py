@@ -30,6 +30,10 @@ class ButtonsWidget(QtWidgets.QWidget):
         button_layout.addWidget(button_toggle_water_borders)
         button_toggle_water_borders.clicked.connect(self.parent.toggleWaterBorders)
 
+        button_toggle_civs = QtWidgets.QPushButton('Civ names', self)
+        button_layout.addWidget(button_toggle_civs)
+        button_toggle_civs.clicked.connect(self.parent.toggleCivilizationNames)
+
         button_play = QtWidgets.QPushButton('Play', self)
         button_layout.addWidget(button_play)
         button_play.clicked.connect(self.parent.play)
@@ -70,7 +74,6 @@ class ButtonsWidget(QtWidgets.QWidget):
         self.status.setText("Status: Ready")
 
 
-
 class MapVisualizerWidget(QtWidgets.QWidget):
     def __init__(self, parent, M, N, envColors, riverColors, outerBordersOnly, borderColors, citiesColors,
                  goodyHutColors, turnCount, *args, **kwargs):
@@ -78,13 +81,25 @@ class MapVisualizerWidget(QtWidgets.QWidget):
         self.parent = parent
 
         layout = QtWidgets.QVBoxLayout(self)
+        layoutH = QtWidgets.QHBoxLayout(self)
 
         # Civilization names
         self.civNames = QtWidgets.QLabel(self)
         self.civNames.setWordWrap(True)
+        self.civNames.setText("Mali\nFinland\n")
+        #self.civNames.setStyleSheet("outline: 2px black;")
+        layoutH.addWidget(self.civNames)
+
+        # creating a QGraphicsDropShadowEffect object
+        shadow = QtWidgets.QGraphicsDropShadowEffect()
+        # setting blur radius
+        shadow.setBlurRadius(1)
+        shadow.setOffset(1)
+        # adding shadow to the label
+        self.civNames.setGraphicsEffect(shadow)
 
         self.graphWidget = pg.PlotWidget()
-        layout.addWidget(self.graphWidget)
+        layoutH.addWidget(self.graphWidget)
         self.graphWidget.setAspectLocked(True)
         self.graphWidget.setAntialiasing(True)
         self.graphWidget.setBackground((0, 0, 0, 0))
@@ -92,6 +107,8 @@ class MapVisualizerWidget(QtWidgets.QWidget):
         self.graphWidget.getPlotItem().hideAxis('left')
         self.graphWidget.scene().sigMouseClicked.connect(self.parent.mouse_clicked)
         self.graphWidget.setMouseTracking(True)
+
+        layout.addLayout(layoutH)
 
         self.environmentHG = HexGrid(M, N)
         self.environmentHG.set_fc_colors(envColors)
@@ -199,6 +216,9 @@ class MainWindow(QtWidgets.QMainWindow):
                                 self.gdh.cityColors[0], self.gdh.goodyHuts[0], self.TurnCount)
         main_layout.addWidget(self.plot_widget)
 
+        # Set civ names
+        self.setCivilizationNames(self.gdh.getCivNames())
+
         self.showMaximized()
 
     def updateFps(self):
@@ -206,6 +226,12 @@ class MainWindow(QtWidgets.QMainWindow):
         if ok:
             self.outputFps = num
             self.buttons_widget.fps.setNum(num)
+
+    def toggleCivilizationNames(self):
+        self.plot_widget.civNames.setHidden(not self.plot_widget.civNames.isHidden())
+
+    def setCivilizationNames(self, text):
+        self.plot_widget.civNames.setText(text)
 
     def updateTurn(self, turn):
         t0 = time.time()

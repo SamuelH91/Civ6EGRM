@@ -166,6 +166,7 @@ def map_civ_colors(civdata):
             print(f"{civ} border color not set (not defined)")
             continue
         qcolor = pg.mkColor(color)
+        civColors[i] = color
         civColorsPen[i] = pg.mkPen(qcolor, width=3)
         civColorsBrush[i] = pg.mkBrush(qcolor)
 
@@ -339,6 +340,15 @@ class GameDataHandler():
                         borderColorsAtTurn.append(emptyBrush)
             self.borderColors.append(borderColorsAtTurn)
         print("Total time for border colors: {}".format(time.time() - t0))
+
+    def getCivNames(self):
+        civs = self.civData[0]
+        civ_text = ""
+        for i, civ in enumerate(civs):
+            colorhex = ''.join([format(int(c), '02x') for c in civColors[i]])
+            civ_text += "<font color=#" + colorhex + ">" + civ.capitalize() + "</font><br>"
+        #civ_text = "<font color=\"blue\">Hello</font> <font color=\"red\">World</font><font color=\"green\">!</font>"
+        return civ_text
 
     def calculateCityColors(self):
         t0 = time.time()
