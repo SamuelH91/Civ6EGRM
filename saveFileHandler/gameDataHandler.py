@@ -6,7 +6,7 @@ import time
 import multiprocessing as mp
 import pyqtgraph as pg
 import copy
-from saveFileHandler.civColors import CIV_COLORS
+from saveFileHandler.civColors import CIV_LEADER_COLORS, COLORS_PRISM, CIV_OVERFLOW_COLORS  # CIV_COLORS
 
 # Terrain types:
 # grassland: 				48 198 231 131:		2213004848     30 C6 E7 83    b'\x30\xC6\xE7\x83'
@@ -136,13 +136,18 @@ civColors = np.array([
 [255, 231, 213]]
 )
 civColors = np.concatenate((civColors, np.random.rand(213, 3) * 255))
+civColorsInner = np.copy(civColors)
 
 civColorsPen = []
 civColorsBrush = []
+civColorsPenInner = []
+civColorsBrushInner = []
 for color in civColors:
     qcolor = pg.mkColor(color)
     civColorsPen.append(pg.mkPen(qcolor, width=3))
+    civColorsPenInner.append(pg.mkPen(qcolor, width=3))
     civColorsBrush.append(pg.mkBrush(qcolor))
+    civColorsBrushInner.append(pg.mkBrush(qcolor))
 
 riverPen = pg.mkPen(pg.mkColor(np.array((45, 89, 120, 255))), width=4)
 
@@ -156,19 +161,40 @@ def map_civ_colors(civdata):
     print(f"according to the jerseys used in civ6 wiki, but it seems that they are not updated there either")
     for i, civ in enumerate(civdata):
         try:
+            colorset = False
             for ii in range(4):
-                color = CIV_COLORS[civ][ii]["territory"]
+                color = COLORS_PRISM[CIV_LEADER_COLORS[civ][ii*2]]
+                colorInner = COLORS_PRISM[CIV_LEADER_COLORS[civ][ii*2+1]]
+                if color not in added_colors:
+                    colorset = True
+                    added_colors.append(color)
+                    print(f"{civ} border color set to {color}/{colorInner} (option #{ii})")
+                    break
+            if not colorset:
+                for jj in range(int(len(CIV_OVERFLOW_COLORS)/2)):
+                    color = COLORS_PRISM[CIV_OVERFLOW_COLORS[jj * 2]]
+                    colorInner = COLORS_PRISM[CIV_LEADER_COLORS[civ][jj * 2 + 1]]
+                    if color not in added_colors:
+                        added_colors.append(color)
+                        print(f"{civ} border color set to {color}/{colorInner} (overflow option #{jj})")
+                        break
+        except:
+            for jj in range(int(len(CIV_OVERFLOW_COLORS) / 2)):
+                color = COLORS_PRISM[CIV_OVERFLOW_COLORS[jj * 2]]
+                colorInner = COLORS_PRISM[CIV_LEADER_COLORS[civ][jj * 2 + 1]]
                 if color not in added_colors:
                     added_colors.append(color)
-                    print(f"{civ} border color set to {color} (option #{ii})")
+                    print(f"{civ} border color set to {color}/{colorInner} (overflow option #{jj})")
                     break
-        except:
-            print(f"{civ} border color not set (not defined)")
-            continue
+            # continue
         qcolor = pg.mkColor(color)
+        qcolorInner = pg.mkColor(colorInner)
         civColors[i] = color
+        civColorsInner[i] = colorInner
         civColorsPen[i] = pg.mkPen(qcolor, width=3)
         civColorsBrush[i] = pg.mkBrush(qcolor)
+        civColorsPenInner[i] = pg.mkPen(colorInner, width=4)
+        civColorsBrushInner[i] = pg.mkBrush(qcolorInner)
 
 
 def fileWorker(idx, filePath):
@@ -176,13 +202,14 @@ def fileWorker(idx, filePath):
     data = f.read()
     f.close()
     mainDecompressedData = decompress(data)
-    civdata = []
+    civData = []
+    leaderData = []
     if idx == 0:
-        civdata = get_civ_data(data)
+        civData, leaderData = get_civ_data(data)
     # map_civ_colors(civdata)
     tileData = save_to_map_json(mainDecompressedData, idx)
     cityData = getCityData(mainDecompressedData)
-    return (idx, tileData, cityData, civdata)
+    return (idx, tileData, cityData, civData, leaderData)
 
 
 class GameDataHandler():
@@ -192,6 +219,7 @@ class GameDataHandler():
         self.tileData = []
         self.cityData = []
         self.civData = []
+        self.leaderData = []
         self.borderColors = []
         self.cityColors = []
         self.envColors = []
@@ -214,6 +242,7 @@ class GameDataHandler():
         self.tileData = [None] * count
         self.cityData = [None] * count
         self.civData = [None] * count
+        self.leaderData = [None] * count
         t0 = time.time()
         pool = mp.Pool()
         for ii, filePath in enumerate(filePaths):
@@ -227,6 +256,7 @@ class GameDataHandler():
         self.tileData[result[0]] = result[1]
         self.cityData[result[0]] = result[2]
         self.civData[result[0]] = result[3]
+        self.leaderData[result[0]] = result[4]
 
     def calculateOtherStuff(self):
         t0 = time.time()
@@ -293,16 +323,18 @@ class GameDataHandler():
 
     def calculateBorderColors(self, lw=3, outsideBordersOnly=False, use_civ_colors=True, drawWaterBorders=True):
         if use_civ_colors:
-            map_civ_colors(self.civData[0])
+            map_civ_colors(self.leaderData[0])
         t0 = time.time()
         self.X, self.Y = self.getMapSize()
         self.neighbours_list = []
         self.borderColors = []
+        self.borderColorsInner = []
         if outsideBordersOnly:
             for ii in range(self.X*self.Y):
                 self.neighbours_list.append(self.getNeighbourIndexes(ii))
         for turn in self.tileData:
             borderColorsAtTurn = []
+            borderInnerColorsAtTurn = []
             for ii, tile in enumerate(turn["tiles"]):
                 if not drawWaterBorders:
                     terrainType = tile["TerrainType"]
@@ -312,8 +344,10 @@ class GameDataHandler():
                             if outsideBordersOnly:
                                 for jj in range(6):
                                     borderColorsAtTurn.append(emptyPen)
+                                    borderInnerColorsAtTurn.append(emptyPen)
                             else:
                                 borderColorsAtTurn.append(emptyBrush)
+                                borderInnerColorsAtTurn.append(emptyBrush)
                             continue
                     except:
                         print("drawWaterBorders failure ...")
@@ -326,37 +360,51 @@ class GameDataHandler():
                                 neighbourID = self.getPlayerID(turn["tiles"][neighbour])
                                 if neighbourID == playerID:
                                     borderColorsAtTurn.append(emptyPen)
+                                    borderInnerColorsAtTurn.append(emptyPen)
                                 else:
                                     borderColorsAtTurn.append(civColorsPen[playerID])
+                                    borderInnerColorsAtTurn.append(civColorsPenInner[playerID])
                             else:
                                 borderColorsAtTurn.append(civColorsPen[playerID])
+                                borderInnerColorsAtTurn.append(civColorsPenInner[playerID])
                     else:
                         borderColorsAtTurn.append(civColorsBrush[playerID])
+                        borderInnerColorsAtTurn.append(emptyBrush)  # no inner
                 else:
                     if outsideBordersOnly:
                         for jj in range(6):
                             borderColorsAtTurn.append(emptyPen)
+                            borderInnerColorsAtTurn.append(emptyPen)
                     else:
                         borderColorsAtTurn.append(emptyBrush)
+                        borderInnerColorsAtTurn.append(emptyBrush)
             self.borderColors.append(borderColorsAtTurn)
+            self.borderColorsInner.append(borderInnerColorsAtTurn)
         print("Total time for border colors: {}".format(time.time() - t0))
 
     def getCivNames(self):
         civs = self.civData[0]
+        leaders = self.leaderData[0]
         civ_text = ""
         for i, civ in enumerate(civs):
             colorhex = ''.join([format(int(c), '02x') for c in civColors[i]])
-            civ_text += "<font color=#" + colorhex + ">" + civ.capitalize() + "</font><br>"
+            colorhexInner = ''.join([format(int(c), '02x') for c in civColorsInner[i]])
+            civ_text += "<font color=#" + colorhex + ">" + civ.capitalize() + "</font> - "
+            civ_text += "<font color=#" + colorhexInner + ">" + leaders[i].capitalize() + "</font><br>"
         #civ_text = "<font color=\"blue\">Hello</font> <font color=\"red\">World</font><font color=\"green\">!</font>"
         return civ_text
 
-    def calculateCityColors(self):
+    def calculateCityColors(self, useInnerAsCityColor=True):
         t0 = time.time()
         cityColorsAtTurnEmpty = [emptyBrush] * self.X*self.Y
+        self.cityColors = []
         for turn in self.cityData:
             cityColorsAtTurn = cityColorsAtTurnEmpty
             for city in turn["cities"]:
-                cityColorsAtTurn[city["LocationIdx"]] = civColorsBrush[city["CivIndex"]]
+                if useInnerAsCityColor:
+                    cityColorsAtTurn[city["LocationIdx"]] = civColorsBrushInner[city["CivIndex"]]
+                else:
+                    cityColorsAtTurn[city["LocationIdx"]] = civColorsBrush[city["CivIndex"]]
             self.cityColors.append(copy.copy(cityColorsAtTurn))
         print("Total time for city colors: {}".format(time.time() - t0))
 

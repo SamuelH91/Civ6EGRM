@@ -43,6 +43,7 @@ Features = {  # + goodyhut codes
     3808671749: {"FeatureType": "Kurgan",               "color": pg.mkBrush(pg.mkColor(np.array([0, 0, 0])))},
     2048582848: {"FeatureType": "LumberMill",           "color": pg.mkBrush(pg.mkColor(np.array([0, 0, 0])))},
     592796099:  {"FeatureType": "March",                "color": pg.mkBrush(pg.mkColor(np.array([0, 0, 0])))},
+    590245655:  {"FeatureType": "Mekewap",                "color": pg.mkBrush(pg.mkColor(np.array([0, 0, 0])))},
     933499311:  {"FeatureType": "MeteorSite",           "color": pg.mkBrush(pg.mkColor(np.array([0, 0, 0])))},
     1001859687: {"FeatureType": "Mine",                 "color": pg.mkBrush(pg.mkColor(np.array([0, 0, 0])))},
     2970879537: {"FeatureType": "Moai",                 "color": pg.mkBrush(pg.mkColor(np.array([0, 0, 0])))},
@@ -73,8 +74,8 @@ Features = {  # + goodyhut codes
 
     # Wonders
     2773098215: {"FeatureType": "ChocolateHills",       "color": pg.mkBrush(pg.mkColor(np.array([0, 0, 0])))},
-    1000000001: {"FeatureType": "CliffsOfDover",        "color": pg.mkBrush(pg.mkColor(np.array([0, 0, 0])))},
-    1000000002: {"FeatureType": "CraterLake",           "color": pg.mkBrush(pg.mkColor(np.array([0, 0, 0])))},
+    1: {"FeatureType": "CliffsOfDover",        "color": pg.mkBrush(pg.mkColor(np.array([0, 0, 0])))},
+    1253249868: {"FeatureType": "CraterLake",           "color": pg.mkBrush(pg.mkColor(np.array([0, 0, 0])))},
     1894931018: {"FeatureType": "DeadSea",              "color": pg.mkBrush(pg.mkColor(np.array([0, 0, 0])))},
     1781837174: {"FeatureType": "DelicateArch",         "color": pg.mkBrush(pg.mkColor(np.array([0, 0, 0])))},
     656656409:  {"FeatureType": "EyeOfTheSahara",       "color": pg.mkBrush(pg.mkColor(np.array([0, 0, 0])))},
@@ -89,7 +90,7 @@ Features = {  # + goodyhut codes
     308108439:  {"FeatureType": "Lysefjord",            "color": pg.mkBrush(pg.mkColor(np.array([0, 0, 0])))},
     3082807326: {"FeatureType": "MatoTipila",           "color": pg.mkBrush(pg.mkColor(np.array([0, 0, 0])))},
     224663563:  {"FeatureType": "Matterhorn",           "color": pg.mkBrush(pg.mkColor(np.array([0, 0, 0])))},
-    1000000012: {"FeatureType": "MountEverest",         "color": pg.mkBrush(pg.mkColor(np.array([0, 0, 0])))},
+    12: {"FeatureType": "MountEverest",         "color": pg.mkBrush(pg.mkColor(np.array([0, 0, 0])))},
     2354893825: {"FeatureType": "MountKilimanjaro",     "color": pg.mkBrush(pg.mkColor(np.array([0, 0, 0])))},
     3861018290: {"FeatureType": "MountRoraima",         "color": pg.mkBrush(pg.mkColor(np.array([0, 0, 0])))},
     2284878731: {"FeatureType": "MountVesuvius",        "color": pg.mkBrush(pg.mkColor(np.array([0, 0, 0])))},
@@ -99,8 +100,8 @@ Features = {  # + goodyhut codes
     3738443622: {"FeatureType": "SaharaElBeyda",        "color": pg.mkBrush(pg.mkColor(np.array([0, 0, 0])))},
     2666510884: {"FeatureType": "TorresDelPaine",       "color": pg.mkBrush(pg.mkColor(np.array([0, 0, 0])))},
     981353664:  {"FeatureType": "TsingyDeBemaraha",     "color": pg.mkBrush(pg.mkColor(np.array([0, 0, 0])))},
-    1000000021: {"FeatureType": "UbsunurHollow",        "color": pg.mkBrush(pg.mkColor(np.array([0, 0, 0])))},
-    1000000022: {"FeatureType": "Uluru",                "color": pg.mkBrush(pg.mkColor(np.array([0, 0, 0])))},
-    1253249868: {"FeatureType": "Yosemite",             "color": pg.mkBrush(pg.mkColor(np.array([0, 0, 0])))},
-    1000000023: {"FeatureType": "ZhangyeDanxia",        "color": pg.mkBrush(pg.mkColor(np.array([0, 0, 0])))},
+    21: {"FeatureType": "UbsunurHollow",        "color": pg.mkBrush(pg.mkColor(np.array([0, 0, 0])))},
+    4277999168: {"FeatureType": "Uluru",                "color": pg.mkBrush(pg.mkColor(np.array([0, 0, 0])))},
+    22: {"FeatureType": "Yosemite",             "color": pg.mkBrush(pg.mkColor(np.array([0, 0, 0])))},  # 1253249868
+    23: {"FeatureType": "ZhangyeDanxia",        "color": pg.mkBrush(pg.mkColor(np.array([0, 0, 0])))},
 }

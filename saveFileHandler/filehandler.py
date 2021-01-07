@@ -263,6 +263,7 @@ def get_civ_data(data):
     civ_id_start_key = b'\x54\xB4\x8A\x0D\x02'
     civ_id_end_key = b'\x2F\x52\x96\x1A\x02'  # Just before this one
     civ_adjective_key = b'\x31\xEB\x88\x62'
+    civ_leader_key = b'\x5F\x5E\xCD\xE8'
 
     bin = data
     civs = []
@@ -278,8 +279,16 @@ def get_civ_data(data):
             except:
                 print("Error finding civ index")
                 civIdx = -1
+            try:
+                leaderIndex = bin.find(civ_leader_key, civNameIndex)
+                leaderNameLength = readUInt16(bin, leaderIndex + 8)
+                leaderName = bin[leaderIndex + 16 + 7:leaderIndex + 16 + leaderNameLength - 1].decode("utf-8")
+            except:
+                print("Error finding leader")
+                leaderName = None
             civs.append({
                 "CivName": civName,
+                "LeaderName": leaderName,
                 "CivIndex": civIdx,
             })
             try:
@@ -290,13 +299,13 @@ def get_civ_data(data):
         print("Error no civs!!!")
         pass
     civsOrdered = [None] * len(civs)
+    leadersOrdered = [None] * len(civs)
     for civ in civs:
         idx = civ["CivIndex"]
         civsOrdered[idx] = civ["CivName"]
-    return civsOrdered
+        leadersOrdered[idx] = civ["LeaderName"]
+    return civsOrdered, leadersOrdered
 
-
-    mapstartindex = bin.index(key)
 
 MAPSIZEDATA = {
     '1144': {"x": 44, "y": 26},

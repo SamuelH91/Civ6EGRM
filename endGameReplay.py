@@ -75,8 +75,8 @@ class ButtonsWidget(QtWidgets.QWidget):
 
 
 class MapVisualizerWidget(QtWidgets.QWidget):
-    def __init__(self, parent, M, N, envColors, riverColors, outerBordersOnly, borderColors, citiesColors,
-                 goodyHutColors, turnCount, *args, **kwargs):
+    def __init__(self, parent, M, N, envColors, riverColors, outerBordersOnly, borderColors, borderColorsInner,
+                 citiesColors, goodyHutColors, turnCount, *args, **kwargs):
         super().__init__(parent, *args, **kwargs)
         self.parent = parent
 
@@ -122,6 +122,13 @@ class MapVisualizerWidget(QtWidgets.QWidget):
         self.riversHG.generatePicture()
         self.graphWidget.addItem(self.riversHG)
 
+        # Inner borders secondary color
+        self.bordersHG_inner = HexGrid(M, N, 0.75, outerBordersOnly)
+        self.bordersHG_inner.set_ec_colors(borderColorsInner)
+        self.bordersHG_inner.generatePicture()
+        self.graphWidget.addItem(self.bordersHG_inner)
+
+        # Outer borders primary color
         self.bordersHG = HexGrid(M, N, 0.85, outerBordersOnly)
         self.bordersHG.set_ec_colors(borderColors)
         self.bordersHG.generatePicture()
@@ -180,6 +187,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.useCivColors = True
         self.riversOn = True
         self.drawWaterBorders = True
+        self.useInnerColorAsCity = True
         self.saveDataLocation = os.getcwd() + "/data/auto/"  # Default location where runFileWatcher copies all auto saves
 
         # Read and parse all files to memory
@@ -188,7 +196,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         # Calculate border colors
         self.gdh.calculateBorderColors(3, self.outerBordersOnly, self.useCivColors, self.drawWaterBorders)
-        self.gdh.calculateCityColors()
+        self.gdh.calculateCityColors(self.useInnerColorAsCity)
 
         # Calculate environment colors
         self.gdh.calculateEnvColors()
@@ -212,7 +220,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.plot_widget = \
             MapVisualizerWidget(self, self.M, self.N, self.gdh.envColors, self.gdh.riverColors,
-                                self.outerBordersOnly, self.gdh.borderColors[0],
+                                self.outerBordersOnly, self.gdh.borderColors[0], self.gdh.borderColorsInner[0],
                                 self.gdh.cityColors[0], self.gdh.goodyHuts[0], self.TurnCount)
         main_layout.addWidget(self.plot_widget)
 
@@ -235,6 +243,10 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def updateTurn(self, turn):
         t0 = time.time()
+        self.plot_widget.bordersHG_inner.set_ec_colors(self.gdh.borderColorsInner[turn - 1])
+        t1 = time.time()
+        tBorderInner = t1 - t0
+        t0 = time.time()
         self.plot_widget.bordersHG.set_ec_colors(self.gdh.borderColors[turn - 1])
         t1 = time.time()
         tBorder = t1 - t0
@@ -248,6 +260,7 @@ class MainWindow(QtWidgets.QMainWindow):
         tCity = t1 - t0
 
         if self.enableTiming:
+            print("Border update took {} s".format(tBorderInner))
             print("Border update took {} s".format(tBorder))
             print("GoodyHut update took {} s".format(tGoody))
             print("City update took {} s".format(tCity))
@@ -273,9 +286,11 @@ class MainWindow(QtWidgets.QMainWindow):
     def toggleBorders(self):
         self.currentIdx = self.plot_widget.turnSlider.sliderPosition()
         if self.hidden:
+            self.plot_widget.bordersHG_inner.set_ec_colors(self.gdh.borderColorsInner[self.currentIdx - 1])
             self.plot_widget.bordersHG.set_ec_colors(self.gdh.borderColors[self.currentIdx - 1])
             self.hidden = False
         else:
+            self.plot_widget.bordersHG_inner.set_ec_colors([emptyPen] * len(self.gdh.borderColors[self.currentIdx - 1]))
             self.plot_widget.bordersHG.set_ec_colors([emptyPen] * len(self.gdh.borderColors[self.currentIdx - 1]))
             self.hidden = True
 
