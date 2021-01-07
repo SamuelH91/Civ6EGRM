@@ -173,7 +173,7 @@ def map_civ_colors(civdata):
             if not colorset:
                 for jj in range(int(len(CIV_OVERFLOW_COLORS)/2)):
                     color = COLORS_PRISM[CIV_OVERFLOW_COLORS[jj * 2]]
-                    colorInner = COLORS_PRISM[CIV_LEADER_COLORS[civ][jj * 2 + 1]]
+                    colorInner = COLORS_PRISM[CIV_OVERFLOW_COLORS[civ][jj * 2 + 1]]
                     if color not in added_colors:
                         added_colors.append(color)
                         print(f"{civ} border color set to {color}/{colorInner} (overflow option #{jj})")
@@ -181,7 +181,7 @@ def map_civ_colors(civdata):
         except:
             for jj in range(int(len(CIV_OVERFLOW_COLORS) / 2)):
                 color = COLORS_PRISM[CIV_OVERFLOW_COLORS[jj * 2]]
-                colorInner = COLORS_PRISM[CIV_LEADER_COLORS[civ][jj * 2 + 1]]
+                colorInner = COLORS_PRISM[CIV_OVERFLOW_COLORS[civ][jj * 2 + 1]]
                 if color not in added_colors:
                     added_colors.append(color)
                     print(f"{civ} border color set to {color}/{colorInner} (overflow option #{jj})")
