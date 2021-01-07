@@ -386,11 +386,21 @@ class GameDataHandler():
         civs = self.civData[0]
         leaders = self.leaderData[0]
         civ_text = ""
+        firstCityState = True
         for i, civ in enumerate(civs):
             colorhex = ''.join([format(int(c), '02x') for c in civColors[i]])
             colorhexInner = ''.join([format(int(c), '02x') for c in civColorsInner[i]])
-            civ_text += "<font color=#" + colorhex + ">" + civ.capitalize() + "</font> - "
-            civ_text += "<font color=#" + colorhexInner + ">" + leaders[i].capitalize() + "</font><br>"
+            leader = leaders[i]
+            civ_name = " ".join(x.capitalize() for x in civ.split("_"))
+            if leader[:10] == "MINOR_CIV_":
+                if firstCityState:
+                    civ_text += "<br>"
+                    firstCityState = False
+                leader = "City State"
+            else:
+                leader = " ".join(x.capitalize() for x in leader.split("_"))
+            civ_text += "<font color=#" + colorhex + ">" + civ_name + "</font> - "
+            civ_text += "<font color=#" + colorhexInner + ">" + leader + "</font><br>"
         #civ_text = "<font color=\"blue\">Hello</font> <font color=\"red\">World</font><font color=\"green\">!</font>"
         return civ_text
 
