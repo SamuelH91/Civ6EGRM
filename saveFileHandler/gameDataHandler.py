@@ -373,7 +373,7 @@ class GameDataHandler():
                         for neighbour in self.neighbours_list[ii]:
                             if neighbour < self.X*self.Y:
                                 neighbourID = self.getPlayerID(turn["tiles"][neighbour])
-                                if 255 > neighbourID == playerID:
+                                if neighbourID == playerID:
                                     borderColorsAtTurn.append(emptyPen)
                                     borderInnerColorsAtTurn.append(emptyPen)
                                     borderSCColorsAtTurn.append(emptyPen)

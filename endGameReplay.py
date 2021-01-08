@@ -150,7 +150,7 @@ class MapVisualizerWidget(QtWidgets.QWidget):
         self.graphWidget.addItem(self.bordersHG_cs)
 
         # Inner borders secondary color
-        self.bordersHG_inner = HexGrid(M, N, 0.75, outerBordersOnly)
+        self.bordersHG_inner = HexGrid(M, N, 0.7, outerBordersOnly)
         self.bordersHG_inner.set_ec_colors(borderColorsInner)
         self.bordersHG_inner.generatePicture()
         self.graphWidget.addItem(self.bordersHG_inner)
