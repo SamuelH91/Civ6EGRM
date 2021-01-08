@@ -62,6 +62,19 @@ class ButtonsWidget(QtWidgets.QWidget):
         coordinate_layout.addWidget(self.y_value)
         self.y_value.setNum(0)
 
+        self.civ = QtWidgets.QLabel(self)
+        button_layout.addWidget(self.civ)
+        self.civ.setWordWrap(True)
+        self.civ.setText("")
+
+        # creating a QGraphicsDropShadowEffect object
+        shadow = QtWidgets.QGraphicsDropShadowEffect()
+        # setting blur radius
+        shadow.setBlurRadius(1)
+        shadow.setOffset(1)
+        # adding shadow to the label
+        self.civ.setGraphicsEffect(shadow)
+
         updateFps_button = QtWidgets.QPushButton("Set output fps")
         button_layout.addWidget(updateFps_button)
         updateFps_button.clicked.connect(self.parent.updateFps)
@@ -86,7 +99,7 @@ class MapVisualizerWidget(QtWidgets.QWidget):
         # Civilization names
         self.civNames = QtWidgets.QLabel(self)
         self.civNames.setWordWrap(True)
-        self.civNames.setText("Mali\nFinland\n")
+        self.civNames.setText("Finland\nis a great country!")
         #self.civNames.setStyleSheet("outline: 2px black;")
         layoutH.addWidget(self.civNames)
 
@@ -415,6 +428,9 @@ class MainWindow(QtWidgets.QMainWindow):
             # print("x: {}, y {}".format(xidx, yidx))
             self.buttons_widget.x_value.setNum(xidx)
             self.buttons_widget.y_value.setNum(yidx)
+            self.currentIdx = self.plot_widget.turnSlider.sliderPosition()
+            owner = self.gdh.getOwner(self.currentIdx, int(xidx), int(yidx))
+            self.buttons_widget.civ.setText(owner)
 
 def main():
     app = QtWidgets.QApplication(sys.argv)
