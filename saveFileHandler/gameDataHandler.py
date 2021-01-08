@@ -158,6 +158,7 @@ riverPen = pg.mkPen(pg.mkColor(np.array((45, 89, 120, 255))), width=4)
 
 emptyBrush = pg.mkBrush(pg.mkColor(np.zeros(4, )))
 emptyPen = pg.mkPen(pg.mkColor(np.zeros(4, )))
+blackPen = pg.mkPen(pg.mkColor(np.array((24, 24, 24))), width=6)
 
 
 def map_civ_colors(civdata):
@@ -227,6 +228,8 @@ class GameDataHandler():
         self.civData = []
         self.leaderData = []
         self.borderColors = []
+        self.borderColorsInner = []
+        self.borderColorsSC = []
         self.cityColors = []
         self.envColors = []
         self.riverColors = []
@@ -236,6 +239,7 @@ class GameDataHandler():
         self.X = -1
         self.Y = -1
         self.neighbours_list = []
+        self.majorCivs = 0
 
     def parseData(self):
         snapshot = DirectorySnapshot(self.dataFolder, self.recursive)
@@ -256,6 +260,7 @@ class GameDataHandler():
             # self.saveResult(fileWorker(ii, filePath))  # debugging single thread
         pool.close()
         pool.join()
+        self.calcMajorCivs()
         print("Total time {} s for data parsing from {} files".format(time.time() - t0, count))
 
     def saveResult(self, result):
@@ -335,12 +340,14 @@ class GameDataHandler():
         self.neighbours_list = []
         self.borderColors = []
         self.borderColorsInner = []
+        self.borderColorsSC = []
         if outsideBordersOnly:
             for ii in range(self.X*self.Y):
                 self.neighbours_list.append(self.getNeighbourIndexes(ii))
         for turn in self.tileData:
             borderColorsAtTurn = []
             borderInnerColorsAtTurn = []
+            borderSCColorsAtTurn = []
             for ii, tile in enumerate(turn["tiles"]):
                 if not drawWaterBorders:
                     terrainType = tile["TerrainType"]
@@ -351,9 +358,11 @@ class GameDataHandler():
                                 for jj in range(6):
                                     borderColorsAtTurn.append(emptyPen)
                                     borderInnerColorsAtTurn.append(emptyPen)
+                                    borderSCColorsAtTurn.append(emptyPen)
                             else:
                                 borderColorsAtTurn.append(emptyBrush)
                                 borderInnerColorsAtTurn.append(emptyBrush)
+                                borderSCColorsAtTurn.append(emptyBrush)
                             continue
                     except:
                         print("drawWaterBorders failure ...")
@@ -364,28 +373,41 @@ class GameDataHandler():
                         for neighbour in self.neighbours_list[ii]:
                             if neighbour < self.X*self.Y:
                                 neighbourID = self.getPlayerID(turn["tiles"][neighbour])
-                                if neighbourID == playerID:
+                                if 255 > neighbourID == playerID:
                                     borderColorsAtTurn.append(emptyPen)
                                     borderInnerColorsAtTurn.append(emptyPen)
+                                    borderSCColorsAtTurn.append(emptyPen)
                                 else:
                                     borderColorsAtTurn.append(civColorsPen[playerID])
                                     borderInnerColorsAtTurn.append(civColorsPenInner[playerID])
+                                    if 255 > playerID >= self.majorCivs:
+                                        borderSCColorsAtTurn.append(blackPen)
+                                    else:
+                                        borderSCColorsAtTurn.append(emptyPen)
                             else:
                                 borderColorsAtTurn.append(civColorsPen[playerID])
                                 borderInnerColorsAtTurn.append(civColorsPenInner[playerID])
+                                if 255 > playerID >= self.majorCivs:
+                                    borderSCColorsAtTurn.append(blackPen)
+                                else:
+                                    borderSCColorsAtTurn.append(emptyPen)
                     else:
                         borderColorsAtTurn.append(civColorsBrush[playerID])
                         borderInnerColorsAtTurn.append(emptyBrush)  # no inner
+                        borderSCColorsAtTurn.append(emptyBrush)  # no inner
                 else:
                     if outsideBordersOnly:
                         for jj in range(6):
                             borderColorsAtTurn.append(emptyPen)
                             borderInnerColorsAtTurn.append(emptyPen)
+                            borderSCColorsAtTurn.append(emptyPen)
                     else:
                         borderColorsAtTurn.append(emptyBrush)
                         borderInnerColorsAtTurn.append(emptyBrush)
+                        borderSCColorsAtTurn.append(emptyBrush)
             self.borderColors.append(borderColorsAtTurn)
             self.borderColorsInner.append(borderInnerColorsAtTurn)
+            self.borderColorsSC.append(borderSCColorsAtTurn)
         print("Total time for border colors: {}".format(time.time() - t0))
 
     def getOwner(self, turnIdx, x, y, language=None):
@@ -415,6 +437,15 @@ class GameDataHandler():
                 elif playerID == 255:
                     civ_text += "Coastal Flood"
         return civ_text
+
+    def calcMajorCivs(self):
+        leaders = self.leaderData[0]
+        count = 0
+        for leader in leaders:
+            if leader[:10] == "MINOR_CIV_":
+                break
+            count += 1
+        self.majorCivs = count
 
     def languageChanger(self, language, civ, leader, cityState, civ_name, leader_name):
         if language != "en_EN" and language is not None:
