@@ -68,8 +68,13 @@ These can be installed with pip e.g.
 
 Any feedback or suggestions are appreciated.
 
-## Special thanks for https://github.com/lucienmaloney/civ6save-editing
+## Localization
+Localization is done automatically by
+- 'python parseLocalization.py' but you have to set correct paths to the code (if you have some new DLCs)
+- vanillapath = os.path.expanduser("G:\SteamLibrary\steamapps\common\Sid Meier's Civilization VI\Base\Assets\Text")
+- dlcpath = os.path.expanduser("G:\SteamLibrary\steamapps\common\Sid Meier's Civilization VI\DLC")
 
+## Special thanks for https://github.com/lucienmaloney/civ6save-editing
 
 ## Troubleshoot
 If following error at the start of endGameReplay.py file

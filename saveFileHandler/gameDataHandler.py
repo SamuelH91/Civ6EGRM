@@ -7,7 +7,12 @@ import multiprocessing as mp
 import pyqtgraph as pg
 import copy
 from saveFileHandler.civColors import CIV_LEADER_COLORS, COLORS_PRISM, CIV_OVERFLOW_COLORS  # CIV_COLORS
-
+try:
+    from saveFileHandler.civLocalization import CIV_LEADER_NAMES, CIV_NAMES
+    civLocalizationImportSuccess = True
+except:
+    civLocalizationImportSuccess = False
+    pass
 # Terrain types:
 # grassland: 				48 198 231 131:		2213004848     30 C6 E7 83    b'\x30\xC6\xE7\x83'
 # grassland (hills):		112 12 157 110: 	1855786096     70 0C 9D 6E    b'\x70\x0C\x9D\x6E'
@@ -383,27 +388,43 @@ class GameDataHandler():
             self.borderColorsInner.append(borderInnerColorsAtTurn)
         print("Total time for border colors: {}".format(time.time() - t0))
 
-    def getOwner(self, turnIdx, x, y):
+    def getOwner(self, turnIdx, x, y, language=None):
+        civ_text = ""
         civs = self.civData[0]
         leaders = self.leaderData[0]
         turn = self.tileData[turnIdx]
-        tile = turn["tiles"][y * self.X + x]
-        playerID = self.getPlayerID(tile)
-        civ_text = ""
-        if playerID >= 0:
-            if playerID < len(leaders):
-                leader, cityState = self.parseLeader(leaders[playerID])
-                colorhex = ''.join([format(int(c), '02x') for c in civColors[playerID]])
-                colorhexInner = ''.join([format(int(c), '02x') for c in civColorsInner[playerID]])
-                civ = civs[playerID]
-                civ_name = " ".join(x.capitalize() for x in civ.split("_"))
-                civ_text += "<font color=#" + colorhex + ">" + civ_name + "</font><br>"
-                civ_text += "<font color=#" + colorhexInner + ">" + leader + "</font>"
-            elif playerID == 62:  # Free City
-                civ_text += "Free City"
-            elif playerID == 255:
-                civ_text += "Coastal Flood"
+        if 0 < x <= self.X and 0 < y <= self.Y:
+            tile = turn["tiles"][y * self.X + x]
+            playerID = self.getPlayerID(tile)
+            if playerID >= 0:
+                if playerID < len(leaders):
+                    leader = leaders[playerID]
+                    leader_name, cityState = self.parseLeader(leader)
+                    colorhex = ''.join([format(int(c), '02x') for c in civColors[playerID]])
+                    colorhexInner = ''.join([format(int(c), '02x') for c in civColorsInner[playerID]])
+                    civ = civs[playerID]
+                    civ_name = " ".join(x.capitalize() for x in civ.split("_"))
+
+                    civ_name, leader_name = self.languageChanger(language, civ, leader, cityState, civ_name,
+                                                                 leader_name)
+
+                    civ_text += "<font color=#" + colorhex + ">" + civ_name + "</font><br>"
+                    civ_text += "<font color=#" + colorhexInner + ">" + leader_name + "</font>"
+                elif playerID == 62:  # Free City
+                    civ_text += "Free City"
+                elif playerID == 255:
+                    civ_text += "Coastal Flood"
         return civ_text
+
+    def languageChanger(self, language, civ, leader, cityState, civ_name, leader_name):
+        if language != "en_EN" and language is not None:
+            if civ in CIV_NAMES:
+                if language in CIV_NAMES[civ]:
+                    civ_name = CIV_NAMES[civ][language]
+            if leader in CIV_LEADER_NAMES and not cityState:
+                if language in CIV_LEADER_NAMES[leader]:
+                    leader_name = CIV_LEADER_NAMES[leader][language]
+        return civ_name, leader_name
 
     def parseLeader(self, leaderIn):
         cityState = False
@@ -415,7 +436,7 @@ class GameDataHandler():
             leader = " ".join(x.capitalize() for x in leader.split("_"))
         return leader, cityState
 
-    def getCivNames(self):
+    def getCivNames(self, language=None):
         civs = self.civData[0]
         leaders = self.leaderData[0]
         civ_text = ""
@@ -423,13 +444,17 @@ class GameDataHandler():
         for i, civ in enumerate(civs):
             colorhex = ''.join([format(int(c), '02x') for c in civColors[i]])
             colorhexInner = ''.join([format(int(c), '02x') for c in civColorsInner[i]])
+            leader = leaders[i]
+            leader_name, cityState = self.parseLeader(leader)
             civ_name = " ".join(x.capitalize() for x in civ.split("_"))
-            leader, cityState = self.parseLeader(leaders[i])
+
+            civ_name, leader_name = self.languageChanger(language, civ, leader, cityState, civ_name, leader_name)
+
             if firstCityState and cityState:
                 civ_text += "<br>"
                 firstCityState = False
             civ_text += "<font color=#" + colorhex + ">" + civ_name + "</font> - "
-            civ_text += "<font color=#" + colorhexInner + ">" + leader + "</font><br>"
+            civ_text += "<font color=#" + colorhexInner + ">" + leader_name + "</font><br>"
         #civ_text = "<font color=\"blue\">Hello</font> <font color=\"red\">World</font><font color=\"green\">!</font>"
         return civ_text
 

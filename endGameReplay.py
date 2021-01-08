@@ -10,6 +10,8 @@ from PIL import Image
 from pygifsicle import gifsicle
 import subprocess as sp
 
+LANGUAGES = ["en_EN", "ru_RU", "de_DE", "es_ES", "fr_FR", "it_IT", "ja_JP", "ko_KR", "pl_PL", "pt_BR"]
+
 # pg.setConfigOptions(antialias=True)
 
 class ButtonsWidget(QtWidgets.QWidget):
@@ -81,6 +83,12 @@ class ButtonsWidget(QtWidgets.QWidget):
         self.fps = QtWidgets.QLabel(self)  # QtWidgets.QLineEdit()
         button_layout.addWidget(self.fps)
         self.fps.setNum(10)
+
+        self.comboBox = QtWidgets.QComboBox(self)
+        button_layout.addWidget(self.comboBox)
+        for lan in LANGUAGES:
+            self.comboBox.addItem(lan)
+        self.comboBox.activated[str].connect(self.parent.setLanguage)
 
         self.status = QtWidgets.QLabel(self)
         button_layout.addWidget(self.status)
@@ -241,6 +249,12 @@ class MainWindow(QtWidgets.QMainWindow):
         self.setCivilizationNames(self.gdh.getCivNames())
 
         self.showMaximized()
+
+    def setLanguage(self, language):
+        if language == LANGUAGES[0]:
+            self.setCivilizationNames(self.gdh.getCivNames())
+        else:
+            self.setCivilizationNames(self.gdh.getCivNames(language))
 
     def updateFps(self):
         num, ok = QtWidgets.QInputDialog.getInt(self, "Set output fps value", "Enter a number", self.outputFps)
@@ -429,7 +443,8 @@ class MainWindow(QtWidgets.QMainWindow):
             self.buttons_widget.x_value.setNum(xidx)
             self.buttons_widget.y_value.setNum(yidx)
             self.currentIdx = self.plot_widget.turnSlider.sliderPosition()
-            owner = self.gdh.getOwner(self.currentIdx - 1, int(xidx), int(yidx))
+            language = self.buttons_widget.comboBox.currentText()
+            owner = self.gdh.getOwner(self.currentIdx - 1, int(xidx), int(yidx), language)
             self.buttons_widget.civ.setText(owner)
 
 def main():
