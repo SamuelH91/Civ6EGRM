@@ -391,13 +391,18 @@ class GameDataHandler():
         playerID = self.getPlayerID(tile)
         civ_text = ""
         if playerID >= 0:
-            leader, cityState = self.parseLeader(leaders[playerID])
-            colorhex = ''.join([format(int(c), '02x') for c in civColors[playerID]])
-            colorhexInner = ''.join([format(int(c), '02x') for c in civColorsInner[playerID]])
-            civ = civs[playerID]
-            civ_name = " ".join(x.capitalize() for x in civ.split("_"))
-            civ_text += "<font color=#" + colorhex + ">" + civ_name + "</font><br>"
-            civ_text += "<font color=#" + colorhexInner + ">" + leader + "</font>"
+            if playerID < len(leaders):
+                leader, cityState = self.parseLeader(leaders[playerID])
+                colorhex = ''.join([format(int(c), '02x') for c in civColors[playerID]])
+                colorhexInner = ''.join([format(int(c), '02x') for c in civColorsInner[playerID]])
+                civ = civs[playerID]
+                civ_name = " ".join(x.capitalize() for x in civ.split("_"))
+                civ_text += "<font color=#" + colorhex + ">" + civ_name + "</font><br>"
+                civ_text += "<font color=#" + colorhexInner + ">" + leader + "</font>"
+            elif playerID == 62:  # Free City
+                civ_text += "Free City"
+            elif playerID == 255:
+                civ_text += "Coastal Flood"
         return civ_text
 
     def parseLeader(self, leaderIn):
