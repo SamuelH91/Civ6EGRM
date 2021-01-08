@@ -429,7 +429,7 @@ class MainWindow(QtWidgets.QMainWindow):
             self.buttons_widget.x_value.setNum(xidx)
             self.buttons_widget.y_value.setNum(yidx)
             self.currentIdx = self.plot_widget.turnSlider.sliderPosition()
-            owner = self.gdh.getOwner(self.currentIdx, int(xidx), int(yidx))
+            owner = self.gdh.getOwner(self.currentIdx - 1, int(xidx), int(yidx))
             self.buttons_widget.civ.setText(owner)
 
 def main():
