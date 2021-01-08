@@ -229,7 +229,7 @@ class GameDataHandler():
         self.leaderData = []
         self.borderColors = []
         self.borderColorsInner = []
-        # self.borderColorsSC = []
+        self.borderColorsSC = []
         self.cityColors = []
         self.envColors = []
         self.riverColors = []
@@ -340,14 +340,14 @@ class GameDataHandler():
         self.neighbours_list = []
         self.borderColors = []
         self.borderColorsInner = []
-        # self.borderColorsSC = []
+        self.borderColorsSC = []
         if outsideBordersOnly:
             for ii in range(self.X*self.Y):
                 self.neighbours_list.append(self.getNeighbourIndexes(ii))
         for turn in self.tileData:
             borderColorsAtTurn = []
             borderInnerColorsAtTurn = []
-            # borderSCColorsAtTurn = []
+            borderSCColorsAtTurn = []
             for ii, tile in enumerate(turn["tiles"]):
                 if not drawWaterBorders:
                     terrainType = tile["TerrainType"]
@@ -358,11 +358,11 @@ class GameDataHandler():
                                 for jj in range(6):
                                     borderColorsAtTurn.append(emptyPen)
                                     borderInnerColorsAtTurn.append(emptyPen)
-                                    # borderSCColorsAtTurn.append(emptyPen)
+                                    borderSCColorsAtTurn.append(emptyPen)
                             else:
                                 borderColorsAtTurn.append(emptyBrush)
                                 borderInnerColorsAtTurn.append(emptyBrush)
-                                # borderSCColorsAtTurn.append(emptyBrush)
+                                borderSCColorsAtTurn.append(emptyBrush)
                             continue
                     except:
                         print("drawWaterBorders failure ...")
@@ -376,38 +376,38 @@ class GameDataHandler():
                                 if neighbourID == playerID:
                                     borderColorsAtTurn.append(emptyPen)
                                     borderInnerColorsAtTurn.append(emptyPen)
-                                    # borderSCColorsAtTurn.append(emptyPen)
+                                    borderSCColorsAtTurn.append(emptyPen)
                                 else:
                                     borderColorsAtTurn.append(civColorsPen[playerID])
                                     borderInnerColorsAtTurn.append(civColorsPenInner[playerID])
-                                    # if 255 > playerID >= self.majorCivs:
-                                    #     borderSCColorsAtTurn.append(blackPen)
-                                    # else:
-                                    #     borderSCColorsAtTurn.append(emptyPen)
+                                    if 255 > playerID >= self.majorCivs:
+                                        borderSCColorsAtTurn.append(blackPen)
+                                    else:
+                                        borderSCColorsAtTurn.append(emptyPen)
                             else:
                                 borderColorsAtTurn.append(civColorsPen[playerID])
                                 borderInnerColorsAtTurn.append(civColorsPenInner[playerID])
-                                # if 255 > playerID >= self.majorCivs:
-                                #     borderSCColorsAtTurn.append(blackPen)
-                                # else:
-                                #     borderSCColorsAtTurn.append(emptyPen)
+                                if 255 > playerID >= self.majorCivs:
+                                    borderSCColorsAtTurn.append(blackPen)
+                                else:
+                                    borderSCColorsAtTurn.append(emptyPen)
                     else:
                         borderColorsAtTurn.append(civColorsBrush[playerID])
                         borderInnerColorsAtTurn.append(emptyBrush)  # no inner
-                        # borderSCColorsAtTurn.append(emptyBrush)  # no inner
+                        borderSCColorsAtTurn.append(emptyBrush)  # no inner
                 else:
                     if outsideBordersOnly:
                         for jj in range(6):
                             borderColorsAtTurn.append(emptyPen)
                             borderInnerColorsAtTurn.append(emptyPen)
-                            # borderSCColorsAtTurn.append(emptyPen)
+                            borderSCColorsAtTurn.append(emptyPen)
                     else:
                         borderColorsAtTurn.append(emptyBrush)
                         borderInnerColorsAtTurn.append(emptyBrush)
-                        # borderSCColorsAtTurn.append(emptyBrush)
+                        borderSCColorsAtTurn.append(emptyBrush)
             self.borderColors.append(borderColorsAtTurn)
             self.borderColorsInner.append(borderInnerColorsAtTurn)
-            # self.borderColorsSC.append(borderSCColorsAtTurn)
+            self.borderColorsSC.append(borderSCColorsAtTurn)
         print("Total time for border colors: {}".format(time.time() - t0))
 
     def getOwner(self, turnIdx, x, y, language=None):

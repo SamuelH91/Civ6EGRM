@@ -97,7 +97,7 @@ class ButtonsWidget(QtWidgets.QWidget):
 
 class MapVisualizerWidget(QtWidgets.QWidget):
     def __init__(self, parent, M, N, envColors, riverColors, outerBordersOnly, borderColors, borderColorsInner,
-                 citiesColors, goodyHutColors, turnCount, *args, **kwargs):  # borderColorsSC,
+                 borderColorsSC, citiesColors, goodyHutColors, turnCount, *args, **kwargs):
         super().__init__(parent, *args, **kwargs)
         self.parent = parent
 
@@ -143,14 +143,14 @@ class MapVisualizerWidget(QtWidgets.QWidget):
         self.riversHG.generatePicture()
         self.graphWidget.addItem(self.riversHG)
 
-        # # City state borders color
-        # self.bordersHG_cs = HexGrid(M, N, 0.55, outerBordersOnly)
-        # self.bordersHG_cs.set_ec_colors(borderColorsSC)
-        # self.bordersHG_cs.generatePicture()
-        # self.graphWidget.addItem(self.bordersHG_cs)
+        # City state borders color
+        self.bordersHG_cs = HexGrid(M, N, 0.55, outerBordersOnly)
+        self.bordersHG_cs.set_ec_colors(borderColorsSC)
+        self.bordersHG_cs.generatePicture()
+        self.graphWidget.addItem(self.bordersHG_cs)
 
         # Inner borders secondary color
-        self.bordersHG_inner = HexGrid(M, N, 0.75, outerBordersOnly)
+        self.bordersHG_inner = HexGrid(M, N, 0.7, outerBordersOnly)
         self.bordersHG_inner.set_ec_colors(borderColorsInner)
         self.bordersHG_inner.generatePicture()
         self.graphWidget.addItem(self.bordersHG_inner)
@@ -248,7 +248,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.plot_widget = \
             MapVisualizerWidget(self, self.M, self.N, self.gdh.envColors, self.gdh.riverColors,
                                 self.outerBordersOnly, self.gdh.borderColors[0], self.gdh.borderColorsInner[0],
-                                self.gdh.cityColors[0], self.gdh.goodyHuts[0], self.TurnCount) # self.gdh.borderColorsSC[0]
+                                self.gdh.borderColorsSC[0], self.gdh.cityColors[0], self.gdh.goodyHuts[0],
+                                self.TurnCount)
         main_layout.addWidget(self.plot_widget)
 
         # Set civ names
@@ -275,10 +276,10 @@ class MainWindow(QtWidgets.QMainWindow):
         self.plot_widget.civNames.setText(text)
 
     def updateTurn(self, turn):
-        # t0 = time.time()
-        # self.plot_widget.bordersHG_cs.set_ec_colors(self.gdh.borderColorsSC[turn - 1])
-        # t1 = time.time()
-        # tBorderSC = t1 - t0
+        t0 = time.time()
+        self.plot_widget.bordersHG_cs.set_ec_colors(self.gdh.borderColorsSC[turn - 1])
+        t1 = time.time()
+        tBorderSC = t1 - t0
         t0 = time.time()
         self.plot_widget.bordersHG_inner.set_ec_colors(self.gdh.borderColorsInner[turn - 1])
         t1 = time.time()
@@ -297,7 +298,7 @@ class MainWindow(QtWidgets.QMainWindow):
         tCity = t1 - t0
 
         if self.enableTiming:
-            # print("Border update took {} s".format(tBorderSC))
+            print("Border update took {} s".format(tBorderSC))
             print("Border update took {} s".format(tBorderInner))
             print("Border update took {} s".format(tBorder))
             print("GoodyHut update took {} s".format(tGoody))
@@ -324,12 +325,12 @@ class MainWindow(QtWidgets.QMainWindow):
     def toggleBorders(self):
         self.currentIdx = self.plot_widget.turnSlider.sliderPosition()
         if self.hidden:
-            # self.plot_widget.bordersHG_cs.set_ec_colors(self.gdh.borderColorsSC[self.currentIdx - 1])
+            self.plot_widget.bordersHG_cs.set_ec_colors(self.gdh.borderColorsSC[self.currentIdx - 1])
             self.plot_widget.bordersHG_inner.set_ec_colors(self.gdh.borderColorsInner[self.currentIdx - 1])
             self.plot_widget.bordersHG.set_ec_colors(self.gdh.borderColors[self.currentIdx - 1])
             self.hidden = False
         else:
-            # self.plot_widget.bordersHG_cs.set_ec_colors([emptyPen] * len(self.gdh.borderColors[self.currentIdx - 1]))
+            self.plot_widget.bordersHG_cs.set_ec_colors([emptyPen] * len(self.gdh.borderColors[self.currentIdx - 1]))
             self.plot_widget.bordersHG_inner.set_ec_colors([emptyPen] * len(self.gdh.borderColors[self.currentIdx - 1]))
             self.plot_widget.bordersHG.set_ec_colors([emptyPen] * len(self.gdh.borderColors[self.currentIdx - 1]))
             self.hidden = True
