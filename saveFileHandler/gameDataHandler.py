@@ -240,6 +240,8 @@ class GameDataHandler():
         self.Y = -1
         self.neighbours_list = []
         self.majorCivs = 0
+        self.minorCivs = 0
+        self.cityCounts = []
 
     def parseData(self):
         snapshot = DirectorySnapshot(self.dataFolder, self.recursive)
@@ -261,6 +263,7 @@ class GameDataHandler():
         pool.close()
         pool.join()
         self.calcMajorCivs()
+        self.calcCityCounts()
         print("Total time {} s for data parsing from {} files".format(time.time() - t0, count))
 
     def saveResult(self, result):
@@ -268,6 +271,19 @@ class GameDataHandler():
         self.cityData[result[0]] = result[2]
         self.civData[result[0]] = result[3]
         self.leaderData[result[0]] = result[4]
+
+    def calcCityCounts(self):
+        self.cityCounts = []
+        for i, turn in enumerate(self.cityData):
+            cityCounts = [0] * self.majorCivs
+            usedCities = {}
+            for city in turn["cities"]:
+                cityCounts[city["CivIndex"]] += 1
+                if city["CityName"] not in usedCities:
+                    usedCities[city["CityName"]] = city["CivIndex"]
+                else:
+                    cityCounts[usedCities[city["CityName"]]] -= 1
+            self.cityCounts.append(cityCounts)
 
     def calculateOtherStuff(self):
         t0 = time.time()
@@ -446,6 +462,7 @@ class GameDataHandler():
                 break
             count += 1
         self.majorCivs = count
+        self.minorCivs = len(leaders) - count
 
     def languageChanger(self, language, civ, leader, cityState, civ_name, leader_name):
         if language != "en_EN" and language is not None:
