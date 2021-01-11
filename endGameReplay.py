@@ -143,23 +143,23 @@ class MapVisualizerWidget(QtWidgets.QWidget):
         self.riversHG.generatePicture()
         self.graphWidget.addItem(self.riversHG)
 
-        # City state borders color
-        self.bordersHG_cs = HexGrid(M, N, 0.55, outerBordersOnly)
-        self.bordersHG_cs.set_ec_colors(borderColorsSC)
-        self.bordersHG_cs.generatePicture()
-        self.graphWidget.addItem(self.bordersHG_cs)
-
         # Inner borders secondary color
-        self.bordersHG_inner = HexGrid(M, N, 0.7, outerBordersOnly)
+        self.bordersHG_inner = HexGrid(M, N, 0.65, outerBordersOnly)
         self.bordersHG_inner.set_ec_colors(borderColorsInner)
         self.bordersHG_inner.generatePicture()
         self.graphWidget.addItem(self.bordersHG_inner)
 
         # Outer borders primary color
-        self.bordersHG = HexGrid(M, N, 0.85, outerBordersOnly)
+        self.bordersHG = HexGrid(M, N, 0.8, outerBordersOnly)
         self.bordersHG.set_ec_colors(borderColors)
         self.bordersHG.generatePicture()
         self.graphWidget.addItem(self.bordersHG)
+
+        # City state borders color
+        self.bordersHG_cs = HexGrid(M, N, 0.9, outerBordersOnly)
+        self.bordersHG_cs.set_ec_colors(borderColorsSC)
+        self.bordersHG_cs.generatePicture()
+        self.graphWidget.addItem(self.bordersHG_cs)
 
         self.citiesHG = HexGrid(M, N, 0.5)
         self.citiesHG.set_fc_colors(citiesColors)

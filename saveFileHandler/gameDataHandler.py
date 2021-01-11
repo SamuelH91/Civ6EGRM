@@ -141,6 +141,9 @@ civColors = np.array([
 [255, 231, 213]]
 )
 civColors = np.concatenate((civColors, np.random.rand(213, 3) * 255))
+# Usually Free city civ index is 62, so in theory there can't be more than 62 civs major/minor
+civColors[62, :] = np.array([25, 25, 25])
+civColors[255, :] = np.array([0, 0, 255])  # sea level rise when no other owner
 civColorsInner = np.copy(civColors)
 
 civColorsPen = []
@@ -158,7 +161,7 @@ riverPen = pg.mkPen(pg.mkColor(np.array((45, 89, 120, 255))), width=4)
 
 emptyBrush = pg.mkBrush(pg.mkColor(np.zeros(4, )))
 emptyPen = pg.mkPen(pg.mkColor(np.zeros(4, )))
-blackPen = pg.mkPen(pg.mkColor(np.array((24, 24, 24))), width=6)
+blackPen = pg.mkPen(pg.mkColor(np.array((24, 24, 24))), width=2)
 
 
 def map_civ_colors(civdata):
