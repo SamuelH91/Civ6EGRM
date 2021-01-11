@@ -5,11 +5,14 @@ from watchdog.utils.dirsnapshot import DirectorySnapshot
 from shutil import copy2
 import os
 
+autoRunBat = "./folderWatcher/autoRunEndGameReplayHere.bat"
+
+
 class Watcher:
 
-    def __init__(self, watchDir, targetDir, fileExt=".Civ6Save", recursive=False):
+    def __init__(self, watchDir, targetDir, copyAutoRunBat=True, fileExt=".Civ6Save", recursive=False):
         self.observer = Observer()
-        self.event_handler = Handler(watchDir, targetDir, fileExt, recursive)
+        self.event_handler = Handler(watchDir, targetDir, copyAutoRunBat, fileExt, recursive)
         self.observer.schedule(self.event_handler, watchDir, recursive=recursive)
 
     def run(self):
@@ -25,7 +28,7 @@ class Watcher:
 
 class Handler(FileSystemEventHandler):
 
-    def __init__(self, watchDir, targetDir, fileExt, recursive):
+    def __init__(self, watchDir, targetDir, copyAutoRunBat, fileExt, recursive):
         self.watchDir = watchDir
         self.targetDir = targetDir
         self.recursive = recursive
@@ -36,6 +39,10 @@ class Handler(FileSystemEventHandler):
         for path in self.snapshot.paths:
             if fileExt == os.path.splitext(path)[1]:
                 copy2(path, os.path.join(self.targetDir, os.path.basename(path)))
+        if copyAutoRunBat:
+            copy2(autoRunBat, os.path.join(self.targetDir, os.path.basename(autoRunBat)))
+            print(f"\nAfter the game, you can run the endGameReplay.py by double clicking\n"
+                  f"autoRunEndGameReplayHere.bat from the target folder:\n'{targetDir}'\n")
 
     def on_any_event(self, event):
         self.snapshot = DirectorySnapshot(self.watchDir, self.recursive)

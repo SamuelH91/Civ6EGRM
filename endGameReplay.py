@@ -9,8 +9,34 @@ import io
 from PIL import Image
 from pygifsicle import gifsicle
 import subprocess as sp
+import argparse
 
 LANGUAGES = ["en_EN", "ru_RU", "de_DE", "es_ES", "fr_FR", "it_IT", "ja_JP", "ko_KR", "pl_PL", "pt_BR"]
+
+
+def run_arg_parser():
+    # Create the parser
+    arg_parser = argparse.ArgumentParser(description='endGameReplay.py reads all civ6 autosave files from -d "<location>"\n'
+                                                     'and displays end game replay map turn by turn. You can also create\n'
+                                                     'mp4 and gif files from your game.')
+    # Add the arguments
+    arg_parser.add_argument('-d', metavar='civ6 autosave directory', action='store', type=str,
+                            required=False, help='the path to the autosave folder')
+    # Execute the parse_args() method
+    args = arg_parser.parse_args()
+    target_path = args.d
+
+    if target_path:
+        if not os.path.isdir(target_path):
+            target_path = None
+        else:
+            target_path = os.path.expanduser(target_path + "/")
+
+    if not target_path:
+        print('The path specified does not exist using default target folder ./auto/data, use -d <dir_path> to change')
+        target_path = os.getcwd() + "/data/auto/"  # Default location where runFileWatcher copies all auto saves
+
+    return target_path
 
 # pg.setConfigOptions(antialias=True)
 
@@ -144,19 +170,19 @@ class MapVisualizerWidget(QtWidgets.QWidget):
         self.graphWidget.addItem(self.riversHG)
 
         # Inner borders secondary color
-        self.bordersHG_inner = HexGrid(M, N, 0.65, outerBordersOnly)
+        self.bordersHG_inner = HexGrid(M, N, 0.6, outerBordersOnly)
         self.bordersHG_inner.set_ec_colors(borderColorsInner)
         self.bordersHG_inner.generatePicture()
         self.graphWidget.addItem(self.bordersHG_inner)
 
         # Outer borders primary color
-        self.bordersHG = HexGrid(M, N, 0.8, outerBordersOnly)
+        self.bordersHG = HexGrid(M, N, 0.75, outerBordersOnly)
         self.bordersHG.set_ec_colors(borderColors)
         self.bordersHG.generatePicture()
         self.graphWidget.addItem(self.bordersHG)
 
         # City state borders color
-        self.bordersHG_cs = HexGrid(M, N, 0.9, outerBordersOnly)
+        self.bordersHG_cs = HexGrid(M, N, 0.85, outerBordersOnly)
         self.bordersHG_cs.set_ec_colors(borderColorsSC)
         self.bordersHG_cs.generatePicture()
         self.graphWidget.addItem(self.bordersHG_cs)
@@ -194,7 +220,7 @@ class MapVisualizerWidget(QtWidgets.QWidget):
 
 class MainWindow(QtWidgets.QMainWindow):
 
-    def __init__(self, app, *args, **kwargs):
+    def __init__(self, app, target_path=None, *args, **kwargs):
         super(MainWindow, self).__init__(*args, **kwargs)
         self.setWindowTitle("Civ VI End Game Replay Map")
         self.app = app
@@ -215,7 +241,10 @@ class MainWindow(QtWidgets.QMainWindow):
         self.riversOn = True
         self.drawWaterBorders = True
         self.useInnerColorAsCity = True
-        self.saveDataLocation = os.getcwd() + "/data/auto/"  # Default location where runFileWatcher copies all auto saves
+        if target_path:
+            self.saveDataLocation = target_path
+        else:
+            self.saveDataLocation = os.getcwd() + "/data/auto/"  # Default location where runFileWatcher copies all auto saves
 
         # Read and parse all files to memory
         self.gdh = GameDataHandler(self.saveDataLocation)
@@ -461,9 +490,10 @@ class MainWindow(QtWidgets.QMainWindow):
             owner = self.gdh.getOwner(self.currentIdx - 1, int(xidx), int(yidx), language)
             self.buttons_widget.civ.setText(owner)
 
+
 def main():
     app = QtWidgets.QApplication(sys.argv)
-    main = MainWindow(app)
+    main = MainWindow(app, run_arg_parser())
     main.show()
     sys.exit(app.exec_())
 
