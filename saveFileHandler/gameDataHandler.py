@@ -214,12 +214,14 @@ def fileWorker(idx, filePath):
     mainDecompressedData = decompress(data)
     civData = []
     leaderData = []
+    notifications = []
     if idx == 0:
         civData, leaderData = get_civ_data(data)
     # map_civ_colors(civdata)
     tileData = save_to_map_json(mainDecompressedData, idx)
     cityData = getCityData(mainDecompressedData)
-    return (idx, tileData, cityData, civData, leaderData)
+    # notifications = getNotifications(mainDecompressedData)
+    return (idx, tileData, cityData, civData, leaderData, notifications)
 
 
 class GameDataHandler():
@@ -230,6 +232,7 @@ class GameDataHandler():
         self.cityData = []
         self.civData = []
         self.leaderData = []
+        self.notifications = []
         self.borderColors = []
         self.borderColorsInner = []
         self.borderColorsSC = []
@@ -258,6 +261,7 @@ class GameDataHandler():
         self.cityData = [None] * count
         self.civData = [None] * count
         self.leaderData = [None] * count
+        self.notifications = [None] * count
         t0 = time.time()
         pool = mp.Pool()
         for ii, filePath in enumerate(filePaths):
@@ -265,15 +269,25 @@ class GameDataHandler():
             # self.saveResult(fileWorker(ii, filePath))  # debugging single thread
         pool.close()
         pool.join()
+        # unique_notifications = self.checkUniqueNotifications()
         self.calcMajorCivs()
         self.calcCityCounts()
         print("Total time {} s for data parsing from {} files".format(time.time() - t0, count))
+
+    def checkUniqueNotifications(self):
+        unique_notifications = []
+        for turn in self.notifications:
+            for notification in turn:
+                if notification["NotiName"] not in unique_notifications:
+                    unique_notifications.append(notification["NotiName"])
+        return unique_notifications
 
     def saveResult(self, result):
         self.tileData[result[0]] = result[1]
         self.cityData[result[0]] = result[2]
         self.civData[result[0]] = result[3]
         self.leaderData[result[0]] = result[4]
+        self.notifications[result[0]] = result[5]
 
     def calcCityCounts(self):
         self.cityCounts = []
@@ -393,9 +407,24 @@ class GameDataHandler():
                             if neighbour < self.X*self.Y:
                                 neighbourID = self.getPlayerID(turn["tiles"][neighbour])
                                 if neighbourID == playerID:
-                                    borderColorsAtTurn.append(emptyPen)
-                                    borderInnerColorsAtTurn.append(emptyPen)
-                                    borderSCColorsAtTurn.append(emptyPen)
+                                    if not drawWaterBorders:
+                                        terrainType = turn["tiles"][neighbour]["TerrainType"]
+                                        if (Terrains[terrainType]["TerrainType"] == "Ocean" or
+                                                Terrains[terrainType]["TerrainType"] == "Coast"):
+                                            borderColorsAtTurn.append(civColorsPen[playerID])
+                                            borderInnerColorsAtTurn.append(civColorsPenInner[playerID])
+                                            if 255 > playerID >= self.majorCivs:
+                                                borderSCColorsAtTurn.append(blackPen)
+                                            else:
+                                                borderSCColorsAtTurn.append(emptyPen)
+                                        else:
+                                            borderColorsAtTurn.append(emptyPen)
+                                            borderInnerColorsAtTurn.append(emptyPen)
+                                            borderSCColorsAtTurn.append(emptyPen)
+                                    else:
+                                        borderColorsAtTurn.append(emptyPen)
+                                        borderInnerColorsAtTurn.append(emptyPen)
+                                        borderSCColorsAtTurn.append(emptyPen)
                                 else:
                                     borderColorsAtTurn.append(civColorsPen[playerID])
                                     borderInnerColorsAtTurn.append(civColorsPenInner[playerID])
