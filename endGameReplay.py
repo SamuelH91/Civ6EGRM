@@ -170,13 +170,13 @@ class MapVisualizerWidget(QtWidgets.QWidget):
         self.graphWidget.addItem(self.riversHG)
 
         # Inner borders secondary color
-        self.bordersHG_inner = HexGrid(M, N, 0.6, outerBordersOnly)
+        self.bordersHG_inner = HexGrid(M, N, 0.55, outerBordersOnly)
         self.bordersHG_inner.set_ec_colors(borderColorsInner)
         self.bordersHG_inner.generatePicture()
         self.graphWidget.addItem(self.bordersHG_inner)
 
         # Outer borders primary color
-        self.bordersHG = HexGrid(M, N, 0.75, outerBordersOnly)
+        self.bordersHG = HexGrid(M, N, 0.7, outerBordersOnly)
         self.bordersHG.set_ec_colors(borderColors)
         self.bordersHG.generatePicture()
         self.graphWidget.addItem(self.bordersHG)

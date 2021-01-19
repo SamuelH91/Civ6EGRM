@@ -161,7 +161,7 @@ riverPen = pg.mkPen(pg.mkColor(np.array((45, 89, 120, 255))), width=4)
 
 emptyBrush = pg.mkBrush(pg.mkColor(np.zeros(4, )))
 emptyPen = pg.mkPen(pg.mkColor(np.zeros(4, )))
-blackPen = pg.mkPen(pg.mkColor(np.array((24, 24, 24))), width=2)
+blackPen = pg.mkPen(pg.mkColor(np.array((24, 24, 24))), width=3)
 
 
 def map_civ_colors(civdata):
