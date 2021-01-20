@@ -282,15 +282,20 @@ class MainWindow(QtWidgets.QMainWindow):
         main_layout.addWidget(self.plot_widget)
 
         # Set civ names
-        self.setCivilizationNames(self.gdh.getCivNames())
+        self.setCivilizationNames(self.gdh.getCivNames(0))
 
         self.showMaximized()
 
     def setLanguage(self, language):
         if language == LANGUAGES[0]:
-            self.setCivilizationNames(self.gdh.getCivNames())
+            self.gdh.parseCivNames()
         else:
-            self.setCivilizationNames(self.gdh.getCivNames(language))
+            self.gdh.parseCivNames(language)
+        self.currentIdx = self.plot_widget.turnSlider.sliderPosition()
+        self.updateCivs(self.currentIdx - 1)
+
+    def updateCivs(self, turn):
+        self.setCivilizationNames(self.gdh.getCivNames(turn))
 
     def updateFps(self):
         num, ok = QtWidgets.QInputDialog.getInt(self, "Set output fps value", "Enter a number", self.outputFps)
@@ -325,6 +330,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.plot_widget.citiesHG.set_fc_colors(self.gdh.cityColors[turn - 1])
         t1 = time.time()
         tCity = t1 - t0
+        self.updateCivs(turn - 1)
 
         if self.enableTiming:
             print("Border update took {} s".format(tBorderSC))

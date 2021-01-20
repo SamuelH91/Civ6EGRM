@@ -248,6 +248,10 @@ class GameDataHandler():
         self.majorCivs = 0
         self.minorCivs = 0
         self.cityCounts = []
+        self.civ_text = []
+        self.civHexaCounts = []
+        self.playersAlive = []
+        self.calculatingCivNames = False
 
     def parseData(self):
         snapshot = DirectorySnapshot(self.dataFolder, self.recursive)
@@ -272,6 +276,9 @@ class GameDataHandler():
         # unique_notifications = self.checkUniqueNotifications()
         self.calcMajorCivs()
         self.calcCityCounts()
+        self.calculateCivHexas()
+        self.calcPlayersAlive()
+        self.parseCivNames()
         print("Total time {} s for data parsing from {} files".format(time.time() - t0, count))
 
     def checkUniqueNotifications(self):
@@ -364,6 +371,39 @@ class GameDataHandler():
                     for jj in range(6):
                         self.riverColors.append(emptyPen)
         print("Total time for river colors: {}".format(time.time() - t0))
+
+    def calculateCivHexas(self):
+        civNum = self.majorCivs + self.minorCivs
+        self.civHexaCounts = []
+        for turn in self.tileData:
+            civHexaCountsAtTurn = [0] * civNum
+            for ii, tile in enumerate(turn["tiles"]):
+                playerID = self.getPlayerID(tile)
+                if 0 <= playerID < civNum:
+                    civHexaCountsAtTurn[playerID] += 1
+            self.civHexaCounts.append(civHexaCountsAtTurn)
+
+    def calcPlayersAlive(self):
+        playersNum = self.majorCivs + self.minorCivs
+        self.playersAlive = []
+        for hexaCounts, cityCounts in zip(self.civHexaCounts, self.cityCounts):
+            temp = [x > 0 for x in hexaCounts]
+            for i in range(self.majorCivs):
+                if temp[i]:
+                    continue
+                elif cityCounts[i] > 0:
+                    temp[i] = True
+            self.playersAlive.append(temp)
+        playerAlive = [False] * playersNum
+        for turn in reversed(self.playersAlive):
+            for i in range(playersNum):
+                if playerAlive[i]:
+                    turn[i] = True
+                    continue
+                if turn[i]:
+                    playerAlive[i] = True
+
+
 
     def calculateBorderColors(self, lw=3, outsideBordersOnly=False, use_civ_colors=True, drawWaterBorders=True):
         if use_civ_colors:
@@ -516,11 +556,12 @@ class GameDataHandler():
             leader = " ".join(x.capitalize() for x in leader.split("_"))
         return leader, cityState
 
-    def getCivNames(self, language=None):
+    def parseCivNames(self, language=None):
+        self.calculatingCivNames = True
         civs = self.civData[0]
         leaders = self.leaderData[0]
-        civ_text = ""
-        firstCityState = True
+        self.civ_text = []
+        # firstCityState = True
         for i, civ in enumerate(civs):
             colorhex = ''.join([format(int(c), '02x') for c in civColors[i]])
             colorhexInner = ''.join([format(int(c), '02x') for c in civColorsInner[i]])
@@ -530,12 +571,23 @@ class GameDataHandler():
 
             civ_name, leader_name = self.languageChanger(language, civ, leader, cityState, civ_name, leader_name)
 
-            if firstCityState and cityState:
-                civ_text += "<br>"
-                firstCityState = False
-            civ_text += "<font color=#" + colorhex + ">" + civ_name + "</font> - "
-            civ_text += "<font color=#" + colorhexInner + ">" + leader_name + "</font><br>"
-        #civ_text = "<font color=\"blue\">Hello</font> <font color=\"red\">World</font><font color=\"green\">!</font>"
+            # if firstCityState and cityState:
+            #     self.civ_text.append("<br>")
+            #     firstCityState = False
+            self.civ_text.append("<font color=#" + colorhex + ">" + civ_name + "</font> - " +
+                                 "<font color=#" + colorhexInner + ">" + leader_name + "</font><br>")
+        self.calculatingCivNames = False
+
+    def getCivNames(self, turnIdx):
+        playersRemaining = self.playersAlive[turnIdx]
+        civ_text = ""
+        if not self.calculatingCivNames:
+            for i, alive in enumerate(playersRemaining):
+                # First minor civ
+                if i == self.majorCivs:
+                    civ_text += "<br>"
+                if alive:
+                    civ_text += self.civ_text[i]
         return civ_text
 
     def calculateCityColors(self, useInnerAsCityColor=True):
