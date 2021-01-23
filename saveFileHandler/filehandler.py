@@ -470,3 +470,32 @@ def getCityData(mainDecompressedData):
         print("No cities!")
         pass
     return cities
+
+notiEnd = "_MESSAGE"  # or "_SUMMARY"
+
+# Are these only player based notifications
+def getNotifications(mainDecompressedData):
+    binaryData = mainDecompressedData
+    notifications = []
+    try:
+        notiIndex = binaryData.index(b'LOC_NOTIFICATION_')
+        # There is some religion info as well at same section
+        while notiIndex:
+            notiNameLength = readUInt32(binaryData, notiIndex - 4)
+            notiName = binaryData[notiIndex:notiIndex + notiNameLength].decode("utf-8")
+            idx = notiIndex + notiNameLength
+
+            notifications.append({
+                "NotiName": notiName,
+                "BinaryIdx": notiIndex,
+            })
+            try:
+                notiIndex = binaryData.index(b'LOC_NOTIFICATION_', idx)
+            except:
+                break
+    except:
+        print("No notifications!")
+        pass
+    return notifications
+
+

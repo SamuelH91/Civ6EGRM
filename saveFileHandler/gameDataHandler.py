@@ -220,7 +220,7 @@ def fileWorker(idx, filePath):
     # map_civ_colors(civdata)
     tileData = save_to_map_json(mainDecompressedData, idx)
     cityData = getCityData(mainDecompressedData)
-    # notifications = getNotifications(mainDecompressedData)
+    notifications = getNotifications(mainDecompressedData)
     return (idx, tileData, cityData, civData, leaderData, notifications)
 
 
@@ -273,7 +273,7 @@ class GameDataHandler():
             # self.saveResult(fileWorker(ii, filePath))  # debugging single thread
         pool.close()
         pool.join()
-        # unique_notifications = self.checkUniqueNotifications()
+        unique_notifications = self.checkUniqueNotifications()
         self.calcMajorCivs()
         self.calcCityCounts()
         self.calculateCivHexas()
