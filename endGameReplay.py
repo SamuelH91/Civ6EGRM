@@ -282,6 +282,7 @@ class MainWindow(QtWidgets.QMainWindow):
         main_layout.addWidget(self.plot_widget)
 
         # Set civ names
+        self.gdh.parseCivNames()
         self.setCivilizationNames(self.gdh.getCivNames(0))
 
         self.showMaximized()

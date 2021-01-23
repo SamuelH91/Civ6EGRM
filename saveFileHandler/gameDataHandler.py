@@ -278,7 +278,6 @@ class GameDataHandler():
         self.calcCityCounts()
         self.calculateCivHexas()
         self.calcPlayersAlive()
-        self.parseCivNames()
         print("Total time {} s for data parsing from {} files".format(time.time() - t0, count))
 
     def checkUniqueNotifications(self):
