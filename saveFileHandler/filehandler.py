@@ -380,7 +380,7 @@ def save_to_map_json(mainDecompressedData, idx):
         FeatureType = readUInt32(bin, mindex + 16)
         TerrainType = readUInt32(bin, mindex + 12)
         if FeatureType not in Features:
-            print(f"Add to dict: Feature: {FeatureType}, x: {i % SX}, y: {np.floor(i / SX)}")
+            print(f"File #{idx}: Add feature: {FeatureType}, x: {i % SX}, y: {np.floor(i / SX)}")
 
         # ski resort + mountain tunnel + galapagos (initial guess)
         if GoodyHut == 2135005470 or GoodyHut == 3108964764 or FeatureType == 226585075:

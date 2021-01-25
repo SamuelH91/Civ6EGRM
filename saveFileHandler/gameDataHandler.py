@@ -166,7 +166,7 @@ blackPen = pg.mkPen(pg.mkColor(np.array((24, 24, 24))), width=3)
 
 def map_civ_colors(civdata):
     added_colors = []
-    print(f"Civilization colors are still work in progress and currently determined by first-come-first-serve")
+    print(f"Civilization colors are determined by first-come-first-serve")
     print(f"according to the jerseys used in Prismatic - Color and Jersey Overhaul mod")
     print(f"https://steamcommunity.com/sharedfiles/filedetails/?id=1661785509")
     for i, civ in enumerate(civdata):
