@@ -261,7 +261,7 @@ def parseJson(saveFileBuffer, idxH):
 def get_civ_data(data):
 
     civ_id_start_key = b'\x54\xB4\x8A\x0D\x02'
-    civ_id_end_key = b'\x2F\x52\x96\x1A\x02'  # Just before this one
+    civ_id_end_key = b'\x58\xBA\x7F\x4C\x02'  # old one not reliable: b'\x2F\x52\x96\x1A\x02'  # Just before this one
     civ_adjective_key = b'\x31\xEB\x88\x62'
     civ_leader_key = b'\x5F\x5E\xCD\xE8'
 
@@ -279,18 +279,19 @@ def get_civ_data(data):
             except:
                 print("Error finding civ index")
                 civIdx = -1
-            try:
-                leaderIndex = bin.find(civ_leader_key, civNameIndex)
-                leaderNameLength = readUInt16(bin, leaderIndex + 8)
-                leaderName = bin[leaderIndex + 16 + 7:leaderIndex + 16 + leaderNameLength - 1].decode("utf-8")
-            except:
-                print("Error finding leader")
-                leaderName = None
-            civs.append({
-                "CivName": civName,
-                "LeaderName": leaderName,
-                "CivIndex": civIdx,
-            })
+            if civIdx != 63:  # or known as BARBARIAN
+                try:
+                    leaderIndex = bin.find(civ_leader_key, civNameIndex)
+                    leaderNameLength = readUInt16(bin, leaderIndex + 8)
+                    leaderName = bin[leaderIndex + 16 + 7:leaderIndex + 16 + leaderNameLength - 1].decode("utf-8")
+                except:
+                    print("Error finding leader")
+                    leaderName = None
+                civs.append({
+                    "CivName": civName,
+                    "LeaderName": leaderName,
+                    "CivIndex": civIdx,
+                })
             try:
                 civNameIndex = bin.index(civ_adjective_key, civNameIndex + 8)
             except:
