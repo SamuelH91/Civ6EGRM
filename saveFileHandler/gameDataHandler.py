@@ -7,7 +7,7 @@ import multiprocessing as mp
 import pyqtgraph as pg
 import copy
 from saveFileHandler.civColors import CIV_LEADER_COLORS, COLORS_PRISM, CIV_OVERFLOW_COLORS,\
-    CS_COLOR_MAP, CS_TYPES  # CIV_COLORS
+    CS_COLOR_MAP, CS_TYPES, CS_UNICODE_MAP  # CIV_COLORS
 try:
     from saveFileHandler.civLocalization import CIV_LEADER_NAMES, CIV_NAMES
     civLocalizationImportSuccess = True
@@ -230,6 +230,7 @@ def map_civ_colors(civdata):
                 except:
                     print("City state not found from mapping: {}".format(civ))
                     qcolorMinor = blackBrush
+                    colorMinor = np.zeros(3,)
                 civColorsBrushMinor[i] = pg.mkBrush(qcolorMinor)
                 civColorsMinor[i] = colorMinor
 
@@ -436,6 +437,7 @@ class GameDataHandler():
                     continue
                 if turn[i]:
                     playerAlive[i] = True
+        # TODO: What if city state liberated
 
 
     def calculateBorderColors(self, lw=3, outsideBordersOnly=False, use_civ_colors=True, drawWaterBorders=True):
@@ -617,15 +619,20 @@ class GameDataHandler():
             leader = leaders[i]
             leader_name, cityState = parseLeader(leader)
             civ_name = " ".join(x.capitalize() for x in civ.split("_"))
+            civ_name_copy = civ_name
 
             civ_name, leader_name = self.languageChanger(language, civ, leader, cityState, civ_name, leader_name)
 
-            # \u25C6 diamond \u2b22 hexa
+            # \u2b22 hexa
             if cityState:
                 colorhexMinor = ''.join([format(int(c), '02x') for c in civColorsMinor[i]])
-                self.civ_text.append("<font color=#" + colorhexMinor + ">" + "\u2b22 " + "</font>" +
-                                     "<font color=#" + colorhex + ">" + civ_name + "</font> - " +
-                                     "<font color=#" + colorhexInner + ">" + leader_name + "</font><br>")
+                try:
+                    symbol = CS_UNICODE_MAP[CS_TYPES[civ_name_copy]]
+                except:
+                    symbol = "&nbsp;\u2b22&nbsp;&nbsp;"
+                self.civ_text.append("<font color=#" + colorhexMinor + ">" + symbol + "</font>" +
+                                     "<font color=#" + colorhex + ">" + civ_name + "</font> " +
+                                     "<font color=#" + colorhexInner + ">" + "CS " + "</font><br>")
             else:
                 self.civ_text.append("<font color=#" + colorhex + ">" + civ_name + "</font> - " +
                                      "<font color=#" + colorhexInner + ">" + leader_name + "</font><br>")

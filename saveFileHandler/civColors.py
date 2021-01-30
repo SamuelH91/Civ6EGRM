@@ -369,3 +369,13 @@ CS_COLOR_MAP = {
     "Trade": "COLOR_STANDARD_YELLOW_LT",
     "Maritime": "COLOR_STANDARD_AQUA_DK",
 }
+
+CS_UNICODE_MAP = {
+    "Cultural": "\U0001F3BC&nbsp;",  # Music
+    "Industrial": "\u2699&nbsp;",  # gear
+    "Militaristic": "\U0001F6E1&nbsp;&nbsp;",  # \u2694 swords \U0001F5E1 dagger \U0001F6E1 shield
+    "Religion": "\U0001F64F&nbsp;",  # \U0001F64F folded hands \u269B atom \u269C fleur-de-lis
+    "Science": "\u2697&nbsp;",  # \U0001F9EA test tube \u2697 alembic
+    "Trade": "\U0001F4B0&nbsp;&nbsp;",  # money bag \U0001F4B2 dollar \U0001F4B5 dollars \U0001FA99 coin not working
+    "Maritime": "\u2693&nbsp;",  # anchor
+}
