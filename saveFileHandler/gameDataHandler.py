@@ -429,16 +429,16 @@ class GameDataHandler():
                 elif cityCounts[i] > 0:
                     temp[i] = True
             self.playersAlive.append(temp)
-        playerAlive = [False] * playersNum
-        for turn in reversed(self.playersAlive):
-            for i in range(playersNum):
-                if playerAlive[i]:
-                    turn[i] = True
-                    continue
-                if turn[i]:
-                    playerAlive[i] = True
-        # TODO: What if city state liberated
-
+        turns = len(self.playersAlive)
+        for i in range(playersNum):  # For each player
+            alive_from_start = False
+            for j in range(turns):  # Check when first alive
+                if self.playersAlive[j][i]:
+                    alive_from_start = True
+                if alive_from_start:  # Fill from beginning until first "alive"
+                    for k in range(j):
+                        self.playersAlive[k][i] = True
+                    break
 
     def calculateBorderColors(self, lw=3, outsideBordersOnly=False, use_civ_colors=True, drawWaterBorders=True):
         if use_civ_colors:
