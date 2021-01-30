@@ -146,6 +146,7 @@ civColors = np.concatenate((civColors, np.random.rand(213, 3) * 255))
 civColors[62, :] = np.array([25, 25, 25])
 civColors[255, :] = np.array([0, 0, 255])  # sea level rise when no other owner
 civColorsInner = np.copy(civColors)
+civColorsMinor = np.copy(civColors)
 
 civColorsPen = []
 civColorsBrush = []
@@ -224,12 +225,13 @@ def map_civ_colors(civdata):
             if civ[:10] == "MINOR_CIV_":
                 try:
                     city_state = " ".join(x.capitalize() for x in civ[10:].split("_"))
-                    color = COLORS_PRISM[CS_COLOR_MAP[CS_TYPES[city_state]]]
-                    qcolorMinor = pg.mkColor(color)
+                    colorMinor = COLORS_PRISM[CS_COLOR_MAP[CS_TYPES[city_state]]]
+                    qcolorMinor = pg.mkColor(colorMinor)
                 except:
-                    print("City state not found from mapping: {}".format(city_state))
+                    print("City state not found from mapping: {}".format(civ))
                     qcolorMinor = blackBrush
                 civColorsBrushMinor[i] = pg.mkBrush(qcolorMinor)
+                civColorsMinor[i] = colorMinor
 
 
 def fileWorker(idx, filePath):
@@ -618,11 +620,15 @@ class GameDataHandler():
 
             civ_name, leader_name = self.languageChanger(language, civ, leader, cityState, civ_name, leader_name)
 
-            # if firstCityState and cityState:
-            #     self.civ_text.append("<br>")
-            #     firstCityState = False
-            self.civ_text.append("<font color=#" + colorhex + ">" + civ_name + "</font> - " +
-                                 "<font color=#" + colorhexInner + ">" + leader_name + "</font><br>")
+            # \u25C6 diamond \u2b22 hexa
+            if cityState:
+                colorhexMinor = ''.join([format(int(c), '02x') for c in civColorsMinor[i]])
+                self.civ_text.append("<font color=#" + colorhexMinor + ">" + "\u2b22 " + "</font>" +
+                                     "<font color=#" + colorhex + ">" + civ_name + "</font> - " +
+                                     "<font color=#" + colorhexInner + ">" + leader_name + "</font><br>")
+            else:
+                self.civ_text.append("<font color=#" + colorhex + ">" + civ_name + "</font> - " +
+                                     "<font color=#" + colorhexInner + ">" + leader_name + "</font><br>")
         self.calculatingCivNames = False
 
     def getCivNames(self, turnIdx):
@@ -637,7 +643,7 @@ class GameDataHandler():
                     civ_text += self.civ_text[i]
         return civ_text
 
-    def calculateCityColors(self, useInnerAsCityColor=True):
+    def calculateCityColors(self, useInnerAsCityColor=True, useMinorType=False):
         t0 = time.time()
         cityColorsAtTurnEmpty = [emptyBrush] * self.X*self.Y
         self.cityColors = []
@@ -645,7 +651,10 @@ class GameDataHandler():
             cityColorsAtTurn = cityColorsAtTurnEmpty
             for minor in self.minorOrigos:
                 if self.playersAlive[ii][minor] and ii != 0:
-                    cityColorsAtTurn[self.minorOrigos[minor]] = civColorsBrushMinor[minor]
+                    if useMinorType:
+                        cityColorsAtTurn[self.minorOrigos[minor]] = civColorsBrushMinor[minor]
+                    else:
+                        cityColorsAtTurn[self.minorOrigos[minor]] = civColorsBrushInner[minor]
             for city in turn["cities"]:
                 if useInnerAsCityColor:
                     cityColorsAtTurn[city["LocationIdx"]] = civColorsBrushInner[city["CivIndex"]]

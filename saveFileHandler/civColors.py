@@ -235,7 +235,7 @@ CS_TYPES = {
     "Dakhla": "Cultural",
     "Kucha": "Cultural",
     "Kumasi": "Cultural",
-    "Mohenjo-Daro": "Cultural",
+    "Mohenjo Daro": "Cultural",
     "Nan Madol": "Cultural",
     "Prague": "Cultural",
     "Rapa Nui": "Cultural",
