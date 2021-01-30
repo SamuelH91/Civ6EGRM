@@ -226,7 +226,7 @@ CIV_LEADER_COLORS = {
 }
 
 
-cityStateTypes = {
+CS_TYPES = {
     # Cultural
     "Antananarivo": "Cultural",
     "Ayutthaya": "Cultural",
@@ -360,8 +360,8 @@ cityStateTypes = {
     "Tondo": "Maritime",
 }
 
-cityStateColorMap = {
-    "Cultural": "COLOR_SC_MEDIUM_PURPLE",
+CS_COLOR_MAP = {
+    "Cultural": "COLOR_STANDARD_PURPLE_LT",
     "Industrial": "COLOR_STANDARD_ORANGE_MD",
     "Militaristic": "COLOR_STANDARD_RED_DK",
     "Religion": "COLOR_STANDARD_WHITE_LT",

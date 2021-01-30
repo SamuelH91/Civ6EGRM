@@ -253,6 +253,7 @@ class MainWindow(QtWidgets.QMainWindow):
         # Calculate border colors
         self.gdh.calculateBorderColors(3, self.outerBordersOnly, self.useCivColors, self.drawWaterBorders)
         self.gdh.calculateCityColors(self.useInnerColorAsCity)
+        # self.gdh.calculateMinorCityColors()
 
         # Calculate environment colors
         self.gdh.calculateEnvColors()

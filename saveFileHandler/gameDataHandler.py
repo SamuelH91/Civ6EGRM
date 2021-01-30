@@ -6,7 +6,8 @@ import time
 import multiprocessing as mp
 import pyqtgraph as pg
 import copy
-from saveFileHandler.civColors import CIV_LEADER_COLORS, COLORS_PRISM, CIV_OVERFLOW_COLORS  # CIV_COLORS
+from saveFileHandler.civColors import CIV_LEADER_COLORS, COLORS_PRISM, CIV_OVERFLOW_COLORS,\
+    CS_COLOR_MAP, CS_TYPES  # CIV_COLORS
 try:
     from saveFileHandler.civLocalization import CIV_LEADER_NAMES, CIV_NAMES
     civLocalizationImportSuccess = True
@@ -150,18 +151,31 @@ civColorsPen = []
 civColorsBrush = []
 civColorsPenInner = []
 civColorsBrushInner = []
+civColorsBrushMinor = []
 for color in civColors:
     qcolor = pg.mkColor(color)
     civColorsPen.append(pg.mkPen(qcolor, width=3))
     civColorsPenInner.append(pg.mkPen(qcolor, width=3))
     civColorsBrush.append(pg.mkBrush(qcolor))
     civColorsBrushInner.append(pg.mkBrush(qcolor))
+    civColorsBrushMinor.append(pg.mkBrush(qcolor))
 
 riverPen = pg.mkPen(pg.mkColor(np.array((45, 89, 120, 255))), width=4)
 
 emptyBrush = pg.mkBrush(pg.mkColor(np.zeros(4, )))
+blackBrush = pg.mkBrush(pg.mkColor(np.zeros(3,)))
 emptyPen = pg.mkPen(pg.mkColor(np.zeros(4, )))
 blackPen = pg.mkPen(pg.mkColor(np.array((24, 24, 24))), width=3)
+
+def parseLeader(leaderIn):
+    cityState = False
+    leader = leaderIn
+    if leader[:10] == "MINOR_CIV_":
+        cityState = True
+        leader = "City State"
+    else:
+        leader = " ".join(x.capitalize() for x in leader.split("_"))
+    return leader, cityState
 
 
 def map_civ_colors(civdata):
@@ -197,6 +211,17 @@ def map_civ_colors(civdata):
                     print(f"{civ} border color set to {color}/{colorInner} (overflow option #{jj})")
                     break
             # continue
+        if len(civ) > 10:
+            if civ[:10] == "MINOR_CIV_":
+                try:
+                    city_state = " ".join(x.capitalize() for x in civ[10:].split("_"))
+                    color = COLORS_PRISM[CS_COLOR_MAP[CS_TYPES[city_state]]]
+                    qcolorMinor = pg.mkColor(color)
+                except:
+                    print("City state not found from mapping: {}".format(city_state))
+                    qcolorMinor = blackBrush
+                civColorsBrushMinor[i] = pg.mkBrush(qcolorMinor)
+
         qcolor = pg.mkColor(color)
         qcolorInner = pg.mkColor(colorInner)
         civColors[i] = color
@@ -205,6 +230,8 @@ def map_civ_colors(civdata):
         civColorsBrush[i] = pg.mkBrush(qcolor)
         civColorsPenInner[i] = pg.mkPen(colorInner, width=4)
         civColorsBrushInner[i] = pg.mkBrush(qcolorInner)
+
+
 
 
 def fileWorker(idx, filePath):
@@ -251,6 +278,7 @@ class GameDataHandler():
         self.civ_text = []
         self.civHexaCounts = []
         self.playersAlive = []
+        self.minorOrigos = {}
         self.calculatingCivNames = False
 
     def parseData(self):
@@ -274,10 +302,17 @@ class GameDataHandler():
         pool.close()
         pool.join()
         # unique_notifications = self.checkUniqueNotifications()
+
+        self.X, self.Y = self.getMapSize()
+        self.neighbours_list = []
+        for ii in range(self.X*self.Y):
+            self.neighbours_list.append(self.getNeighbourIndexes(ii))
+
         self.calcMajorCivs()
         self.calcCityCounts()
         self.calculateCivHexas()
         self.calcPlayersAlive()
+        self.calculateCityStateOrigos()
         print("Total time {} s for data parsing from {} files".format(time.time() - t0, count))
 
     def checkUniqueNotifications(self):
@@ -403,19 +438,13 @@ class GameDataHandler():
                     playerAlive[i] = True
 
 
-
     def calculateBorderColors(self, lw=3, outsideBordersOnly=False, use_civ_colors=True, drawWaterBorders=True):
         if use_civ_colors:
             map_civ_colors(self.leaderData[0])
         t0 = time.time()
-        self.X, self.Y = self.getMapSize()
-        self.neighbours_list = []
         self.borderColors = []
         self.borderColorsInner = []
         self.borderColorsSC = []
-        if outsideBordersOnly:
-            for ii in range(self.X*self.Y):
-                self.neighbours_list.append(self.getNeighbourIndexes(ii))
         for turn in self.tileData:
             borderColorsAtTurn = []
             borderInnerColorsAtTurn = []
@@ -497,6 +526,37 @@ class GameDataHandler():
             self.borderColorsSC.append(borderSCColorsAtTurn)
         print("Total time for border colors: {}".format(time.time() - t0))
 
+    def calculateCityStateOrigos(self):
+        t0 = time.time()
+        # self.borderColorsInner = []
+        if len(self.tileData) > 1:
+            turnIdx = 1
+        else:
+            turnIdx = 0
+        turn = self.tileData[turnIdx]
+        self.minorOrigos = {}
+        for ii, tile in enumerate(turn["tiles"]):
+            playerID = self.getPlayerID(tile)
+            if playerID >= self.majorCivs:  # Minor only
+                neighbour_count_inv = 6
+                found_orig = True
+                for neighbour in self.neighbours_list[ii]:  # If more than 4 are owned (or all actually)
+                    if neighbour < self.X*self.Y:
+                        neighbourID = self.getPlayerID(turn["tiles"][neighbour])
+                        if neighbourID != playerID:
+                            neighbour_count_inv -= 1
+                    if neighbour_count_inv <= 3:
+                        found_orig = False
+                        break
+                if found_orig:
+                    if not playerID in self.minorOrigos:
+                        self.minorOrigos[playerID] = ii
+                    else:
+                        print("Already found minor origo, something went wrong")
+
+
+        print("Total time for city state origos: {}".format(time.time() - t0))
+
     def getOwner(self, turnIdx, x, y, language=None):
         civ_text = ""
         civs = self.civData[0]
@@ -508,7 +568,7 @@ class GameDataHandler():
             if playerID >= 0:
                 if playerID < len(leaders):
                     leader = leaders[playerID]
-                    leader_name, cityState = self.parseLeader(leader)
+                    leader_name, cityState = parseLeader(leader)
                     colorhex = ''.join([format(int(c), '02x') for c in civColors[playerID]])
                     colorhexInner = ''.join([format(int(c), '02x') for c in civColorsInner[playerID]])
                     civ = civs[playerID]
@@ -545,16 +605,6 @@ class GameDataHandler():
                     leader_name = CIV_LEADER_NAMES[leader][language]
         return civ_name, leader_name
 
-    def parseLeader(self, leaderIn):
-        cityState = False
-        leader = leaderIn
-        if leader[:10] == "MINOR_CIV_":
-            cityState = True
-            leader = "City State"
-        else:
-            leader = " ".join(x.capitalize() for x in leader.split("_"))
-        return leader, cityState
-
     def parseCivNames(self, language=None):
         self.calculatingCivNames = True
         civs = self.civData[0]
@@ -565,7 +615,7 @@ class GameDataHandler():
             colorhex = ''.join([format(int(c), '02x') for c in civColors[i]])
             colorhexInner = ''.join([format(int(c), '02x') for c in civColorsInner[i]])
             leader = leaders[i]
-            leader_name, cityState = self.parseLeader(leader)
+            leader_name, cityState = parseLeader(leader)
             civ_name = " ".join(x.capitalize() for x in civ.split("_"))
 
             civ_name, leader_name = self.languageChanger(language, civ, leader, cityState, civ_name, leader_name)
@@ -593,8 +643,11 @@ class GameDataHandler():
         t0 = time.time()
         cityColorsAtTurnEmpty = [emptyBrush] * self.X*self.Y
         self.cityColors = []
-        for turn in self.cityData:
+        for ii, turn in enumerate(self.cityData):
             cityColorsAtTurn = cityColorsAtTurnEmpty
+            for minor in self.minorOrigos:
+                if self.playersAlive[ii][minor] and ii != 0:
+                    cityColorsAtTurn[self.minorOrigos[minor]] = civColorsBrushMinor[minor]
             for city in turn["cities"]:
                 if useInnerAsCityColor:
                     cityColorsAtTurn[city["LocationIdx"]] = civColorsBrushInner[city["CivIndex"]]
@@ -602,6 +655,18 @@ class GameDataHandler():
                     cityColorsAtTurn[city["LocationIdx"]] = civColorsBrush[city["CivIndex"]]
             self.cityColors.append(copy.copy(cityColorsAtTurn))
         print("Total time for city colors: {}".format(time.time() - t0))
+
+    def calculateMinorCityColors(self):
+        t0 = time.time()
+        cityColorsAtTurnEmpty = [emptyBrush] * self.X*self.Y
+        self.minorCityColors = []
+        for ii, turn in enumerate(self.cityData):
+            cityColorsAtTurn = cityColorsAtTurnEmpty
+            for minor in self.minorOrigos:
+                if self.playersAlive[ii][minor]:
+                    cityColorsAtTurn[self.minorOrigos[minor]] = civColorsBrushMinor[minor]
+            self.minorCityColors.append(copy.copy(cityColorsAtTurn))
+        print("Total time for minor city colors: {}".format(time.time() - t0))
 
     def getPlayerID(self, tile):
         if tile["OwnershipBuffer"] >= 64:
