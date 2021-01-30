@@ -11,6 +11,7 @@ HXY = np.array([[X1, X2, X2, X1, -X2, -X2], [Y1, Y2, -Y2, -Y1, -Y2, Y2]])
 class Hexagon(QtGui.QPolygonF):
     def __init__(self, xy, scale=1):
         super().__init__()
+        self.xy = xy
         for row in np.transpose(HXY * scale + xy):
             self.append(QtCore.QPointF(row[0], row[1]))
 
@@ -21,6 +22,9 @@ class Hexagon(QtGui.QPolygonF):
             point = self.at(ii)
             xy[ii, :] = np.array([point.x(), point.y()])
         return xy
+
+    def get_mid_coord(self):
+        return self.xy[0], self.xy[1]
 
 # if __name__ == '__main__':
 # #     hex1 = Hexagon(np.array([[0], [0]]))

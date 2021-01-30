@@ -78,3 +78,6 @@ class HexGrid(pg.GraphicsObject):  # pg.GraphicsItem
     def set_ec_colors(self, ecColors):
         self.ec_colors = ecColors
         self.generatePicture()
+
+    def get_hexa_xy(self, idx):
+        return self.hexagons[idx].get_mid_coord()

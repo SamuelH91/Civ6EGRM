@@ -217,6 +217,17 @@ class MapVisualizerWidget(QtWidgets.QWidget):
         slider_value.setNum(1)
         self.turnSlider.valueChanged.connect(slider_value.setNum)
 
+        self.symbols = {}  # pg.TextItem('', **{'color': '#FFF'})
+        # self.graphWidget.addItem(self.label_value)
+        # self.label_value.setPos(QtCore.QPointF(2, 10))
+        # self.label_value.setText("\U0001F6E1")
+
+    def add_symbol(self, key, x, y, text):
+        self.symbols[key] = pg.TextItem('', anchor=(0.5, 0.5))  # pg.TextItem('', **{'color': '#FFF'})
+        self.graphWidget.addItem(self.symbols[key])
+        self.symbols[key].setPos(QtCore.QPointF(x, y))
+        self.symbols[key].setText(text)
+
 
 class MainWindow(QtWidgets.QMainWindow):
 
@@ -286,6 +297,12 @@ class MainWindow(QtWidgets.QMainWindow):
         self.gdh.parseCivNames()
         self.setCivilizationNames(self.gdh.getCivNames(0))
 
+        # City state symbol locations
+        for i, minor in enumerate(self.gdh.minorOrigos):
+            x, y = self.plot_widget.environmentHG.get_hexa_xy(self.gdh.minorOrigos[minor])
+            # symbol = CS_UNICODE_MAP[self.gdh.minorCivTypes[minor]].replace("&nbsp;", "").replace(" ", "")
+            self.plot_widget.add_symbol(minor, x, y, "")
+
         self.showMaximized()
 
     def setLanguage(self, language):
@@ -311,6 +328,14 @@ class MainWindow(QtWidgets.QMainWindow):
     def setCivilizationNames(self, text):
         self.plot_widget.civNames.setText(text)
 
+    def setCityStateSymbolAtTurn(self, idx):
+        for i in range(self.gdh.majorCivs, self.gdh.minorCivs + self.gdh.majorCivs):
+            if i in self.plot_widget.symbols:
+                symbol = ""
+                if self.gdh.playersAlive[idx][i] and idx != 0:
+                    symbol = CS_UNICODE_MAP[self.gdh.minorCivTypes[i]].replace("&nbsp;", "").replace(" ", "")
+                self.plot_widget.symbols[i].setText(symbol)
+
     def updateTurn(self, turn):
         t0 = time.time()
         self.plot_widget.bordersHG_cs.set_ec_colors(self.gdh.borderColorsSC[turn - 1])
@@ -332,6 +357,9 @@ class MainWindow(QtWidgets.QMainWindow):
         self.plot_widget.citiesHG.set_fc_colors(self.gdh.cityColors[turn - 1])
         t1 = time.time()
         tCity = t1 - t0
+
+        self.setCityStateSymbolAtTurn(turn - 1)
+
         self.updateCivs(turn - 1)
 
         if self.enableTiming:

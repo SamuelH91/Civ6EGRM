@@ -280,6 +280,7 @@ class GameDataHandler():
         self.civHexaCounts = []
         self.playersAlive = []
         self.minorOrigos = {}
+        self.minorCivTypes = {}
         self.calculatingCivNames = False
 
     def parseData(self):
@@ -551,7 +552,7 @@ class GameDataHandler():
                         found_orig = False
                         break
                 if found_orig:
-                    if not playerID in self.minorOrigos:
+                    if playerID not in self.minorOrigos:
                         self.minorOrigos[playerID] = ii
                     else:
                         print("Already found minor origo, something went wrong")
@@ -596,6 +597,13 @@ class GameDataHandler():
             count += 1
         self.majorCivs = count
         self.minorCivs = len(leaders) - count
+        self.minorCivTypes = {}
+        for ii in range(count, len(leaders)):
+            civ_name = " ".join(x.capitalize() for x in leaders[ii][10:].split("_"))
+            try:
+                self.minorCivTypes[ii] = CS_TYPES[civ_name]
+            except:
+                self.minorCivTypes[ii] = "Unknown"
 
     def languageChanger(self, language, civ, leader, cityState, civ_name, leader_name):
         if language != "en_EN" and language is not None:
@@ -612,14 +620,12 @@ class GameDataHandler():
         civs = self.civData[0]
         leaders = self.leaderData[0]
         self.civ_text = []
-        # firstCityState = True
         for i, civ in enumerate(civs):
             colorhex = ''.join([format(int(c), '02x') for c in civColors[i]])
             colorhexInner = ''.join([format(int(c), '02x') for c in civColorsInner[i]])
             leader = leaders[i]
             leader_name, cityState = parseLeader(leader)
             civ_name = " ".join(x.capitalize() for x in civ.split("_"))
-            civ_name_copy = civ_name
 
             civ_name, leader_name = self.languageChanger(language, civ, leader, cityState, civ_name, leader_name)
 
@@ -627,7 +633,7 @@ class GameDataHandler():
             if cityState:
                 colorhexMinor = ''.join([format(int(c), '02x') for c in civColorsMinor[i]])
                 try:
-                    symbol = CS_UNICODE_MAP[CS_TYPES[civ_name_copy]]
+                    symbol = CS_UNICODE_MAP[self.minorCivTypes[i]]
                 except:
                     symbol = "&nbsp;\u2b22&nbsp;&nbsp;"
                 self.civ_text.append("<font color=#" + colorhexMinor + ">" + symbol + "</font>" +
