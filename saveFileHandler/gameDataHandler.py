@@ -211,6 +211,15 @@ def map_civ_colors(civdata):
                     print(f"{civ} border color set to {color}/{colorInner} (overflow option #{jj})")
                     break
             # continue
+        qcolor = pg.mkColor(color)
+        qcolorInner = pg.mkColor(colorInner)
+        civColors[i] = color
+        civColorsInner[i] = colorInner
+        civColorsPen[i] = pg.mkPen(qcolor, width=3)
+        civColorsBrush[i] = pg.mkBrush(qcolor)
+        civColorsPenInner[i] = pg.mkPen(colorInner, width=4)
+        civColorsBrushInner[i] = pg.mkBrush(qcolorInner)
+
         if len(civ) > 10:
             if civ[:10] == "MINOR_CIV_":
                 try:
@@ -221,17 +230,6 @@ def map_civ_colors(civdata):
                     print("City state not found from mapping: {}".format(city_state))
                     qcolorMinor = blackBrush
                 civColorsBrushMinor[i] = pg.mkBrush(qcolorMinor)
-
-        qcolor = pg.mkColor(color)
-        qcolorInner = pg.mkColor(colorInner)
-        civColors[i] = color
-        civColorsInner[i] = colorInner
-        civColorsPen[i] = pg.mkPen(qcolor, width=3)
-        civColorsBrush[i] = pg.mkBrush(qcolor)
-        civColorsPenInner[i] = pg.mkPen(colorInner, width=4)
-        civColorsBrushInner[i] = pg.mkBrush(qcolorInner)
-
-
 
 
 def fileWorker(idx, filePath):
