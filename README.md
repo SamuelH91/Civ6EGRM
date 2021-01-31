@@ -19,15 +19,6 @@ Civilization 6 End Game Replay Map
 
 More detailed instruction and installation guide under
   
-## TODOs
-- Lock civ colors (and modify them away from close ocean blue or land green)
-- Include natural wonders and other tile improvement data (some custom visualization?)
-
-- Nice to have stuff in future:
-  - Optional visualize units
-  - Show disasters (e.g. meteors would be quite easy from tile data)
-  - List events (e.g. wars, wonders, great people)
-
 ## Tested with
 - Base game: (Single + Multi)
 - Expansions: (RF + GS)
@@ -76,6 +67,14 @@ Localization is done automatically by
 - vanillapath = os.path.expanduser("G:\SteamLibrary\steamapps\common\Sid Meier's Civilization VI\Base\Assets\Text")
 - dlcpath = os.path.expanduser("G:\SteamLibrary\steamapps\common\Sid Meier's Civilization VI\DLC")
 
+## TODOs
+- Include natural wonders and other tile improvement data (some custom visualization?)
+
+- Nice to have stuff in future:
+  - List events (e.g. wars, wonders, great people)
+  - Optional visualize units
+  - Show disasters (e.g. meteors would be quite easy from tile data)
+
 ## Special thanks for https://github.com/lucienmaloney/civ6save-editing
 
 ## Troubleshoot
@@ -84,3 +83,5 @@ If following error at the start of endGameReplay.py file
 This application failed to start because no Qt platform plugin could be initialized. Reinstalling the application may fix this problem."
 Set following entry to your system environment variable (at least one confirmed case in windows 7)
 QT_PLUGIN_PATH  C:\Python38\Lib\site-packages\PyQt5\Qt\plugins  (change the path according to your installation location)
+
+To get emoji symbols working somehow on Windows install Segoe UI Emoji Regular font (seguiemj.ttf) (from Windows 10 but Windows 7 can't show those colored)
