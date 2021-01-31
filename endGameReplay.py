@@ -10,7 +10,9 @@ from PIL import Image
 from pygifsicle import gifsicle
 import subprocess as sp
 import argparse
+import platform
 
+platformWin7 = platform.release() == "7" and platform.system() == "Windows"
 LANGUAGES = ["en_EN", "ru_RU", "de_DE", "es_ES", "fr_FR", "it_IT", "ja_JP", "ko_KR", "pl_PL", "pt_BR"]
 
 
@@ -39,6 +41,7 @@ def run_arg_parser():
     return target_path
 
 # pg.setConfigOptions(antialias=True)
+
 
 class ButtonsWidget(QtWidgets.QWidget):
     def __init__(self, parent, *args, **kwargs):
@@ -226,7 +229,7 @@ class MapVisualizerWidget(QtWidgets.QWidget):
         self.symbols[key] = pg.TextItem('', anchor=(0.5, 0.5))  # pg.TextItem('', **{'color': '#FFF'})
         self.graphWidget.addItem(self.symbols[key])
         self.symbols[key].setPos(QtCore.QPointF(x, y))
-        self.symbols[key].setText(text)
+        self.symbols[key].setHtml(text)
 
 
 class MainWindow(QtWidgets.QMainWindow):
@@ -331,10 +334,12 @@ class MainWindow(QtWidgets.QMainWindow):
     def setCityStateSymbolAtTurn(self, idx):
         for i in range(self.gdh.majorCivs, self.gdh.minorCivs + self.gdh.majorCivs):
             if i in self.plot_widget.symbols:
-                symbol = ""
+                symbol = ""  # \u2b22
+                colorhexMinor = "181818"
                 if self.gdh.playersAlive[idx][i] and idx != 0:
                     symbol = CS_UNICODE_MAP[self.gdh.minorCivTypes[i]].replace("&nbsp;", "").replace(" ", "")
-                self.plot_widget.symbols[i].setText(symbol)
+                    colorhexMinor = ''.join([format(int(c), '02x') for c in civColorsMinor[i]])
+                self.plot_widget.symbols[i].setHtml("<font color=#" + colorhexMinor + ">" + symbol + "</font>")
 
     def updateTurn(self, turn):
         t0 = time.time()
