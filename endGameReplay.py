@@ -113,6 +113,13 @@ class ButtonsWidget(QtWidgets.QWidget):
         button_layout.addWidget(self.fps)
         self.fps.setNum(10)
 
+        update_symbol_button = QtWidgets.QPushButton("Set symbol size")
+        button_layout.addWidget(update_symbol_button)
+        update_symbol_button.clicked.connect(self.parent.updateSymbolSize)
+        self.symbol_size = QtWidgets.QLabel(self)  # QtWidgets.QLineEdit()
+        button_layout.addWidget(self.symbol_size)
+        self.symbol_size.setNum(20)
+
         self.comboBox = QtWidgets.QComboBox(self)
         button_layout.addWidget(self.comboBox)
         for lan in LANGUAGES:
@@ -231,6 +238,12 @@ class MapVisualizerWidget(QtWidgets.QWidget):
         self.symbols[key].setPos(QtCore.QPointF(x, y))
         self.symbols[key].setHtml(text)
 
+    def set_symbol_size(self, size):
+        font = QtGui.QFont()
+        font.setPixelSize(size)
+        for symbol in self.symbols:
+            self.symbols[symbol].setFont(font)
+
 
 class MainWindow(QtWidgets.QMainWindow):
 
@@ -247,6 +260,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.hidden = False
         self.enableTiming = False
         self.outputFps = 10
+        self.symbolSize = 20
 
         # Options
         self.OptimizeGif = True
@@ -306,6 +320,8 @@ class MainWindow(QtWidgets.QMainWindow):
             # symbol = CS_UNICODE_MAP[self.gdh.minorCivTypes[minor]].replace("&nbsp;", "").replace(" ", "")
             self.plot_widget.add_symbol(minor, x, y, "")
 
+        self.plot_widget.set_symbol_size(self.symbolSize)
+
         self.showMaximized()
 
     def setLanguage(self, language):
@@ -324,6 +340,13 @@ class MainWindow(QtWidgets.QMainWindow):
         if ok:
             self.outputFps = num
             self.buttons_widget.fps.setNum(num)
+
+    def updateSymbolSize(self):
+        num, ok = QtWidgets.QInputDialog.getInt(self, "Set on map symbol size", "Enter a number", self.symbolSize)
+        if ok:
+            self.symbolSize = num
+            self.buttons_widget.symbol_size.setNum(num)
+            self.plot_widget.set_symbol_size(num)
 
     def toggleCivilizationNames(self):
         self.plot_widget.civNames.setHidden(not self.plot_widget.civNames.isHidden())
