@@ -208,7 +208,7 @@ class MapVisualizerWidget(QtWidgets.QWidget):
 
         self.eventList = ScrollLabel()
         layoutH.addWidget(self.eventList)
-        self.eventList.set_text("Test\nNothing\nTo\nSee\nHere\nYet\nSorry\n\U0001F3BC&nbsp;\n\u2699&nbsp;\n\U0001F6E1&nbsp;&nbsp;\n\n\n\n\n\n^\n|\n|\n|\nv\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\U0001F64F&nbsp;\n\u2697&nbsp;\n\U0001F4B0&nbsp;&nbsp;\n\u2693&nbsp;")
+        self.eventList.set_text("Test\nNothing\nTo\nSee\nHere\nYet\nSorry\n\U0001F3BC&nbsp;\n\u2699&nbsp;\n\U0001F6E1&nbsp;&nbsp;\nWar, peace, capture, raze, etc...\n\n\n\n\n^\n|\n|\n|\nv\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\U0001F64F&nbsp;\n\u2697&nbsp;\n\U0001F4B0&nbsp;&nbsp;\n\u2693&nbsp;")
         self.eventList.setFrameShape(QtWidgets.QFrame.NoFrame)
         # self.eventList.setAlignment(QtCore.Qt.AlignRight)
         self.eventList.setMaximumWidth(200)
