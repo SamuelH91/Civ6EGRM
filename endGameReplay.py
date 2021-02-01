@@ -64,6 +64,9 @@ class ButtonsWidget(QtWidgets.QWidget):
         button_toggle_civs = QtWidgets.QPushButton('Civ names', self)
         button_layout.addWidget(button_toggle_civs)
         button_toggle_civs.clicked.connect(self.parent.toggleCivilizationNames)
+        set_civ_width_button = QtWidgets.QPushButton("Set civ width")
+        button_layout.addWidget(set_civ_width_button)
+        set_civ_width_button.clicked.connect(self.parent.set_civ_width)
 
         button_play = QtWidgets.QPushButton('Play', self)
         button_layout.addWidget(button_play)
@@ -116,9 +119,13 @@ class ButtonsWidget(QtWidgets.QWidget):
         update_symbol_button = QtWidgets.QPushButton("Set symbol size")
         button_layout.addWidget(update_symbol_button)
         update_symbol_button.clicked.connect(self.parent.updateSymbolSize)
-        self.symbol_size = QtWidgets.QLabel(self)  # QtWidgets.QLineEdit()
-        button_layout.addWidget(self.symbol_size)
-        self.symbol_size.setNum(20)
+
+        toggle_events_button = QtWidgets.QPushButton("Toggle events")
+        button_layout.addWidget(toggle_events_button)
+        toggle_events_button.clicked.connect(self.parent.toggle_events)
+        set_event_width_button = QtWidgets.QPushButton("Set event width")
+        button_layout.addWidget(set_event_width_button)
+        set_event_width_button.clicked.connect(self.parent.set_event_width)
 
         self.comboBox = QtWidgets.QComboBox(self)
         button_layout.addWidget(self.comboBox)
@@ -129,6 +136,40 @@ class ButtonsWidget(QtWidgets.QWidget):
         self.status = QtWidgets.QLabel(self)
         button_layout.addWidget(self.status)
         self.status.setText("Status: Ready")
+
+
+# class for scrollable label
+class ScrollLabel(QtWidgets.QScrollArea):
+
+    # contructor
+    def __init__(self, *args, **kwargs):
+        QtWidgets.QScrollArea.__init__(self, *args, **kwargs)
+
+        # making widget resizable
+        self.setWidgetResizable(True)
+
+        # making qwidget object
+        content = QtWidgets.QWidget(self)
+        self.setWidget(content)
+
+        # vertical box layout
+        lay = QtWidgets.QVBoxLayout(content)
+
+        # creating label
+        self.label = QtWidgets.QLabel(content)
+
+        # setting alignment to the text
+        self.label.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignTop)
+
+        # making label multi-line
+        self.label.setWordWrap(True)
+
+        # adding label to the layout
+        lay.addWidget(self.label)
+
+    def set_text(self, text):
+        # setting text to the label
+        self.label.setText(text)
 
 
 class MapVisualizerWidget(QtWidgets.QWidget):
@@ -164,6 +205,21 @@ class MapVisualizerWidget(QtWidgets.QWidget):
         self.graphWidget.getPlotItem().hideAxis('left')
         self.graphWidget.scene().sigMouseClicked.connect(self.parent.mouse_clicked)
         self.graphWidget.setMouseTracking(True)
+
+        self.eventList = ScrollLabel()
+        layoutH.addWidget(self.eventList)
+        self.eventList.set_text("Test\nNothing\nTo\nSee\nHere\nYet\nSorry\n\U0001F3BC&nbsp;\n\u2699&nbsp;\n\U0001F6E1&nbsp;&nbsp;\n\n\n\n\n\n^\n|\n|\n|\nv\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\U0001F64F&nbsp;\n\u2697&nbsp;\n\U0001F4B0&nbsp;&nbsp;\n\u2693&nbsp;")
+        self.eventList.setFrameShape(QtWidgets.QFrame.NoFrame)
+        # self.eventList.setAlignment(QtCore.Qt.AlignRight)
+        self.eventList.setMaximumWidth(200)
+        # self.eventList.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
+        self.eventList.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
+        self.eventList.setVisible(False)
+
+        shadow2 = QtWidgets.QGraphicsDropShadowEffect()
+        shadow2.setBlurRadius(1)
+        shadow2.setOffset(1)
+        self.eventList.label.setGraphicsEffect(shadow2)
 
         layout.addLayout(layoutH)
 
@@ -261,6 +317,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.enableTiming = False
         self.outputFps = 10
         self.symbolSize = 20
+        self.eventListWidth = 200
+        self.civWidth = None
 
         # Options
         self.OptimizeGif = True
@@ -347,6 +405,26 @@ class MainWindow(QtWidgets.QMainWindow):
             self.symbolSize = num
             self.buttons_widget.symbol_size.setNum(num)
             self.plot_widget.set_symbol_size(num)
+
+    def set_civ_width(self):
+        num, ok = QtWidgets.QInputDialog.getInt(self, "Set on civ width", "Enter a number",
+                                                self.plot_widget.civNames.sizeHint().width())
+        if ok:
+            self.civWidth = num
+            self.plot_widget.civNames.setMaximumWidth(num)
+        # else:
+            # self.plot_widget.civNames.setSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Maximum)
+            # self.plot_widget.civNames.setMaximumSize(self.plot_widget.civNames.sizeHint())
+
+    def set_event_width(self):
+        num, ok = QtWidgets.QInputDialog.getInt(self, "Set on event list width", "Enter a number",
+                                                self.plot_widget.eventList.sizeHint().width())
+        if ok:
+            self.eventListWidth = num
+            self.plot_widget.eventList.setMaximumWidth(num)
+
+    def toggle_events(self):
+        self.plot_widget.eventList.setHidden(not self.plot_widget.eventList.isHidden())
 
     def toggleCivilizationNames(self):
         self.plot_widget.civNames.setHidden(not self.plot_widget.civNames.isHidden())
