@@ -276,6 +276,7 @@ class GameDataHandler():
         self.majorCivs = 0
         self.minorCivs = 0
         self.cityCounts = []
+        self.razedCityLocs = []
         self.civ_text = []
         self.civHexaCounts = []
         self.playersAlive = []
@@ -312,6 +313,7 @@ class GameDataHandler():
 
         self.calcMajorCivs()
         self.calcCityCounts()
+        self.calcRazedCitys()
         self.calculateCivHexas()
         self.calcPlayersAlive()
         self.calculateCityStateOrigos()
@@ -344,6 +346,31 @@ class GameDataHandler():
                 else:
                     cityCounts[usedCities[city["CityName"]]] -= 1
             self.cityCounts.append(cityCounts)
+
+    def calcRazedCitys(self):
+        self.razedCityLocs = []
+        cityLocsHistory = []
+        # Add 1st turn city locs to history
+        for city in self.cityData[0]["cities"]:
+            loc = city["LocationIdx"]
+            if loc not in cityLocsHistory:
+                cityLocsHistory.append(loc)
+        self.razedCityLocs.append([])
+        for i, turn in enumerate(self.cityData[1:]):
+            razedCitysAtTurn = []
+            for oldCityLoc in cityLocsHistory:
+                city_exists_still = False
+                for city in turn["cities"]:
+                    if oldCityLoc == city["LocationIdx"]:
+                        city_exists_still = True
+                        break
+                if not city_exists_still:
+                    razedCitysAtTurn.append(oldCityLoc)
+            for city in turn["cities"]:
+                loc = city["LocationIdx"]
+                if loc not in cityLocsHistory:
+                    cityLocsHistory.append(loc)
+            self.razedCityLocs.append(razedCitysAtTurn)
 
     def calculateOtherStuff(self):
         t0 = time.time()

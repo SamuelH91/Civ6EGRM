@@ -376,7 +376,7 @@ class MainWindow(QtWidgets.QMainWindow):
         for i, minor in enumerate(self.gdh.minorOrigos):
             x, y = self.plot_widget.environmentHG.get_hexa_xy(self.gdh.minorOrigos[minor])
             # symbol = CS_UNICODE_MAP[self.gdh.minorCivTypes[minor]].replace("&nbsp;", "").replace(" ", "")
-            self.plot_widget.add_symbol(minor, x, y, "")
+            self.plot_widget.add_symbol("CityState_" + str(minor), x, y, "")
 
         self.plot_widget.set_symbol_size(self.symbolSize)
 
@@ -434,13 +434,33 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def setCityStateSymbolAtTurn(self, idx):
         for i in range(self.gdh.majorCivs, self.gdh.minorCivs + self.gdh.majorCivs):
-            if i in self.plot_widget.symbols:
+            cityState = "CityState_" + str(i)
+            if cityState in self.plot_widget.symbols:
                 symbol = ""  # \u2b22
                 colorhexMinor = "181818"
                 if self.gdh.playersAlive[idx][i] and idx != 0:
                     symbol = CS_UNICODE_MAP[self.gdh.minorCivTypes[i]].replace("&nbsp;", "").replace(" ", "")
                     colorhexMinor = ''.join([format(int(c), '02x') for c in civColorsMinor[i]])
-                self.plot_widget.symbols[i].setHtml("<font color=#" + colorhexMinor + ">" + symbol + "</font>")
+                self.plot_widget.symbols[cityState].setHtml("<font color=#" + colorhexMinor + ">" + symbol + "</font>")
+
+    def setCityRazedAtTurn(self, idx):
+        turn = self.gdh.razedCityLocs[idx]
+        # Clear old ones
+        for symbol in self.plot_widget.symbols:
+            if symbol[:10] == "razedCity_":
+                self.plot_widget.symbols[symbol].setHtml("")
+        # Set new ones
+        for cityLoc in turn:
+            razedCity = "razedCity_" + str(cityLoc)
+            # Add if not already added, move this?
+            if razedCity not in self.plot_widget.symbols:
+                x, y = self.plot_widget.environmentHG.get_hexa_xy(cityLoc)
+                self.plot_widget.add_symbol(razedCity, x, y, "")
+                self.plot_widget.set_symbol_size(self.symbolSize)
+            if razedCity in self.plot_widget.symbols:
+                symbol = "\U0001F3DA"
+                colorhex = "181818"
+                self.plot_widget.symbols[razedCity].setHtml("<font color=#" + colorhex + ">" + symbol + "</font>")
 
     def updateTurn(self, turn):
         t0 = time.time()
@@ -465,6 +485,7 @@ class MainWindow(QtWidgets.QMainWindow):
         tCity = t1 - t0
 
         self.setCityStateSymbolAtTurn(turn - 1)
+        self.setCityRazedAtTurn(turn - 1)
 
         self.updateCivs(turn - 1)
 
