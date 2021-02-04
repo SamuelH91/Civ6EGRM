@@ -378,6 +378,15 @@ class MainWindow(QtWidgets.QMainWindow):
             # symbol = CS_UNICODE_MAP[self.gdh.minorCivTypes[minor]].replace("&nbsp;", "").replace(" ", "")
             self.plot_widget.add_symbol("CityState_" + str(minor), x, y, "")
 
+        # Razed city symbols
+        for turn in self.gdh.razedCityLocs:
+            # Set new ones
+            for cityLoc in turn:
+                razedCity = "razedCity_" + str(cityLoc)
+                if razedCity not in self.plot_widget.symbols:
+                    x, y = self.plot_widget.environmentHG.get_hexa_xy(cityLoc)
+                    self.plot_widget.add_symbol(razedCity, x, y, "")
+
         self.plot_widget.set_symbol_size(self.symbolSize)
 
         self.showMaximized()
@@ -445,18 +454,13 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def setCityRazedAtTurn(self, idx):
         turn = self.gdh.razedCityLocs[idx]
-        # Clear old ones
+        # Clear old ones "razedCity_" symbols
         for symbol in self.plot_widget.symbols:
             if symbol[:10] == "razedCity_":
                 self.plot_widget.symbols[symbol].setHtml("")
         # Set new ones
         for cityLoc in turn:
             razedCity = "razedCity_" + str(cityLoc)
-            # Add if not already added, move this?
-            if razedCity not in self.plot_widget.symbols:
-                x, y = self.plot_widget.environmentHG.get_hexa_xy(cityLoc)
-                self.plot_widget.add_symbol(razedCity, x, y, "")
-                self.plot_widget.set_symbol_size(self.symbolSize)
             if razedCity in self.plot_widget.symbols:
                 symbol = "\U0001F3DA"
                 colorhex = "181818"
