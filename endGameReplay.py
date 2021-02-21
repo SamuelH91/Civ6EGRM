@@ -120,6 +120,18 @@ class ButtonsWidget(QtWidgets.QWidget):
         button_layout.addWidget(update_symbol_button)
         update_symbol_button.clicked.connect(self.parent.updateSymbolSize)
 
+        update_text_button = QtWidgets.QPushButton("Set text size")
+        button_layout.addWidget(update_text_button)
+        update_text_button.clicked.connect(self.parent.updateSymbolTextSize)
+
+        toggle_city_names_button = QtWidgets.QPushButton("Toggle city")
+        button_layout.addWidget(toggle_city_names_button)
+        toggle_city_names_button.clicked.connect(self.parent.toggleCityNames)
+
+        toggle_city_names_bg_button = QtWidgets.QPushButton("Toggle city bg")
+        button_layout.addWidget(toggle_city_names_bg_button)
+        toggle_city_names_bg_button.clicked.connect(self.parent.toggleCityNamesBg)
+
         toggle_events_button = QtWidgets.QPushButton("Toggle events")
         button_layout.addWidget(toggle_events_button)
         toggle_events_button.clicked.connect(self.parent.toggle_events)
@@ -298,7 +310,15 @@ class MapVisualizerWidget(QtWidgets.QWidget):
         font = QtGui.QFont()
         font.setPixelSize(size)
         for symbol in self.symbols:
-            self.symbols[symbol].setFont(font)
+            if symbol[:9] != "CityName_":
+                self.symbols[symbol].setFont(font)
+
+    def set_symbol_text_size(self, size):
+        font = QtGui.QFont()
+        font.setPixelSize(size)
+        for symbol in self.symbols:
+            if symbol[:9] == "CityName_":
+                self.symbols[symbol].setFont(font)
 
 
 class MainWindow(QtWidgets.QMainWindow):
@@ -317,8 +337,11 @@ class MainWindow(QtWidgets.QMainWindow):
         self.enableTiming = False
         self.outputFps = 10
         self.symbolSize = 20
+        self.symbolTextSize = 10
         self.eventListWidth = 200
         self.civWidth = None
+        self.hiddenCityNames = False
+        self.backgroundTextColor = False
 
         # Options
         self.OptimizeGif = True
@@ -387,7 +410,18 @@ class MainWindow(QtWidgets.QMainWindow):
                     x, y = self.plot_widget.environmentHG.get_hexa_xy(cityLoc)
                     self.plot_widget.add_symbol(razedCity, x, y, "")
 
+        # City name symbols
+        offset = 0.8
+        for turn in self.gdh.cityData:
+            # Set new ones
+            for city in turn["cities"]:
+                cityName = "CityName_" + city["CityName"]
+                if cityName not in self.plot_widget.symbols:
+                    x, y = self.plot_widget.environmentHG.get_hexa_xy(city["LocationIdx"])
+                    self.plot_widget.add_symbol(cityName, x, y + offset, "")
+
         self.plot_widget.set_symbol_size(self.symbolSize)
+        self.plot_widget.set_symbol_text_size(self.symbolTextSize)
 
         self.showMaximized()
 
@@ -412,8 +446,14 @@ class MainWindow(QtWidgets.QMainWindow):
         num, ok = QtWidgets.QInputDialog.getInt(self, "Set on map symbol size", "Enter a number", self.symbolSize)
         if ok:
             self.symbolSize = num
-            self.buttons_widget.symbol_size.setNum(num)
+            # self.buttons_widget.symbol_size.setNum(num)
             self.plot_widget.set_symbol_size(num)
+
+    def updateSymbolTextSize(self):
+        num, ok = QtWidgets.QInputDialog.getInt(self, "Set on map text size", "Enter a number", self.symbolTextSize)
+        if ok:
+            self.symbolTextSize = num
+            self.plot_widget.set_symbol_text_size(num)
 
     def set_civ_width(self):
         num, ok = QtWidgets.QInputDialog.getInt(self, "Set on civ width", "Enter a number",
@@ -438,6 +478,20 @@ class MainWindow(QtWidgets.QMainWindow):
     def toggleCivilizationNames(self):
         self.plot_widget.civNames.setHidden(not self.plot_widget.civNames.isHidden())
 
+    def toggleCityNames(self):
+        self.hiddenCityNames = not self.hiddenCityNames
+        if self.hiddenCityNames:
+            for symbol in self.plot_widget.symbols:
+                if symbol[:9] == "CityName_":
+                    self.plot_widget.symbols[symbol].setHtml("")
+        else:
+            self.setCityNameSymbolAtTurn(self.plot_widget.turnSlider.sliderPosition() - 1)
+
+    def toggleCityNamesBg(self):
+        self.backgroundTextColor = not self.backgroundTextColor
+        if not self.hiddenCityNames:
+            self.setCityNameSymbolAtTurn(self.plot_widget.turnSlider.sliderPosition() - 1)
+
     def setCivilizationNames(self, text):
         self.plot_widget.civNames.setText(text)
 
@@ -451,6 +505,25 @@ class MainWindow(QtWidgets.QMainWindow):
                     symbol = CS_UNICODE_MAP[self.gdh.minorCivTypes[i]].replace("&nbsp;", "").replace(" ", "")
                     colorhexMinor = ''.join([format(int(c), '02x') for c in civColorsMinor[i]])
                 self.plot_widget.symbols[cityState].setHtml("<font color=#" + colorhexMinor + ">" + symbol + "</font>")
+
+    def setCityNameSymbolAtTurn(self, idx):
+        turn = self.gdh.cityData[idx]
+        bg = self.backgroundTextColor
+        body = ""
+        for symbol in self.plot_widget.symbols:
+            if symbol[:9] == "CityName_":
+                self.plot_widget.symbols[symbol].setHtml("")
+        if not self.hiddenCityNames:
+            for city in turn["cities"]:
+                cityName = city["CityName"]
+                cityNameTag = "CityName_" + cityName
+                if cityNameTag in self.plot_widget.symbols:
+                    colorhex = ''.join([format(int(c), '02x') for c in civColorsInner[city["CivIndex"]]])
+                    if bg:
+                        colorhexbg = ''.join([format(int(c), '02x') for c in civColors[city["CivIndex"]]])
+                        body = "<body bgcolor=#" + colorhexbg + ">"
+                        #style = "<style> font { text-shadow: 1px 1px #" + colorhexbg + ";} </style>"
+                    self.plot_widget.symbols[cityNameTag].setHtml(body + "<font color=#" + colorhex + ">" + cityName + "</font>")  #  background-color=#FF0000  text-shadow=2px 2px #FF0000
 
     def setCityRazedAtTurn(self, idx):
         turn = self.gdh.razedCityLocs[idx]
@@ -490,6 +563,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.setCityStateSymbolAtTurn(turn - 1)
         self.setCityRazedAtTurn(turn - 1)
+        self.setCityNameSymbolAtTurn(turn - 1)
 
         self.updateCivs(turn - 1)
 

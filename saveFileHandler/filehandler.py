@@ -480,7 +480,6 @@ def getNotifications(mainDecompressedData):
     notifications = []
     try:
         notiIndex = binaryData.index(b'LOC_NOTIFICATION_')
-        # There is some religion info as well at same section
         while notiIndex:
             notiNameLength = readUInt32(binaryData, notiIndex - 4)
             notiName = binaryData[notiIndex:notiIndex + notiNameLength].decode("utf-8")
@@ -498,5 +497,105 @@ def getNotifications(mainDecompressedData):
         print("No notifications!")
         pass
     return notifications
+
+
+def getDiploStates(mainDecompressedData, turn):
+    base = b'\x05\x00\x00\x00'
+    binaryData = mainDecompressedData
+    diploStates = {}
+
+    try:
+        diploIndex = binaryData.index(b'DIPLO_STATE_') - 16
+        currentPlayerId = readUInt32(binaryData, diploIndex + 4)
+        currentPlayerBin = writeUInt32LE(currentPlayerId)
+        targetPlayerId = readUInt32(binaryData, diploIndex + 8)
+
+        while diploIndex:
+            diploStateLength = readUInt32(binaryData, diploIndex + 12)
+            diploState = binaryData[diploIndex + 16:diploIndex + 16 + diploStateLength].decode("utf-8")
+            idx = diploIndex + 16 + diploStateLength
+
+            targetPlayerId += 1
+            targetPlayerBin = writeUInt32LE(targetPlayerId)
+
+            nextSearch = base + currentPlayerBin + targetPlayerBin
+
+            try:
+                diploIndexCandidate = binaryData.index(nextSearch, idx)
+                num1 = readUInt32(binaryData, diploIndexCandidate - 8)  # Major/Minor/Alive/Dead?
+                num2 = readUInt32(binaryData, diploIndexCandidate - 4)  # Major/Minor/Alive/Dead?
+
+                if currentPlayerId not in diploStates:
+                    diploStates[currentPlayerId] = {}
+                diploStates[currentPlayerId][targetPlayerId - 1] = {"state": diploState[12:], "num1": num1, "num2": num2}
+
+                if binaryData[diploIndexCandidate + 16:diploIndexCandidate + 28] == b'DIPLO_STATE_':
+                    diploIndex = diploIndexCandidate
+                else:
+                    # Find next player
+                    currentPlayerId += 1
+                    currentPlayerBin = writeUInt32LE(currentPlayerId)
+                    try:
+                        while True:
+                            diploIndex = binaryData.index(b'DIPLO_STATE_', diploIndexCandidate + 28) - 16
+                            currentPlayerId = readUInt32(binaryData, diploIndex + 4)
+                            currentPlayerBin = writeUInt32LE(currentPlayerId)
+                            targetPlayerId = readUInt32(binaryData, diploIndex + 8)
+                            if targetPlayerId != 62:
+                                break
+                            else:
+                                diploIndexCandidate = diploIndex
+                    except:
+                        # print("Couldn't find next player")
+                        break
+            except:
+                print(f"File #{turn}: Something unexpected happened, "
+                      f"when searching diploStates! nextSearch: {nextSearch}")
+                pass
+    except:
+        print("No diplo states!")
+        pass
+    return diploStates
+
+
+def getWars(mainDecompressedData, fileIdx):
+    # # Always paired?
+    # wRecTag = b'WarsReceived'
+    # wDecTag = b'WarsDeclared'
+    # # Cyclic war declarations can't be solved from these?
+    #
+    # binaryData = mainDecompressedData
+    # wars = {}
+    #
+    # warCountIndexR = binaryData.index(wRecTag)
+    # warCountIndexD = binaryData.index(wDecTag)
+
+    wDecTag = b'LOC_HOF_GRAPH_PLAYER_WARS_DECLARED'
+    wRecTag = b'LOC_HOF_GRAPH_PLAYER_WARS_RECEIVED'
+    binaryData = mainDecompressedData
+
+    receivers = getWarTagData(binaryData, wRecTag)
+    declarers = getWarTagData(binaryData, wDecTag)
+
+    return {"declarers": declarers, "receivers": receivers}
+
+
+def getWarTagData(binaryData, wTag):
+
+    warCountIndex = binaryData.index(wTag) + len(wTag) + 9
+    warCounts = readUInt32(binaryData, warCountIndex)
+
+    tags = []
+    idx = warCountIndex + 4
+
+    for i in range(warCounts):
+        id = readUInt32(binaryData, idx)
+        turnNum = readUInt32(binaryData, idx + 4)
+        idx += 12
+        tags.append({"turn": turnNum, "id": id})
+    tags.sort(key=lambda war: war["turn"])
+    return tags
+
+
 
 
