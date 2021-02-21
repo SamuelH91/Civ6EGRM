@@ -6,6 +6,8 @@ import time
 import multiprocessing as mp
 import pyqtgraph as pg
 import copy
+from collections import defaultdict
+import numpy as np
 from saveFileHandler.civColors import CIV_LEADER_COLORS, COLORS_PRISM, CIV_OVERFLOW_COLORS,\
     CS_COLOR_MAP, CS_TYPES, CS_UNICODE_MAP  # CIV_COLORS
 try:
@@ -243,13 +245,17 @@ def fileWorker(idx, filePath):
     civData = []
     leaderData = []
     notifications = []
+    diploStates = []
+    wars = []
     if idx == 0:
         civData, leaderData = get_civ_data(data)
     # map_civ_colors(civdata)
     tileData = save_to_map_json(mainDecompressedData, idx)
     cityData = getCityData(mainDecompressedData)
     # notifications = getNotifications(mainDecompressedData)
-    return (idx, tileData, cityData, civData, leaderData, notifications)
+    diploStates = getDiploStates(mainDecompressedData, idx)
+    wars = getWars(mainDecompressedData, idx)
+    return idx, tileData, cityData, civData, leaderData, notifications, diploStates, wars
 
 
 class GameDataHandler():
@@ -261,6 +267,8 @@ class GameDataHandler():
         self.civData = []
         self.leaderData = []
         self.notifications = []
+        self.diploStates = []
+        self.wars = []
         self.borderColors = []
         self.borderColorsInner = []
         self.borderColorsSC = []
@@ -297,6 +305,8 @@ class GameDataHandler():
         self.civData = [None] * count
         self.leaderData = [None] * count
         self.notifications = [None] * count
+        self.diploStates = [None] * count
+        self.wars = [None] * count
         t0 = time.time()
         pool = mp.Pool()
         for ii, filePath in enumerate(filePaths):
@@ -317,6 +327,7 @@ class GameDataHandler():
         self.calculateCivHexas()
         self.calcPlayersAlive()
         self.calculateCityStateOrigos()
+        self.calcIncrementalWars()
         print("Total time {} s for data parsing from {} files".format(time.time() - t0, count))
 
     def checkUniqueNotifications(self):
@@ -333,6 +344,8 @@ class GameDataHandler():
         self.civData[result[0]] = result[3]
         self.leaderData[result[0]] = result[4]
         self.notifications[result[0]] = result[5]
+        self.diploStates[result[0]] = result[6]
+        self.wars[result[0]] = result[7]
 
     def calcCityCounts(self):
         self.cityCounts = []
@@ -587,6 +600,47 @@ class GameDataHandler():
 
         print("Total time for city state origos: {}".format(time.time() - t0))
 
+    def calcIncrementalWars(self):
+        used_turns = []
+        self.incWars = []
+        for i, (warsAtTurnIdx, diploAtTurnIdx) in enumerate(zip(self.wars, self.diploStates)):
+            new_wars = []
+            declarers = warsAtTurnIdx["declarers"]
+            receivers = warsAtTurnIdx["receivers"]
+
+            while True:
+                turn = -1
+                for declarer in declarers:
+                    if declarer["turn"] not in used_turns:
+                        turn = declarer["turn"]
+                        used_turns.append(turn)
+                        break
+                if turn > 0:
+                    decs = [declarer["id"] for declarer in declarers if declarer["turn"] == turn]
+                    recs = [receiver["id"] for receiver in receivers if receiver["turn"] == turn]
+                    if len(decs) == 1:
+                        new_wars.append({"turn": turn, "declarer": decs[0], "receiver": recs[0]})
+                    else:
+                        unique_index = copy.copy(decs)
+                        unique_index.extend(recs)
+                        unique_index = np.unique(unique_index)
+                        graph_size = len(unique_index)
+                        g = Graph(graph_size)
+                        for dec in decs:
+                            for rec in recs:
+                                if diploAtTurnIdx[dec][rec]["state"][:3] == "WAR":
+                                    g.addEdge(np.where(unique_index == dec)[0][0], np.where(unique_index == rec)[0][0])
+                                    new_wars.append({"turn": turn, "declarer": dec, "receiver": rec})
+                        if g.isCyclic():
+                            print(f"Warning cyclic war declaration during turn #{i}!!")
+                else:
+                    break
+            self.incWars.append(new_wars)
+
+
+
+
+
     def getOwner(self, turnIdx, x, y, language=None):
         civ_text = ""
         civs = self.civData[0]
@@ -785,3 +839,46 @@ class GameDataHandler():
                 idx = np.where((oldColors[:, 0] == color[0]) & (oldColors[:, 1] == color[1]) & (oldColors[:, 2] == color[2]))[0]
                 if len(idx) > 0:
                     borderColorsAtTurn[ii] = np.append(self.pColors[idx], 0.9)
+
+
+# Python program to detect cycle
+# in a graph
+class Graph:
+    def __init__(self, vertices):
+        self.graph = defaultdict(list)
+        self.V = vertices
+
+    def addEdge(self, u, v):
+        self.graph[u].append(v)
+
+    def isCyclicUtil(self, v, visited, recStack):
+
+        # Mark current node as visited and
+        # adds to recursion stack
+        visited[v] = True
+        recStack[v] = True
+
+        # Recur for all neighbours
+        # if any neighbour is visited and in
+        # recStack then graph is cyclic
+        for neighbour in self.graph[v]:
+            if visited[neighbour] == False:
+                if self.isCyclicUtil(neighbour, visited, recStack) == True:
+                    return True
+            elif recStack[neighbour] == True:
+                return True
+
+        # The node needs to be poped from
+        # recursion stack before function ends
+        recStack[v] = False
+        return False
+
+    # Returns true if graph is cyclic else false
+    def isCyclic(self):
+        visited = [False] * self.V
+        recStack = [False] * self.V
+        for node in range(self.V):
+            if visited[node] == False:
+                if self.isCyclicUtil(node, visited, recStack) == True:
+                    return True
+        return False
