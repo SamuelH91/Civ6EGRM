@@ -305,6 +305,10 @@ class MapVisualizerWidget(QtWidgets.QWidget):
         self.graphWidget.addItem(self.symbols[key])
         self.symbols[key].setPos(QtCore.QPointF(x, y))
         self.symbols[key].setHtml(text)
+        shadow = QtWidgets.QGraphicsDropShadowEffect()
+        shadow.setBlurRadius(1)
+        shadow.setOffset(1)
+        self.symbols[key].setGraphicsEffect(shadow)
 
     def set_symbol_size(self, size):
         font = QtGui.QFont()
@@ -312,6 +316,15 @@ class MapVisualizerWidget(QtWidgets.QWidget):
         for symbol in self.symbols:
             if symbol[:9] != "CityName_":
                 self.symbols[symbol].setFont(font)
+
+    def set_symbol_shadow(self, key, shadowColor, blurRad=1, blurOffset=1):
+        shadow = QtWidgets.QGraphicsDropShadowEffect()
+        shadow.setBlurRadius(blurRad)
+        shadow.setOffset(blurOffset)
+        if shadowColor is not None:
+            shadow.setColor(QtGui.QColor(*shadowColor.astype(int)))
+        if key in self.symbols:
+            self.symbols[key].setGraphicsEffect(shadow)
 
     def set_symbol_text_size(self, size):
         font = QtGui.QFont()
@@ -509,7 +522,6 @@ class MainWindow(QtWidgets.QMainWindow):
     def setCityNameSymbolAtTurn(self, idx):
         turn = self.gdh.cityData[idx]
         bg = self.backgroundTextColor
-        body = ""
         for symbol in self.plot_widget.symbols:
             if symbol[:9] == "CityName_":
                 self.plot_widget.symbols[symbol].setHtml("")
@@ -520,10 +532,11 @@ class MainWindow(QtWidgets.QMainWindow):
                 if cityNameTag in self.plot_widget.symbols:
                     colorhex = ''.join([format(int(c), '02x') for c in civColorsInner[city["CivIndex"]]])
                     if bg:
-                        colorhexbg = ''.join([format(int(c), '02x') for c in civColors[city["CivIndex"]]])
-                        body = "<body bgcolor=#" + colorhexbg + ">"
-                        #style = "<style> font { text-shadow: 1px 1px #" + colorhexbg + ";} </style>"
-                    self.plot_widget.symbols[cityNameTag].setHtml(body + "<font color=#" + colorhex + ">" + cityName + "</font>")  #  background-color=#FF0000  text-shadow=2px 2px #FF0000
+                        colorbg = civColors[city["CivIndex"]]
+                        self.plot_widget.set_symbol_shadow(cityNameTag, colorbg)
+                    else:
+                        self.plot_widget.set_symbol_shadow(cityNameTag, None)
+                    self.plot_widget.symbols[cityNameTag].setHtml("<font color=#" + colorhex + ">" + cityName + "</font>")  #  background-color=#FF0000  text-shadow=2px 2px #FF0000
 
     def setCityRazedAtTurn(self, idx):
         turn = self.gdh.razedCityLocs[idx]
