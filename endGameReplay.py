@@ -15,7 +15,7 @@ import platform
 platformWin7 = platform.release() == "7" and platform.system() == "Windows"
 LANGUAGES = ["en_EN", "ru_RU", "de_DE", "es_ES", "fr_FR", "it_IT", "ja_JP", "ko_KR", "pl_PL", "pt_BR"]
 
-
+use_original_name = False
 def run_arg_parser():
     # Create the parser
     arg_parser = argparse.ArgumentParser(description='endGameReplay.py reads all civ6 autosave files from -d "<location>"\n'
@@ -355,6 +355,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.civWidth = None
         self.hiddenCityNames = False
         self.backgroundTextColor = False
+        self.language = "en_EN"
 
         # Options
         self.OptimizeGif = True
@@ -443,11 +444,13 @@ class MainWindow(QtWidgets.QMainWindow):
             self.gdh.parseCivNames()
         else:
             self.gdh.parseCivNames(language)
+        self.language = language
         self.currentIdx = self.plot_widget.turnSlider.sliderPosition()
         self.updateCivs(self.currentIdx - 1)
 
     def updateCivs(self, turn):
         self.setCivilizationNames(self.gdh.getCivNames(turn))
+        self.setCityNameSymbolAtTurn(turn)
 
     def updateFps(self):
         num, ok = QtWidgets.QInputDialog.getInt(self, "Set output fps value", "Enter a number", self.outputFps)
@@ -529,6 +532,18 @@ class MainWindow(QtWidgets.QMainWindow):
             for city in turn["cities"]:
                 cityName = city["CityName"]
                 cityNameTag = "CityName_" + cityName
+                # if additional city name data
+                if not use_original_name:
+                    if "cityNameData" in city:
+                        # if custom or not
+                        if city["cityNameData"]["Orig"]:
+                            # if localization data exists
+                            if "cityLocData" in city:
+                                # if english or not
+                                if self.language != LANGUAGES[0]:
+                                    cityName = city["cityLocData"][self.language]
+                        else:
+                            cityName = city["cityNameData"]["CityName"]  # Custom city name
                 if cityNameTag in self.plot_widget.symbols:
                     colorhex = ''.join([format(int(c), '02x') for c in civColorsInner[city["CivIndex"]]])
                     if bg:

@@ -437,7 +437,7 @@ def save_to_map_json(mainDecompressedData, idx):
 
     return tilesmap
 
-def getCityData(mainDecompressedData):
+def getCityData(mainDecompressedData, turn):
     bin = mainDecompressedData
     cities = {"cities": []}
     try:
@@ -445,7 +445,13 @@ def getCityData(mainDecompressedData):
         # There is some religion info as well at same section
         while cityIndex:
             cityNameLength = readUInt32(bin, cityIndex + 8)
-            cityName = " ".join([x.capitalize() for x in bin[cityIndex + 12 + 14:cityIndex + 12 + cityNameLength].decode("utf-8").replace("_", " ").lower().split()])
+            if bin[cityIndex + 12:cityIndex + 12 + 14] == b'LOC_CITY_NAME_':
+                cityName = " ".join([x.capitalize() for x in bin[cityIndex + 12 + 14:cityIndex + 12 + cityNameLength].decode("utf-8").replace("_", " ").lower().split()])
+                resolve_name_tag = False
+            else:
+                # HOW DID THIS HAPPEN!??!? -> Captured custom named city?
+                cityName = bin[cityIndex + 12:cityIndex + 12 + cityNameLength].decode("utf-8")
+                resolve_name_tag = True
             idx = cityIndex + 12 + cityNameLength
             cityCivIdx = readUInt16(bin, idx)
             # Unknown 1xUInt16
@@ -455,6 +461,13 @@ def getCityData(mainDecompressedData):
             # could be 32
             # 2x 00 00 00 00?
             cityOrderIdx = readUInt16(bin, idx + 18)
+            if resolve_name_tag:
+                for city in cities["cities"]:
+                    if city["LocationIdx"] == cityLocationIdx:
+                        newName = city["CityName"]
+                        print(f"File #{turn}: Changed CityName '{cityName}' to standard tag '{newName}'")
+                        cityName = newName
+                        break
             cities["cities"].append({
                 "CityName": cityName,
                 "CivIndex": cityCivIdx,
@@ -475,34 +488,35 @@ def getCityData(mainDecompressedData):
 
 def getCityNameData(mainDecompressedData, idx):
     bin = mainDecompressedData
-    searchTag = b'\x00\x00\x00\x01\x06\x00\x00\x00\xEC\x57\xF0\x24\x00\x00\x00\x00\x0A\xCE\x19\xBB\x00\x00\x00\x00\x4A\x63\x61\xB7\x00\x00\x00\x00\xAB\xF8\x81\x3A\x00\x00\x00\x00\xE8\x55\x3F\xEB\x00\x00\x00\x00\x76\x8E\x0F\x7F'
+    #searchTag = b'\x00\x00\x00\x01\x06\x00\x00\x00\xEC\x57\xF0\x24\x00\x00\x00\x00\x0A\xCE\x19\xBB\x00\x00\x00\x00\x4A\x63\x61\xB7\x00\x00\x00\x00\xAB\xF8\x81\x3A\x00\x00\x00\x00\xE8\x55\x3F\xEB\x00\x00\x00\x00\x76\x8E\x0F\x7F'
+    searchTag0 = b'\x00\x00\x00\x00\x00\x00\x00\x00\x04\x00\x00\x00'
+    searchTag1 = b'\x00\x00'
+    searchTag = b'\xE8\x55\x3F\xEB\x00\x76\x8E\x0F\x7F\x00\x06\x00\x00\x00'
     origTag = b'LOC_CITY_NAME_'
     origTagLen = len(origTag)
+    tagLen = len(searchTag)
     cities = {"cityNames": []}
-    offset = 17 + 52
+    nameIndex = 0
     try:
         cityIndex = bin.index(searchTag)
         while cityIndex:
-            if bin[cityIndex-5:cityIndex-1] == b'\xFF\xFF\xFF\xFF':
-                try:
-                    cityIndex = bin.index(searchTag, cityIndex + offset)
-                    continue
-                except:
-                    break
-            cityNameLength = readUInt32(bin, cityIndex + offset)
-            name = bin[cityIndex + offset + 4:cityIndex + offset + 4 + cityNameLength]
+            # if bin[cityIndex-5:cityIndex-1] == b'\xFF\xFF\xFF\xFF':
+            nameIndex0 = bin.rindex(searchTag0, nameIndex, cityIndex)
+            nameIndex = bin.rindex(searchTag1, nameIndex, nameIndex0) - 2
+            cityNameLength = readUInt32(bin, nameIndex)
+            name = bin[nameIndex + 4:nameIndex + 4 + cityNameLength]
             cityOrigName = False
             if name[:origTagLen] == origTag:
                 cityOrigName = True
                 cityName = " ".join([x.capitalize() for x in name[origTagLen:].decode("utf-8").replace("_", " ").lower().split()])
             else:
-                cityName = name
+                cityName = name.decode("utf-8")
             cities["cityNames"].append({
                 "CityName": cityName,
                 "Orig": cityOrigName,
             })
             try:
-                cityIndex = bin.index(searchTag, cityIndex + offset)
+                cityIndex = bin.index(searchTag, cityIndex + tagLen)
             except:
                 break
     except:

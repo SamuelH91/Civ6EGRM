@@ -16,6 +16,7 @@ try:
 except:
     civLocalizationImportSuccess = False
     pass
+import traceback
 # Terrain types:
 # grassland: 				48 198 231 131:		2213004848     30 C6 E7 83    b'\x30\xC6\xE7\x83'
 # grassland (hills):		112 12 157 110: 	1855786096     70 0C 9D 6E    b'\x70\x0C\x9D\x6E'
@@ -249,19 +250,24 @@ def fileWorker(idx, filePath):
     notifications = []
     diploStates = []
     wars = []
-    if idx == 0:
-        civData, leaderData = get_civ_data(data)
-    # map_civ_colors(civdata)
-    tileData = save_to_map_json(mainDecompressedData, idx)
-    cityData = getCityData(mainDecompressedData)
-    checkCityTileOwner(cityData, tileData)
-    reCityData = reorderedCityData(cityData)
-    # notifications = getNotifications(mainDecompressedData)
-    cityNameData = getCityNameData(mainDecompressedData, idx)
-    combineNames(cityData, reCityData, cityNameData)
-    getCityLocNames(cityData)
-    diploStates = getDiploStates(mainDecompressedData, idx)
-    wars = getWars(mainDecompressedData, idx)
+    try:
+        if idx == 0:
+            civData, leaderData = get_civ_data(data)
+        # map_civ_colors(civdata)
+        tileData = save_to_map_json(mainDecompressedData, idx)
+        cityData = getCityData(mainDecompressedData, idx)
+        diploStates = getDiploStates(mainDecompressedData, idx)
+        wars = getWars(mainDecompressedData, idx)
+
+        checkCityTileOwner(cityData, tileData)
+        cityNameData = getCityNameData(mainDecompressedData, idx)
+        reCityData = reorderedCityData(cityData)
+        # notifications = getNotifications(mainDecompressedData)
+        combineNames(cityData, reCityData, cityNameData, idx)
+        getCityLocNames(cityData)
+    except Exception as e:
+        traceback.print_exc()
+        print(e)
     return idx, tileData, cityData, civData, leaderData, notifications, diploStates, wars
 
 
@@ -273,23 +279,41 @@ def getPlayerID(tile):
         return -1
 
 
-def checkCityTileOwner(cityData, tileData):
+def checkCityTileOwner(cityData, tileData, updateWithTileOwner=True):
     for city in cityData["cities"]:
         pId = getPlayerID(tileData["tiles"][city["LocationIdx"]])
         city["tileOwner"] = pId
+        if updateWithTileOwner:
+            if pId != FREE_CITY_IDX and pId != city["CivIndex"]:  # and pId > 0:
+                maxCivCityOrderIdx, maxCivCityOrderIdx1 = findLastCivCityIdx(cityData, pId)
+                city["CivCityOrderIdx"] = maxCivCityOrderIdx + 1
+                city["CivCityOrderIdx1"] = maxCivCityOrderIdx1 + 1
+                city["CivIndex"] = pId
 
 
-def combineNames(cityData, reCityData, cityNameData):
+def combineNames(cityData, reCityData, cityNameData, fileNum):
     count = 0
+    cityNameIdxLast = len(cityNameData["cityNames"]) - 1
     # Free cities first from the end of the list
     for city in reversed(reCityData):
         if city["tileOwner"] == FREE_CITY_IDX:
-            cityData["cities"][city["OldIdx"]]["cityNameData"] = cityNameData["cityNames"][-count]
+            cityData["cities"][city["OldIdx"]]["cityNameData"] = cityNameData["cityNames"][cityNameIdxLast - count]
             count += 1
         else:
             break
-    for idx, city in enumerate(reCityData[:-count]):
-        cityData["cities"][city["OldIdx"]]["cityNameData"] = cityNameData["cityNames"][idx]
+    if count == 0:
+        count = len(reCityData)
+    else:
+        count = -count
+    for idx, city in enumerate(reCityData[:count]):
+        if cityNameData["cityNames"][idx]["Orig"]:
+            if cityData["cities"][city["OldIdx"]]["CityName"] != cityNameData["cityNames"][idx]["CityName"]:
+                print(f"File #{fileNum} Warning: a bug, city names should be same when using originals")
+            else:
+                cityData["cities"][city["OldIdx"]]["cityNameData"] = cityNameData["cityNames"][idx]
+        else:
+            #TODO: Find a way to check if city state captured and name changed immediately
+            cityData["cities"][city["OldIdx"]]["cityNameData"] = cityNameData["cityNames"][idx]
 
 
 def getCityLocNames(cityData):
@@ -304,7 +328,10 @@ def getCityLocNames(cityData):
 def reorderedCityData(cityData):
     reorderedCityData = []
     usedCities = []
+    replacedCities = []
     for idx, city in enumerate(cityData["cities"]):
+        if city["CivIndex"] < 0:
+            continue
         CityName = city["CityName"]
         cityCopy = city.copy()
         cityCopy["OldIdx"] = idx
@@ -317,17 +344,56 @@ def reorderedCityData(cityData):
         else:
             usedCities.append(CityName)
         # Find a slot where to insert
-        for idx2, insertedCity in enumerate(reorderedCityData):
-            insertOrReplace = compareCity(city, insertedCity)
-            if insertOrReplace > 0:
-                reorderedCityData.insert(idx2, cityCopy)
-                break
-            elif insertOrReplace == 0:
-                reorderedCityData[idx2] = cityCopy
+        insertCity(reorderedCityData, cityCopy, replacedCities)
+
+    replacedCities2 = []
+    for cityName in replacedCities:
+        for city in reorderedCityData:
+            if city["CityName"] == cityName:
                 break
         else:
-            reorderedCityData.append(cityCopy)
+            for idx, missingCity in enumerate(reversed(cityData["cities"])):
+                if missingCity["CityName"] == cityName:
+                    break
+            else:
+                print("Failed to find a missing city candidate at reorderedCityData")
+                continue
+            maxCivCityOrderIdx, maxCivCityOrderIdx1 = findLastCivCityIdx(cityData, missingCity["tileOwner"])
+            newCity = missingCity.copy()
+            newCity["OldIdx"] = len(cityData["cities"]) - idx - 1
+            newCity["CivIndex"] = missingCity["tileOwner"]
+            newCity["CivCityOrderIdx"] = maxCivCityOrderIdx + 1
+            newCity["CivCityOrderIdx1"] = maxCivCityOrderIdx1 + 1
+
+            insertCity(reorderedCityData, newCity, replacedCities2)
+
     return reorderedCityData
+
+
+def insertCity(reorderedCityData, city, replacedCities):
+    for idx2, insertedCity in enumerate(reorderedCityData):
+        insertOrReplace = compareCity(city, insertedCity)
+        if insertOrReplace > 0:
+            reorderedCityData.insert(idx2, city)
+            break
+        elif insertOrReplace == 0:
+            replacedCities.append(reorderedCityData[idx2]["CityName"])
+            reorderedCityData[idx2] = city
+            break
+    else:
+        reorderedCityData.append(city)
+
+def findLastCivCityIdx(cityData, civIdx):
+    maxCivCityOrderIdx = -1
+    maxCivCityOrderIdx1 = -1
+    for city in cityData["cities"]:
+        if city["CivIndex"] == civIdx:
+            if maxCivCityOrderIdx < city["CivCityOrderIdx"]:
+                maxCivCityOrderIdx = city["CivCityOrderIdx"]
+            if maxCivCityOrderIdx1 < city["CivCityOrderIdx1"]:
+                maxCivCityOrderIdx1 = city["CivCityOrderIdx1"]
+    return maxCivCityOrderIdx, maxCivCityOrderIdx1
+
 
 def compareCity(city1, city2):
     CivIndex = city1["CivIndex"]
@@ -409,6 +475,10 @@ class GameDataHandler():
         self.notifications = [None] * count
         self.diploStates = [None] * count
         self.wars = [None] * count
+
+        # self.saveResult(fileWorker(0, filePaths[0]))
+        # self.calcMajorCivs()
+
         t0 = time.time()
         pool = mp.Pool()
         for ii, filePath in enumerate(filePaths):
@@ -463,6 +533,32 @@ class GameDataHandler():
             self.cityCounts.append(cityCounts)
 
     def calcRazedCitys(self):
+        self.razedCityLocs = []
+        cityLocsHistory = []
+        # Add 1st turn city locs to history
+        for city in self.cityData[0]["cities"]:
+            loc = city["LocationIdx"]
+            if loc not in cityLocsHistory:
+                cityLocsHistory.append(loc)
+        self.razedCityLocs.append([])
+        for i, turn in enumerate(self.cityData[1:]):
+            razedCitysAtTurn = []
+            for oldCityLoc in cityLocsHistory:
+                city_exists_still = False
+                for city in turn["cities"]:
+                    if oldCityLoc == city["LocationIdx"]:
+                        city_exists_still = True
+                        break
+                if not city_exists_still:
+                    razedCitysAtTurn.append(oldCityLoc)
+            for city in turn["cities"]:
+                loc = city["LocationIdx"]
+                if loc not in cityLocsHistory:
+                    cityLocsHistory.append(loc)
+            self.razedCityLocs.append(razedCitysAtTurn)
+
+
+    def calcRazedCitysOld(self):
         self.razedCityLocs = []
         cityLocsHistory = []
         # Add 1st turn city locs to history
