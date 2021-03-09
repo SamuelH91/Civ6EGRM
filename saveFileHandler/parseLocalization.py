@@ -15,6 +15,7 @@ info = "\
 # xml tags needed:\n\
 # <Replace Tag=\"LOC_LEADER_<LEADER>_NAME\" Language=\"<language>\">\n\
 # <Replace Tag=\"LOC_CIVILIZATION_<CIV>_NAME\" Language=\"<language>\">\n\
+# <Replace Tag=\"LOC_CITY_NAME_<CITY>\" Language=\"<language>\">\n\
 \n\
 # And for DLCs\n\
 # from SteamLibrary\steamapps\common\Sid Meier's Civilization VI\DLC\<DLC>\Text\n\
@@ -25,7 +26,9 @@ civNameExtra = "_FRONTEND"
 civNameStart = "LOC_CIVILIZATION_"
 leaderNameStart = "LOC_LEADER_"
 leaderNameExtra = "TRAIT"
+cityName = "LOC_CITY_NAME_"
 dlcFileEnd = "_Translations_ConfigText.xml"
+dlcFileEnd2 = "_Translations_Text.xml"
 vanillaFileStart = "Vanilla_"
 xmlfile = ".xml"
 nameEnd = "_NAME"
@@ -33,13 +36,16 @@ civNameExtraLen = len(civNameExtra)
 civNameStartLen = len(civNameStart)
 leaderNameStartLen = len(leaderNameStart)
 leaderNameExtraLen = len(leaderNameExtra)
+cityNameLen = len(cityName)
 dlcFileEndLen = len(dlcFileEnd)
+dlcFileEndLen2 = len(dlcFileEnd2)
 vanillaFileStartLen = len(vanillaFileStart)
 xmlfileLen = len(xmlfile)
 nameEndLen = len(nameEnd)
 
 leaders = {}
 civs = {}
+citys = {}
 
 
 def add_tag_to_dict(replaceTag, dictionary, tag, language):
@@ -73,6 +79,9 @@ def parse_xml(path, targetLanguage):
                     if tag[-nameEndLen:] == nameEnd:
                         tag = tag[:-nameEndLen]
                         add_tag_to_dict(replaceTag, leaders, tag, language)
+            elif tag[:cityNameLen] == cityName:
+                tag = tag[cityNameLen:]
+                add_tag_to_dict(replaceTag, citys, tag, language)
 
 
 snapshotVanilla = DirectorySnapshot(vanillapath, False)
@@ -90,6 +99,10 @@ for i, path in enumerate(snapshot.paths):
         # print(path)
         for targetLanguage in targetLanguages:
             parse_xml(path, targetLanguage)
+    elif path[-dlcFileEndLen2:] == dlcFileEnd2:
+        # print(path)
+        for targetLanguage in targetLanguages:
+            parse_xml(path, targetLanguage)
 
 with codecs.open("civLocalization.py", "w", "utf-8") as stream:   # or utf-8
     stream.write(info)
@@ -98,6 +111,9 @@ with codecs.open("civLocalization.py", "w", "utf-8") as stream:   # or utf-8
     stream.write("\n\n")
     stream.write("CIV_NAMES = ")
     stream.write(json.dumps(civs, indent=4, ensure_ascii=False))
+    stream.write("\n\n")
+    stream.write("CITY_NAMES = ")
+    stream.write(json.dumps(citys, indent=4, ensure_ascii=False))
     stream.write("\n\n")
 
 print("Autogeneration done!!!")
