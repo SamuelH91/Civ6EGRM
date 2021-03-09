@@ -29,6 +29,7 @@ leaderNameExtra = "TRAIT"
 cityName = "LOC_CITY_NAME_"
 dlcFileEnd = "_Translations_ConfigText.xml"
 dlcFileEnd2 = "_Translations_Text.xml"
+dlcFileEnd3 = "_Translations_Major_Text.xml"
 vanillaFileStart = "Vanilla_"
 xmlfile = ".xml"
 nameEnd = "_NAME"
@@ -39,6 +40,7 @@ leaderNameExtraLen = len(leaderNameExtra)
 cityNameLen = len(cityName)
 dlcFileEndLen = len(dlcFileEnd)
 dlcFileEndLen2 = len(dlcFileEnd2)
+dlcFileEndLen3 = len(dlcFileEnd3)
 vanillaFileStartLen = len(vanillaFileStart)
 xmlfileLen = len(xmlfile)
 nameEndLen = len(nameEnd)
@@ -100,6 +102,10 @@ for i, path in enumerate(snapshot.paths):
         for targetLanguage in targetLanguages:
             parse_xml(path, targetLanguage)
     elif path[-dlcFileEndLen2:] == dlcFileEnd2:
+        # print(path)
+        for targetLanguage in targetLanguages:
+            parse_xml(path, targetLanguage)
+    elif path[-dlcFileEndLen3:] == dlcFileEnd3:
         # print(path)
         for targetLanguage in targetLanguages:
             parse_xml(path, targetLanguage)
