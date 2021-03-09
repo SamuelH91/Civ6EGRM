@@ -11,7 +11,7 @@ import numpy as np
 from saveFileHandler.civColors import CIV_LEADER_COLORS, COLORS_PRISM, CIV_OVERFLOW_COLORS,\
     CS_COLOR_MAP, CS_TYPES, CS_UNICODE_MAP  # CIV_COLORS
 try:
-    from saveFileHandler.civLocalization import CIV_LEADER_NAMES, CIV_NAMES
+    from saveFileHandler.civLocalization import CIV_LEADER_NAMES, CIV_NAMES, CITY_NAMES
     civLocalizationImportSuccess = True
 except:
     civLocalizationImportSuccess = False
@@ -170,6 +170,8 @@ blackBrush = pg.mkBrush(pg.mkColor(np.zeros(3,)))
 emptyPen = pg.mkPen(pg.mkColor(np.zeros(4, )))
 blackPen = pg.mkPen(pg.mkColor(np.array((24, 24, 24))), width=3)
 
+FREE_CITY_IDX = 62
+
 def parseLeader(leaderIn):
     cityState = False
     leader = leaderIn
@@ -252,11 +254,111 @@ def fileWorker(idx, filePath):
     # map_civ_colors(civdata)
     tileData = save_to_map_json(mainDecompressedData, idx)
     cityData = getCityData(mainDecompressedData)
+    checkCityTileOwner(cityData, tileData)
+    reCityData = reorderedCityData(cityData)
     # notifications = getNotifications(mainDecompressedData)
+    cityNameData = getCityNameData(mainDecompressedData, idx)
+    combineNames(cityData, reCityData, cityNameData)
+    getCityLocNames(cityData)
     diploStates = getDiploStates(mainDecompressedData, idx)
     wars = getWars(mainDecompressedData, idx)
     return idx, tileData, cityData, civData, leaderData, notifications, diploStates, wars
 
+
+def getPlayerID(tile):
+    if tile["OwnershipBuffer"] >= 64:
+        tileBufferData = tile["buffer"]
+        return tileBufferData[-5]
+    else:
+        return -1
+
+
+def checkCityTileOwner(cityData, tileData):
+    for city in cityData["cities"]:
+        pId = getPlayerID(tileData["tiles"][city["LocationIdx"]])
+        city["tileOwner"] = pId
+
+
+def combineNames(cityData, reCityData, cityNameData):
+    count = 0
+    # Free cities first from the end of the list
+    for city in reversed(reCityData):
+        if city["tileOwner"] == FREE_CITY_IDX:
+            cityData["cities"][city["OldIdx"]]["cityNameData"] = cityNameData["cityNames"][-count]
+            count += 1
+        else:
+            break
+    for idx, city in enumerate(reCityData[:-count]):
+        cityData["cities"][city["OldIdx"]]["cityNameData"] = cityNameData["cityNames"][idx]
+
+
+def getCityLocNames(cityData):
+    for city in cityData["cities"]:
+        if "cityNameData" in city:
+            if city["cityNameData"]["Orig"]:
+                cityKey = "_".join(x.upper() for x in city["CityName"].split(" "))
+                if cityKey in CITY_NAMES:
+                    city["cityLocData"] = CITY_NAMES[cityKey]
+
+
+def reorderedCityData(cityData):
+    reorderedCityData = []
+    usedCities = []
+    for idx, city in enumerate(cityData["cities"]):
+        CityName = city["CityName"]
+        cityCopy = city.copy()
+        cityCopy["OldIdx"] = idx
+        # If city exists already remove it from list
+        if CityName in usedCities:
+            for idx2, insertedCity in enumerate(reorderedCityData):
+                if insertedCity["CityName"] == CityName:
+                    reorderedCityData.pop(idx2)
+                    break
+        else:
+            usedCities.append(CityName)
+        # Find a slot where to insert
+        for idx2, insertedCity in enumerate(reorderedCityData):
+            insertOrReplace = compareCity(city, insertedCity)
+            if insertOrReplace > 0:
+                reorderedCityData.insert(idx2, cityCopy)
+                break
+            elif insertOrReplace == 0:
+                reorderedCityData[idx2] = cityCopy
+                break
+        else:
+            reorderedCityData.append(cityCopy)
+    return reorderedCityData
+
+def compareCity(city1, city2):
+    CivIndex = city1["CivIndex"]
+    CivCityOrderIdx = city1["CivCityOrderIdx"]
+    tileOwner = city1["tileOwner"]
+    CivIndex2 = city2["CivIndex"]
+    CivCityOrderIdx2 = city2["CivCityOrderIdx"]
+    tileOwner2 = city2["tileOwner"]
+
+    # City 1 is not free city and city 2 is
+    if tileOwner != FREE_CITY_IDX and tileOwner2 == FREE_CITY_IDX:
+        return 1
+    # City 1 is free city and city 2 is not
+    elif tileOwner == FREE_CITY_IDX and tileOwner2 != FREE_CITY_IDX:
+        return -1
+    # Both are either free city or not #TODO: Check that the order is not time related with Free Cities
+    else:
+        # Civ index priority # 1
+        if CivIndex < CivIndex2:
+            return 1
+        elif CivIndex > CivIndex2:
+            return -1
+        else:
+            # City index priority # 1
+            if CivCityOrderIdx < CivCityOrderIdx2:
+                return 1
+            elif CivCityOrderIdx > CivCityOrderIdx2:
+                return -1
+            # Both are same replace old index (player has lost an existing city)
+            else:
+                return 0
 
 class GameDataHandler():
     def __init__(self, dataFolder, fileExt=".Civ6Save"):
@@ -454,7 +556,7 @@ class GameDataHandler():
         for turn in self.tileData:
             civHexaCountsAtTurn = [0] * civNum
             for ii, tile in enumerate(turn["tiles"]):
-                playerID = self.getPlayerID(tile)
+                playerID = getPlayerID(tile)
                 if 0 <= playerID < civNum:
                     civHexaCountsAtTurn[playerID] += 1
             self.civHexaCounts.append(civHexaCountsAtTurn)
@@ -511,12 +613,12 @@ class GameDataHandler():
                     except:
                         print("drawWaterBorders failure ...")
                         pass
-                playerID = self.getPlayerID(tile)
+                playerID = getPlayerID(tile)
                 if playerID >= 0:
                     if outsideBordersOnly:
                         for neighbour in self.neighbours_list[ii]:
                             if neighbour < self.X*self.Y:
-                                neighbourID = self.getPlayerID(turn["tiles"][neighbour])
+                                neighbourID = getPlayerID(turn["tiles"][neighbour])
                                 if neighbourID == playerID:
                                     if not drawWaterBorders:
                                         terrainType = turn["tiles"][neighbour]["TerrainType"]
@@ -579,13 +681,13 @@ class GameDataHandler():
         turn = self.tileData[turnIdx]
         self.minorOrigos = {}
         for ii, tile in enumerate(turn["tiles"]):
-            playerID = self.getPlayerID(tile)
+            playerID = getPlayerID(tile)
             if playerID >= self.majorCivs:  # Minor only
                 neighbour_count_inv = 6
                 found_orig = True
                 for neighbour in self.neighbours_list[ii]:  # If more than 4 are owned (or all actually)
                     if neighbour < self.X*self.Y:
-                        neighbourID = self.getPlayerID(turn["tiles"][neighbour])
+                        neighbourID = getPlayerID(turn["tiles"][neighbour])
                         if neighbourID != playerID:
                             neighbour_count_inv -= 1
                     if neighbour_count_inv <= 3:
@@ -638,9 +740,6 @@ class GameDataHandler():
             self.incWars.append(new_wars)
 
 
-
-
-
     def getOwner(self, turnIdx, x, y, language=None):
         civ_text = ""
         civs = self.civData[0]
@@ -648,7 +747,7 @@ class GameDataHandler():
         turn = self.tileData[turnIdx]
         if 0 < x <= self.X and 0 < y <= self.Y:
             tile = turn["tiles"][y * self.X + x]
-            playerID = self.getPlayerID(tile)
+            playerID = getPlayerID(tile)
             if playerID >= 0:
                 if playerID < len(leaders):
                     leader = leaders[playerID]
@@ -769,12 +868,7 @@ class GameDataHandler():
             self.minorCityColors.append(copy.copy(cityColorsAtTurn))
         print("Total time for minor city colors: {}".format(time.time() - t0))
 
-    def getPlayerID(self, tile):
-        if tile["OwnershipBuffer"] >= 64:
-            tileBufferData = tile["buffer"]
-            return tileBufferData[-5]
-        else:
-            return -1
+
 
     def getMapSize(self):
         if len(self.tileData) != 0:

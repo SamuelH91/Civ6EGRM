@@ -472,6 +472,44 @@ def getCityData(mainDecompressedData):
         pass
     return cities
 
+
+def getCityNameData(mainDecompressedData, idx):
+    bin = mainDecompressedData
+    searchTag = b'\x00\x00\x00\x01\x06\x00\x00\x00\xEC\x57\xF0\x24\x00\x00\x00\x00\x0A\xCE\x19\xBB\x00\x00\x00\x00\x4A\x63\x61\xB7\x00\x00\x00\x00\xAB\xF8\x81\x3A\x00\x00\x00\x00\xE8\x55\x3F\xEB\x00\x00\x00\x00\x76\x8E\x0F\x7F'
+    origTag = b'LOC_CITY_NAME_'
+    origTagLen = len(origTag)
+    cities = {"cityNames": []}
+    offset = 17 + 52
+    try:
+        cityIndex = bin.index(searchTag)
+        while cityIndex:
+            if bin[cityIndex-5:cityIndex-1] == b'\xFF\xFF\xFF\xFF':
+                try:
+                    cityIndex = bin.index(searchTag, cityIndex + offset)
+                    continue
+                except:
+                    break
+            cityNameLength = readUInt32(bin, cityIndex + offset)
+            name = bin[cityIndex + offset + 4:cityIndex + offset + 4 + cityNameLength]
+            cityOrigName = False
+            if name[:origTagLen] == origTag:
+                cityOrigName = True
+                cityName = " ".join([x.capitalize() for x in name[origTagLen:].decode("utf-8").replace("_", " ").lower().split()])
+            else:
+                cityName = name
+            cities["cityNames"].append({
+                "CityName": cityName,
+                "Orig": cityOrigName,
+            })
+            try:
+                cityIndex = bin.index(searchTag, cityIndex + offset)
+            except:
+                break
+    except:
+        print(f"File #{idx}: No cityname data found!")
+        pass
+    return cities
+
 notiEnd = "_MESSAGE"  # or "_SUMMARY"
 
 # Are these only player based notifications
