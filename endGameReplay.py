@@ -672,7 +672,7 @@ class MainWindow(QtWidgets.QMainWindow):
             destination="endGameReplayMap.gif",   # or just omit it and will use the first source provided.
             optimize=False,  # Whetever to add the optimize flag of not, optimized with -O3 option
             colors=256,  # Number of colors t use
-            options=["--verbose", "-O3"],  # Options to use. "--lossy"
+            options=["--verbose", "-O3"],  # Options to use. , "--lossy=0" , "-O3"
         )
         self.updateStatus("Status: Gif done!")
         print("Gif done!")
@@ -705,7 +705,7 @@ class MainWindow(QtWidgets.QMainWindow):
                    "-loglevel", "error",
                    "-i", "pipe:",
                    "-vcodec", "h264",
-                   "-pix_fmt", "yuv420p",
+                   "-pix_fmt", "yuv444p",  # "yuv420p"
                    "-y", "endGameReplayMap.mp4"]
 
         pipe = sp.Popen(command, stdin=sp.PIPE, stderr=sp.PIPE)
