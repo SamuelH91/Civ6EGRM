@@ -1,7 +1,6 @@
 # Civ6EGRM
 Civilization 6 End Game Replay Map
 
-![](endGameReplayMap.gif)
 
 ## Main features
 - fileCopier.py which copies automatically all autosaves (Single/Multi) (not necessary if you have some other method to collect your save files)
