@@ -285,10 +285,17 @@ def checkCityTileOwner(cityData, tileData, updateWithTileOwner=True):
         city["tileOwner"] = pId
         if updateWithTileOwner:
             if pId != FREE_CITY_IDX and pId != city["CivIndex"]:  # and pId > 0:
-                maxCivCityOrderIdx, maxCivCityOrderIdx1 = findLastCivCityIdx(cityData, pId)
-                city["CivCityOrderIdx"] = maxCivCityOrderIdx + 1
-                city["CivCityOrderIdx1"] = maxCivCityOrderIdx1 + 1
-                city["CivIndex"] = pId
+                CivCityOrderIdx, CivCityOrderIdx1, oldIdx = cityHasExiststedAlreadyInCiv(city["CityName"], pId,
+                                                                                         cityData)
+                if CivCityOrderIdx >= 0:
+                    city["CivCityOrderIdx"] = CivCityOrderIdx
+                    city["CivCityOrderIdx1"] = CivCityOrderIdx1
+                    city["CivIndex"] = pId
+                else:
+                    maxCivCityOrderIdx, maxCivCityOrderIdx1 = findLastCivCityIdx(cityData, pId)
+                    city["CivCityOrderIdx"] = maxCivCityOrderIdx + 1
+                    city["CivCityOrderIdx1"] = maxCivCityOrderIdx1 + 1
+                    city["CivIndex"] = pId
 
 
 def combineNames(cityData, reCityData, cityNameData, fileNum):
@@ -330,9 +337,6 @@ def combineNames(cityData, reCityData, cityNameData, fileNum):
                 candidate = cityNameData["cityNames"][total]
         if stop:
             break
-
-
-
 
 
 def getCityLocNames(cityData):
@@ -377,8 +381,17 @@ def reorderedCityData(cityData, removeGaps=True):
             else:
                 print("Failed to find a missing city candidate at reorderedCityData")
                 continue
-            maxCivCityOrderIdx, maxCivCityOrderIdx1 = findLastCivCityIdx(cityData, missingCity["tileOwner"])
+
             newCity = missingCity.copy()
+
+            # CivCityOrderIdx, CivCityOrderIdx1, oldIdx = cityHasExiststedAlreadyInCiv(missingCity, cityData)
+            # if CivCityOrderIdx >= 0:
+            #     newCity["OldIdx"] = oldIdx
+            #     newCity["CivIndex"] = missingCity["tileOwner"]
+            #     newCity["CivCityOrderIdx"] = CivCityOrderIdx
+            #     newCity["CivCityOrderIdx1"] = CivCityOrderIdx1
+            # else:
+            maxCivCityOrderIdx, maxCivCityOrderIdx1 = findLastCivCityIdx(cityData, missingCity["tileOwner"])
             newCity["OldIdx"] = len(cityData["cities"]) - idx - 1
             newCity["CivIndex"] = missingCity["tileOwner"]
             newCity["CivCityOrderIdx"] = maxCivCityOrderIdx + 1
@@ -434,6 +447,7 @@ def insertCity(reorderedCityData, city, replacedCities):
     else:
         reorderedCityData.append(city)
 
+
 def findLastCivCityIdx(cityData, civIdx):
     maxCivCityOrderIdx = -1
     maxCivCityOrderIdx1 = -1
@@ -444,6 +458,40 @@ def findLastCivCityIdx(cityData, civIdx):
             if maxCivCityOrderIdx1 < city["CivCityOrderIdx1"]:
                 maxCivCityOrderIdx1 = city["CivCityOrderIdx1"]
     return maxCivCityOrderIdx, maxCivCityOrderIdx1
+
+
+def findFirstAvailableCivCityIdx(cityData, civIdx):
+    idxList = []
+    CivCityOrderIdx1 = -1
+    for city in cityData["cities"]:
+        if city["CivIndex"] == civIdx:
+            idxList.append(city["CivCityOrderIdx"])
+            if CivCityOrderIdx1 < city["CivCityOrderIdx1"]:
+                CivCityOrderIdx1 = city["CivCityOrderIdx1"]
+    idxList.sort()
+    for ii in range(len(idxList)):
+        if ii != idxList[ii]:
+            CivCityOrderIdx = ii
+            break
+    else:
+        CivCityOrderIdx = len(idxList)
+    return CivCityOrderIdx, CivCityOrderIdx1
+
+
+def cityHasExiststedAlreadyInCiv(CityName, CivIndex, cityData):
+    CivCityOrderIdx = -1
+    CivCityOrderIdx1 = -1
+    oldIdx = -1
+    for idx, city in enumerate(cityData["cities"]):
+        if city["CivIndex"] == CivIndex:
+            if city["CityName"] == CityName:
+                CivCityOrderIdx = city["CivCityOrderIdx"]
+                oldIdx = idx
+            if CivCityOrderIdx1 < city["CivCityOrderIdx1"]:
+                CivCityOrderIdx1 = city["CivCityOrderIdx1"]
+    CivCityOrderIdx1 += 1
+    return CivCityOrderIdx, CivCityOrderIdx1, oldIdx
+
 
 
 def compareCity(city1, city2):
