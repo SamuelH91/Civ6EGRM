@@ -57,14 +57,14 @@ class ButtonsWidget(QtWidgets.QWidget):
         button_layout.addWidget(button_toggle)
         button_toggle.clicked.connect(self.parent.toggleBorders)
 
-        button_toggle_water_borders = QtWidgets.QPushButton('Water Borders', self)
+        button_toggle_water_borders = QtWidgets.QPushButton('on water', self)
         button_layout.addWidget(button_toggle_water_borders)
         button_toggle_water_borders.clicked.connect(self.parent.toggleWaterBorders)
 
         button_toggle_civs = QtWidgets.QPushButton('Civ names', self)
         button_layout.addWidget(button_toggle_civs)
         button_toggle_civs.clicked.connect(self.parent.toggleCivilizationNames)
-        set_civ_width_button = QtWidgets.QPushButton("Set civ width")
+        set_civ_width_button = QtWidgets.QPushButton("Civ width")
         button_layout.addWidget(set_civ_width_button)
         set_civ_width_button.clicked.connect(self.parent.set_civ_width)
 
@@ -109,18 +109,18 @@ class ButtonsWidget(QtWidgets.QWidget):
         # adding shadow to the label
         self.civ.setGraphicsEffect(shadow)
 
-        updateFps_button = QtWidgets.QPushButton("Set output fps")
+        updateFps_button = QtWidgets.QPushButton("Output fps")
         button_layout.addWidget(updateFps_button)
         updateFps_button.clicked.connect(self.parent.updateFps)
         self.fps = QtWidgets.QLabel(self)  # QtWidgets.QLineEdit()
         button_layout.addWidget(self.fps)
         self.fps.setNum(10)
 
-        update_symbol_button = QtWidgets.QPushButton("Set symbol size")
+        update_symbol_button = QtWidgets.QPushButton("Symbol size")
         button_layout.addWidget(update_symbol_button)
         update_symbol_button.clicked.connect(self.parent.updateSymbolSize)
 
-        update_text_button = QtWidgets.QPushButton("Set text size")
+        update_text_button = QtWidgets.QPushButton("Text size")
         button_layout.addWidget(update_text_button)
         update_text_button.clicked.connect(self.parent.updateSymbolTextSize)
 
@@ -128,14 +128,14 @@ class ButtonsWidget(QtWidgets.QWidget):
         button_layout.addWidget(toggle_city_names_button)
         toggle_city_names_button.clicked.connect(self.parent.toggleCityNames)
 
-        toggle_city_names_bg_button = QtWidgets.QPushButton("Toggle city bg")
+        toggle_city_names_bg_button = QtWidgets.QPushButton("+ bg")
         button_layout.addWidget(toggle_city_names_bg_button)
         toggle_city_names_bg_button.clicked.connect(self.parent.toggleCityNamesBg)
 
         toggle_events_button = QtWidgets.QPushButton("Toggle events")
         button_layout.addWidget(toggle_events_button)
         toggle_events_button.clicked.connect(self.parent.toggle_events)
-        set_event_width_button = QtWidgets.QPushButton("Set event width")
+        set_event_width_button = QtWidgets.QPushButton("Event width")
         button_layout.addWidget(set_event_width_button)
         set_event_width_button.clicked.connect(self.parent.set_event_width)
 
