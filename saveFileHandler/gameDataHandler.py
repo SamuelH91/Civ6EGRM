@@ -383,14 +383,6 @@ def reorderedCityData(cityData, removeGaps=True):
                 continue
 
             newCity = missingCity.copy()
-
-            # CivCityOrderIdx, CivCityOrderIdx1, oldIdx = cityHasExiststedAlreadyInCiv(missingCity, cityData)
-            # if CivCityOrderIdx >= 0:
-            #     newCity["OldIdx"] = oldIdx
-            #     newCity["CivIndex"] = missingCity["tileOwner"]
-            #     newCity["CivCityOrderIdx"] = CivCityOrderIdx
-            #     newCity["CivCityOrderIdx1"] = CivCityOrderIdx1
-            # else:
             maxCivCityOrderIdx, maxCivCityOrderIdx1 = findLastCivCityIdx(cityData, missingCity["tileOwner"])
             newCity["OldIdx"] = len(cityData["cities"]) - idx - 1
             newCity["CivIndex"] = missingCity["tileOwner"]
@@ -458,24 +450,6 @@ def findLastCivCityIdx(cityData, civIdx):
             if maxCivCityOrderIdx1 < city["CivCityOrderIdx1"]:
                 maxCivCityOrderIdx1 = city["CivCityOrderIdx1"]
     return maxCivCityOrderIdx, maxCivCityOrderIdx1
-
-
-def findFirstAvailableCivCityIdx(cityData, civIdx):
-    idxList = []
-    CivCityOrderIdx1 = -1
-    for city in cityData["cities"]:
-        if city["CivIndex"] == civIdx:
-            idxList.append(city["CivCityOrderIdx"])
-            if CivCityOrderIdx1 < city["CivCityOrderIdx1"]:
-                CivCityOrderIdx1 = city["CivCityOrderIdx1"]
-    idxList.sort()
-    for ii in range(len(idxList)):
-        if ii != idxList[ii]:
-            CivCityOrderIdx = ii
-            break
-    else:
-        CivCityOrderIdx = len(idxList)
-    return CivCityOrderIdx, CivCityOrderIdx1
 
 
 def cityHasExiststedAlreadyInCiv(CityName, CivIndex, cityData):
