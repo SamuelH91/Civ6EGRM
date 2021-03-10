@@ -460,7 +460,7 @@ def getCityData(mainDecompressedData, turn):
             cityLocationIdx = readUInt16(bin, idx + 8)
             # could be 32
             # 2x 00 00 00 00?
-            cityOrderIdx = readUInt16(bin, idx + 18)
+            cityOrderIdx = readUInt16(bin, idx + 20)
             if resolve_name_tag:
                 for city in cities["cities"]:
                     if city["LocationIdx"] == cityLocationIdx:
@@ -497,6 +497,9 @@ def getCityNameData(mainDecompressedData, idx):
     tagLen = 100
     cities = {"cityNames": []}
     nameIndex = 0
+    totalSize = 0
+    nextCivThreshold = 100000
+    civCityOrderIdx = 0
     try:
         cityIndex = bin.index(searchTag)
         while cityIndex:
@@ -511,12 +514,27 @@ def getCityNameData(mainDecompressedData, idx):
                 cityName = " ".join([x.capitalize() for x in name[origTagLen:].decode("utf-8").replace("_", " ").lower().split()])
             else:
                 cityName = name.decode("utf-8")
+
+            diffToPreviousCity = nextCivThreshold
+            if totalSize > 0:
+                diffToPreviousCity = cityIndex - cities["cityNames"][totalSize - 1]["cityIndex"]
+
+            nextCiv = diffToPreviousCity >= nextCivThreshold
+            if nextCiv:
+                civCityOrderIdx = 0
+
+            # print(f"File #{idx}: City {cityName} '{totalSize}': diff {diffToPreviousCity}")
             cities["cityNames"].append({
                 "CityName": cityName,
                 "Orig": cityOrigName,
                 "cityIndex": cityIndex,
                 "nameIndex": nameIndex,
+                #"diff": diffToPreviousCity,  # usually ~20k+ between cities within same civ and 100k+++ between civs
+                "nextCiv": nextCiv,
+                "CivCityOrderIdx": civCityOrderIdx
             })
+            totalSize += 1
+            civCityOrderIdx += 1
             try:
                 cityIndex = bin.index(searchTag, cityIndex + tagLen)
             except:

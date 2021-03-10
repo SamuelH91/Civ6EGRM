@@ -295,29 +295,44 @@ def combineNames(cityData, reCityData, cityNameData, fileNum):
     count = 0
     cityNameIdxLast = len(cityNameData["cityNames"]) - 1
     # Free cities first from the end of the list
+    freeCitys = []
     for city in reversed(reCityData):
         if city["tileOwner"] == FREE_CITY_IDX:
             cityData["cities"][city["OldIdx"]]["cityNameData"] = cityNameData["cityNames"][cityNameIdxLast - count]
             count += 1
+            freeCitys.append(city)
         else:
             break
-    if count == 0:
-        count = len(reCityData)
-    else:
-        count = -count
 
     skip = 0
-    for idx, city in enumerate(reCityData[:count]):
-        if cityNameData["cityNames"][idx]["Orig"]:
-            if cityData["cities"][city["OldIdx"]]["CityName"] != cityNameData["cityNames"][idx]["CityName"]:
-                print(f"File #{fileNum} Warning: a bug, city names should be same when using originals")
+    stop = False
+    for idx, city in enumerate(reCityData[:len(reCityData)-count]):
+        total = idx + skip
+        if total > cityNameIdxLast:
+            break
+        candidate = cityNameData["cityNames"][total]
+        while True:
+            if candidate["CivCityOrderIdx"] == city["CivCityOrderIdx"]:
+                cityData["cities"][city["OldIdx"]]["cityNameData"] = candidate
+                if candidate["Orig"]:
+                    if cityData["cities"][city["OldIdx"]]["CityName"] != candidate["CityName"]:
+                        print(f"File #{fileNum} Warning: a bug?, city names should be same when using originals")
+                break
+            elif candidate["CivCityOrderIdx"] < city["CivCityOrderIdx"]:  # Free city?
+                if city in freeCitys:
+                    pass
+            else:  # Captured city state?
                 skip += 1
-            else:
-                cityData["cities"][city["OldIdx"]]["cityNameData"] = cityNameData["cityNames"][idx]
-        else:
-            #TODO: Find a way to check if city state captured and name changed immediately
-            #TODO: FIX city state capture bug, look into next turn?
-            cityData["cities"][city["OldIdx"]]["cityNameData"] = cityNameData["cityNames"][idx]
+                total = idx + skip
+                if total > cityNameIdxLast:
+                    stop = True
+                    break
+                candidate = cityNameData["cityNames"][total]
+        if stop:
+            break
+
+
+
 
 
 def getCityLocNames(cityData):
@@ -329,7 +344,7 @@ def getCityLocNames(cityData):
                     city["cityLocData"] = CITY_NAMES[cityKey]
 
 
-def reorderedCityData(cityData):
+def reorderedCityData(cityData, removeGaps=True):
     reorderedCityData = []
     usedCities = []
     replacedCities = []
@@ -370,6 +385,38 @@ def reorderedCityData(cityData):
             newCity["CivCityOrderIdx1"] = maxCivCityOrderIdx1 + 1
 
             insertCity(reorderedCityData, newCity, replacedCities2)
+
+    # Remove gaps from CivCityOrderIdx
+    if removeGaps:
+        first = True
+        CurrentCivIndex = 0
+        CurrentCivCityOrderIdx = 0
+        for city in reorderedCityData:
+            if first:
+                first = False
+                CurrentCivIndex = city["CivIndex"]
+                CurrentCivCityOrderIdx = city["CivCityOrderIdx"]
+                # Start from 0
+                if CurrentCivCityOrderIdx != 0:
+                    city["CivCityOrderIdx"] = 0
+                    city["CivCityOrderIdxOld"] = CurrentCivCityOrderIdx
+                    CurrentCivCityOrderIdx = 0
+                continue
+            if city["tileOwner"] == FREE_CITY_IDX:
+                continue
+            if CurrentCivIndex == city["CivIndex"]:
+                CurrentCivCityOrderIdx += 1
+                if CurrentCivCityOrderIdx != city["CivCityOrderIdx"]:
+                    city["CivCityOrderIdxOld"] = city["CivCityOrderIdx"]
+                    city["CivCityOrderIdx"] = CurrentCivCityOrderIdx
+            else:  # Next Civ
+                CurrentCivIndex = city["CivIndex"]
+                CurrentCivCityOrderIdx = city["CivCityOrderIdx"]
+                # Start from 0
+                if CurrentCivCityOrderIdx != 0:
+                    city["CivCityOrderIdx"] = 0
+                    city["CivCityOrderIdxOld"] = CurrentCivCityOrderIdx
+                    CurrentCivCityOrderIdx = 0
 
     return reorderedCityData
 
