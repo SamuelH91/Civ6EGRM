@@ -494,7 +494,7 @@ def getCityNameData(mainDecompressedData, idx):
     searchTag = b'\xE8\x55\x3F\xEB\x00\x76\x8E\x0F\x7F\x00\x06\x00\x00\x00'
     origTag = b'LOC_CITY_NAME_'
     origTagLen = len(origTag)
-    tagLen = len(searchTag)
+    tagLen = 100
     cities = {"cityNames": []}
     nameIndex = 0
     try:
@@ -514,6 +514,8 @@ def getCityNameData(mainDecompressedData, idx):
             cities["cityNames"].append({
                 "CityName": cityName,
                 "Orig": cityOrigName,
+                "cityIndex": cityIndex,
+                "nameIndex": nameIndex,
             })
             try:
                 cityIndex = bin.index(searchTag, cityIndex + tagLen)

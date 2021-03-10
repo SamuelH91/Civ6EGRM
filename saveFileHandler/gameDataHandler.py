@@ -305,14 +305,18 @@ def combineNames(cityData, reCityData, cityNameData, fileNum):
         count = len(reCityData)
     else:
         count = -count
+
+    skip = 0
     for idx, city in enumerate(reCityData[:count]):
         if cityNameData["cityNames"][idx]["Orig"]:
             if cityData["cities"][city["OldIdx"]]["CityName"] != cityNameData["cityNames"][idx]["CityName"]:
                 print(f"File #{fileNum} Warning: a bug, city names should be same when using originals")
+                skip += 1
             else:
                 cityData["cities"][city["OldIdx"]]["cityNameData"] = cityNameData["cityNames"][idx]
         else:
             #TODO: Find a way to check if city state captured and name changed immediately
+            #TODO: FIX city state capture bug, look into next turn?
             cityData["cities"][city["OldIdx"]]["cityNameData"] = cityNameData["cityNames"][idx]
 
 
