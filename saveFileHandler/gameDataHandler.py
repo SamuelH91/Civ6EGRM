@@ -495,10 +495,10 @@ class GameDataHandler():
 
         self.calcMajorCivs()
         self.calcCityCounts()
-        self.calcRazedCitys()
         self.calculateCivHexas()
         self.calcPlayersAlive()
         self.calculateCityStateOrigos()
+        self.calcRazedCitys()
         self.calcIncrementalWars()
         print("Total time {} s for data parsing from {} files".format(time.time() - t0, count))
 
@@ -534,54 +534,33 @@ class GameDataHandler():
 
     def calcRazedCitys(self):
         self.razedCityLocs = []
-        cityLocsHistory = []
-        # Add 1st turn city locs to history
-        for city in self.cityData[0]["cities"]:
-            loc = city["LocationIdx"]
-            if loc not in cityLocsHistory:
-                cityLocsHistory.append(loc)
-        self.razedCityLocs.append([])
-        for i, turn in enumerate(self.cityData[1:]):
+        for i, turn in enumerate(self.cityData):
             razedCitysAtTurn = []
-            for oldCityLoc in cityLocsHistory:
-                city_exists_still = False
-                for city in turn["cities"]:
-                    if oldCityLoc == city["LocationIdx"]:
-                        city_exists_still = True
-                        break
-                if not city_exists_still:
-                    razedCitysAtTurn.append(oldCityLoc)
-            for city in turn["cities"]:
-                loc = city["LocationIdx"]
-                if loc not in cityLocsHistory:
-                    cityLocsHistory.append(loc)
+            # For minor player ruins
+            for minor in self.minorOrigos:
+                if not self.playersAlive[i][minor]:
+                    loc = self.minorOrigos[minor]
+                    for cityNewer in turn["cities"]:
+                        if loc == cityNewer["LocationIdx"] and cityNewer["CivIndex"] >= 0:
+                            break
+                    else:
+                        # No newer city exists -> razed
+                        razedCitysAtTurn.append(loc)
+            # For major player ruins
+            for idx, city in enumerate(turn["cities"]):
+                if city["CivIndex"] < 0:
+                    loc = city["LocationIdx"]
+                    if idx + 1 >= len(turn["cities"]):
+                        razedCitysAtTurn.append(loc)
+                        continue
+                    for cityNewer in turn["cities"][idx+1:]:
+                        if loc == cityNewer["LocationIdx"] and cityNewer["CivIndex"] >= 0:
+                            break
+                    else:
+                        # No newer city exists -> razed
+                        razedCitysAtTurn.append(loc)
             self.razedCityLocs.append(razedCitysAtTurn)
 
-
-    def calcRazedCitysOld(self):
-        self.razedCityLocs = []
-        cityLocsHistory = []
-        # Add 1st turn city locs to history
-        for city in self.cityData[0]["cities"]:
-            loc = city["LocationIdx"]
-            if loc not in cityLocsHistory:
-                cityLocsHistory.append(loc)
-        self.razedCityLocs.append([])
-        for i, turn in enumerate(self.cityData[1:]):
-            razedCitysAtTurn = []
-            for oldCityLoc in cityLocsHistory:
-                city_exists_still = False
-                for city in turn["cities"]:
-                    if oldCityLoc == city["LocationIdx"]:
-                        city_exists_still = True
-                        break
-                if not city_exists_still:
-                    razedCitysAtTurn.append(oldCityLoc)
-            for city in turn["cities"]:
-                loc = city["LocationIdx"]
-                if loc not in cityLocsHistory:
-                    cityLocsHistory.append(loc)
-            self.razedCityLocs.append(razedCitysAtTurn)
 
     def calculateOtherStuff(self):
         t0 = time.time()
@@ -937,7 +916,7 @@ class GameDataHandler():
         cityColorsAtTurnEmpty = [emptyBrush] * self.X*self.Y
         self.cityColors = []
         for ii, turn in enumerate(self.cityData):
-            cityColorsAtTurn = cityColorsAtTurnEmpty
+            cityColorsAtTurn = cityColorsAtTurnEmpty.copy()
             for minor in self.minorOrigos:
                 if self.playersAlive[ii][minor] and ii != 0:
                     if useMinorType:
@@ -945,11 +924,12 @@ class GameDataHandler():
                     else:
                         cityColorsAtTurn[self.minorOrigos[minor]] = civColorsBrushInner[minor]
             for city in turn["cities"]:
-                if useInnerAsCityColor:
-                    cityColorsAtTurn[city["LocationIdx"]] = civColorsBrushInner[city["CivIndex"]]
-                else:
-                    cityColorsAtTurn[city["LocationIdx"]] = civColorsBrush[city["CivIndex"]]
-            self.cityColors.append(copy.copy(cityColorsAtTurn))
+                if city["CivIndex"] >= 0:
+                    if useInnerAsCityColor:
+                        cityColorsAtTurn[city["LocationIdx"]] = civColorsBrushInner[city["CivIndex"]]
+                    else:
+                        cityColorsAtTurn[city["LocationIdx"]] = civColorsBrush[city["CivIndex"]]
+            self.cityColors.append(cityColorsAtTurn)
         print("Total time for city colors: {}".format(time.time() - t0))
 
     def calculateMinorCityColors(self):
@@ -957,11 +937,11 @@ class GameDataHandler():
         cityColorsAtTurnEmpty = [emptyBrush] * self.X*self.Y
         self.minorCityColors = []
         for ii, turn in enumerate(self.cityData):
-            cityColorsAtTurn = cityColorsAtTurnEmpty
+            cityColorsAtTurn = cityColorsAtTurnEmpty.copy()
             for minor in self.minorOrigos:
                 if self.playersAlive[ii][minor]:
                     cityColorsAtTurn[self.minorOrigos[minor]] = civColorsBrushMinor[minor]
-            self.minorCityColors.append(copy.copy(cityColorsAtTurn))
+            self.minorCityColors.append(cityColorsAtTurn)
         print("Total time for minor city colors: {}".format(time.time() - t0))
 
 

@@ -545,9 +545,12 @@ class MainWindow(QtWidgets.QMainWindow):
                         else:
                             cityName = city["cityNameData"]["CityName"]  # Custom city name
                 if cityNameTag in self.plot_widget.symbols:
-                    colorhex = ''.join([format(int(c), '02x') for c in civColorsInner[city["CivIndex"]]])
+                    civIdx = city["CivIndex"]
+                    if civIdx < 0:
+                        cityName = ""
+                    colorhex = ''.join([format(int(c), '02x') for c in civColorsInner[civIdx]])
                     if bg:
-                        colorbg = civColors[city["CivIndex"]]
+                        colorbg = civColors[civIdx]
                         self.plot_widget.set_symbol_shadow(cityNameTag, colorbg)
                     else:
                         self.plot_widget.set_symbol_shadow(cityNameTag, None)
