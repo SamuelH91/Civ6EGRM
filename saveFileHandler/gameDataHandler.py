@@ -851,6 +851,7 @@ class GameDataHandler():
         print("Total time for city state origos: {}".format(time.time() - t0))
 
     def calcIncrementalWars(self):
+        self.calcDiploStateWarPeaceDiff()
         used_turns = []
         self.incWars = []
         for i, (warsAtTurnIdx, diploAtTurnIdx) in enumerate(zip(self.wars, self.diploStates)):
@@ -868,25 +869,188 @@ class GameDataHandler():
                 if turn > 0:
                     decs = [declarer["id"] for declarer in declarers if declarer["turn"] == turn]
                     recs = [receiver["id"] for receiver in receivers if receiver["turn"] == turn]
-                    if len(decs) == 1:
-                        new_wars.append({"turn": turn, "declarer": decs[0], "receiver": recs[0]})
+                    if len(decs) == 1:  # trivial case 1
+                        for rec in recs:
+                            new_wars.append({"turn": turn, "declarer": decs[0], "receiver": rec})
+                    elif len(recs) == 1:  # trivial case 2
+                        for dec in decs:
+                            new_wars.append({"turn": turn, "declarer": dec, "receiver": recs[0]})
                     else:
+                        # Total war count to be found by turn
+                        total_wars = int(np.sum(self.warPeaceDiffTable[:, :, i - 1] > 0)/2)
+                        found_wars = [0]
+
                         unique_index = copy.copy(decs)
                         unique_index.extend(recs)
                         unique_index = np.unique(unique_index)
                         graph_size = len(unique_index)
                         g = Graph(graph_size)
-                        for dec in decs:
+                        # Declarer and it's minors declare war on the receiver major, receiver's minors will
+                        # declare war back to the declarer's and 1st? of their minor, rest of attacker's minor will
+                        # declare war to the receiver's minor
+                        # Recs seems to include unnecessary minors which have declared war to another minor
+                        # Sometimes random? Index based greater attacks smaller minor civ? If only minor attacks this
+                        # doesn't apply
+                        # Ignore minor-minor-wars ?
+                        # -> Simplified: just attacker + minor to defender and defender's minors attack back
+                        major_decs = [dec for dec in decs if dec < self.majorCivs]
+                        only_decs = [dec for dec in decs if dec not in recs]
+                        major_recs = [rec for rec in recs if rec < self.majorCivs]
+                        only_recs = [rec for rec in recs if rec not in decs]
+                        print(f"turn {turn}: war count {total_wars}")
+                        print(f"decs {decs}")
+                        print(f"recs {recs}")
+                        print(f"major_decs {major_decs}")
+                        print(f"only_decs {only_decs}")
+                        print(f"major_recs {major_recs}")
+                        print(f"only_recs {only_recs}")
+
+                        minor_allies = {}
+                        for major in major_decs:
+                            minor_allies[major] = self.findMinorAllies(major, i)
+
+                        for major in major_recs:
+                            if major not in minor_allies:
+                                minor_allies[major] = self.findMinorAllies(major, i)
+
+                        print(f"minor allies {minor_allies}")
+
+                        used_decs = []
+
+                        for dec in only_decs:
                             for rec in recs:
-                                if diploAtTurnIdx[dec][rec]["state"][:3] == "WAR":
-                                    g.addEdge(np.where(unique_index == dec)[0][0], np.where(unique_index == rec)[0][0])
-                                    new_wars.append({"turn": turn, "declarer": dec, "receiver": rec})
+                                if rec < self.majorCivs:
+                                    self.addWars(new_wars, g, dec, rec, i, turn, unique_index, found_wars, minor_allies)
+                            if dec < self.majorCivs:
+                                major_decs.remove(dec)  # Remove Dec from dec list
+                            decs.remove(dec)  # Remove Dec from dec list
+
+                        if total_wars > found_wars[0]:
+                            for rec in only_recs:
+                                for dec in decs:
+                                    self.addWars(new_wars, g, dec, rec, i, turn, unique_index, found_wars, minor_allies)
+                                if rec < self.majorCivs:
+                                    major_recs.remove(rec)  # Remove Rec from dec list
+                                recs.remove(rec)  # Remove Rec from dec list
+
+                        if total_wars > found_wars[0]:
+                            for dec in major_decs:
+                                for rec in recs:
+                                    self.addWars(new_wars, g, dec, rec, i, turn, unique_index, found_wars, minor_allies)
+                                decs.remove(dec)  # Remove Major Dec from dec list
+
+                        if total_wars > found_wars[0]:
+                            for rec in major_recs:
+                                for dec in decs:
+                                    self.addWars(new_wars, g, dec, rec, i, turn, unique_index, found_wars, minor_allies)
+                                recs.remove(rec)  # Remove Rec from dec list
+
+                        if total_wars > found_wars[0]:
+                            for dec in decs:
+                                for rec in recs:
+                                    self.addWars(new_wars, g, dec, rec, i, turn, unique_index, found_wars, minor_allies)
+
+                        # Dec Major's minors -> Dec Major + Minor's
+                        # Minor -> Dec Major
+                        # Dec Major's minors -> Minor
+
+                        # for dec in only_decs:
+                        #     for rec in recs:
+                        #         # if dec in minor_allies:
+                        #         #     if rec in minor_allies[dec]:  # Skip allies
+                        #         #         continue
+                        #         if self.warPeaceDiffTable[dec, rec, i - 1] > 0:  # New war
+                        #             found_wars += 1
+                        #             g.addEdge(np.where(unique_index == dec)[0][0], np.where(unique_index == rec)[0][0])
+                        #             new_wars.append({"turn": turn, "declarer": dec, "receiver": rec})
+                        #     decs.remove(dec)
+                        #     # minors = []
+                        #     # for d2 in decs:
+                        #     #     if diploAtTurnIdx[dec][d2]["state"][:3] == "MAX":
+                        #     #         minors.append(d2)
+                        #     # dec_minor_allys.append({dec: minors})
+                        #
+                        # for rec in only_recs:
+                        #     for dec in recs:
+                        #         if self.warPeaceDiffTable[dec, rec, i - 1] > 0:  # New war
+                        #             new_war = {"turn": turn, "declarer": dec, "receiver": rec}
+                        #             inv_war = {"turn": turn, "declarer": rec, "receiver": dec}
+                        #             if new_war not in new_wars and inv_war not in new_wars:
+                        #                 found_wars += 1
+                        #                 g.addEdge(np.where(unique_index == dec)[0][0], np.where(unique_index == rec)[0][0])
+                        #                 new_wars.append(new_war)
+                        #             else:
+                        #                 print(f"Bug: war already existed")
+                        #     recs.remove(rec)
+                        #
+                        # for dec in decs:
+                        #     for rec in recs:
+                        #         # if diploAtTurnIdx[dec][rec]["state"][:3] == "WAR":
+                        #         if self.warPeaceDiffTable[dec, rec, i - 1] > 0:  # New war
+                        #             new_war = {"turn": turn, "declarer": dec, "receiver": rec}
+                        #             inv_war = {"turn": turn, "declarer": rec, "receiver": dec}
+                        #             if new_war not in new_wars and inv_war not in new_wars:
+                        #                 found_wars += 1
+                        #                 g.addEdge(np.where(unique_index == dec)[0][0], np.where(unique_index == rec)[0][0])
+                        #                 new_wars.append(new_war)
+                        #             else:
+                        #                 print(f"Bug: war already existed")
                         if g.isCyclic():
                             print(f"Warning cyclic war declaration during turn #{i}!!")
                 else:
                     break
             self.incWars.append(new_wars)
 
+    def addWars(self, new_wars, g, dec, rec, i, turn, unique_index, found_wars, minor_allies):
+        if rec < self.majorCivs:
+            # If there is a new war Dec Major -> Rec Major
+            if self.addWar(new_wars, g, dec, rec, i, turn, unique_index, found_wars) > 0:
+                # If receiver has minor allies
+                for rec_minor in minor_allies[rec]:
+                    # minor declare war to major
+                    self.addWar(new_wars, g, rec_minor, dec, i, turn, unique_index, found_wars)
+                    # If declarer has minor allies
+                    if dec < self.majorCivs:
+                        for dec_minor in minor_allies[dec]:  # minors declare war to minors
+                            self.addWar(new_wars, g, rec_minor, dec_minor, i, turn,
+                                        unique_index, found_wars)
+        else:
+            self.addWar(new_wars, g, dec, rec, i, turn, unique_index, found_wars)
+
+    def addWar(self, new_wars, g, dec, rec, i, turn, unique_index, found_wars):
+        if self.warPeaceDiffTable[dec, rec, i - 1] > 0:  # New war
+            new_war = {"turn": turn, "declarer": dec, "receiver": rec}
+            inv_war = {"turn": turn, "declarer": rec, "receiver": dec}
+            if new_war not in new_wars and inv_war not in new_wars:
+                found_wars[0] += 1
+                g.addEdge(np.where(unique_index == dec)[0][0],
+                          np.where(unique_index == rec)[0][0])
+                new_wars.append(new_war)
+                return 1
+            else:
+                print(f"Bug: war already existed")
+                return -1
+        return 0
+
+    def findMinorAllies(self, pIdx, turnIdx):
+        diploAtTurnIdx = self.diploStates[turnIdx]
+        pCount = self.majorCivs + self.minorCivs
+        allies = []
+        for minor in range(self.majorCivs, pCount):
+            if diploAtTurnIdx[pIdx][minor]["state"][:3] == "MAX":
+                allies.append(minor)
+        return allies
+
+    def calcDiploStateWarPeaceDiff(self):
+        pCount = self.majorCivs + self.minorCivs
+        diploDiffsWars = np.zeros((pCount, pCount, len(self.diploStates)), dtype=np.int8)
+        for idx, diploAtTurnIdx in enumerate(self.diploStates):
+            for p1 in range(pCount):
+                for p2 in range(pCount):
+                    if diploAtTurnIdx[p1][p2]["state"][:3] == "WAR" or diploAtTurnIdx[p1][p2]["state"][-3:] == "WAR":
+                        diploDiffsWars[p1][p2][idx] = 1
+                        # MAX_INFLUENCE PATRON
+        self.warPeaceDiffTable = np.diff(diploDiffsWars)  # starting from turn "2" (idx - 1)
 
     def getOwner(self, turnIdx, x, y, language=None):
         civ_text = ""
