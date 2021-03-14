@@ -669,5 +669,55 @@ def getWarTagData(binaryData, wTag):
     return tags
 
 
+def getGrievances(binaryData, fileIdx):
 
+    tag = b'LOC_DIPLO_GRIEVANCE_LOG_'
+    data1 = b'\x10\x00\x00\x00'
+    data0 = b'\x00\x00\x00\x00'
+    grievances = []
 
+    try:
+        grievanceIndex = binaryData.index(tag)
+        grievanceCount = readUInt32(binaryData, grievanceIndex - 28)
+
+        found = 0
+
+        while grievanceIndex:
+            tagLen = readUInt32(binaryData, grievanceIndex - 4)
+            complainer = readUInt32(binaryData, grievanceIndex - 20)
+            complainee = readUInt32(binaryData, grievanceIndex - 16)
+            value = readUInt32(binaryData, grievanceIndex - 12)
+            turn = readUInt32(binaryData, grievanceIndex - 8)
+
+            try:
+                if found == grievanceCount - 1:
+                    dataIndex = binaryData.index(data0, grievanceIndex + tagLen)
+                else:
+                    dataIndex = binaryData.index(data1, grievanceIndex + tagLen)
+            except:
+                dataIndex = grievanceIndex + tagLen
+
+            data = binaryData[grievanceIndex + tagLen:dataIndex]
+
+            grievances.append({
+                "Complainer": complainer,
+                "Complainee": complainee,
+                "Value": value,
+                "Turn": turn,
+                "DebugIdx": grievanceIndex,
+                "Data": data,
+            })
+            found += 1
+
+            if found >= grievanceCount:
+                break
+
+            try:
+                grievanceIndex = binaryData.index(tag, grievanceIndex + tagLen)
+            except:
+                break
+
+    except:
+        print("No grievances!")
+        pass
+    return grievances

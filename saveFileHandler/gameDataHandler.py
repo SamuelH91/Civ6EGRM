@@ -256,6 +256,7 @@ def fileWorker(idx, filePath):
         # map_civ_colors(civdata)
         tileData = save_to_map_json(mainDecompressedData, idx)
         cityData = getCityData(mainDecompressedData, idx)
+        grievances = getGrievances(mainDecompressedData, idx)
         diploStates = getDiploStates(mainDecompressedData, idx)
         wars = getWars(mainDecompressedData, idx)
 
@@ -268,7 +269,7 @@ def fileWorker(idx, filePath):
     except Exception as e:
         traceback.print_exc()
         print(e)
-    return idx, tileData, cityData, civData, leaderData, notifications, diploStates, wars
+    return idx, tileData, cityData, civData, leaderData, notifications, diploStates, wars, grievances
 
 
 def getPlayerID(tile):
@@ -510,6 +511,7 @@ class GameDataHandler():
         self.notifications = []
         self.diploStates = []
         self.wars = []
+        self.grievances = []
         self.borderColors = []
         self.borderColorsInner = []
         self.borderColorsSC = []
@@ -548,6 +550,7 @@ class GameDataHandler():
         self.notifications = [None] * count
         self.diploStates = [None] * count
         self.wars = [None] * count
+        self.grievances = [None] * count
 
         # self.saveResult(fileWorker(0, filePaths[0]))
         # self.calcMajorCivs()
@@ -591,6 +594,7 @@ class GameDataHandler():
         self.notifications[result[0]] = result[5]
         self.diploStates[result[0]] = result[6]
         self.wars[result[0]] = result[7]
+        self.grievances[result[0]] = result[8]
 
     def calcCityCounts(self):
         self.cityCounts = []
@@ -851,6 +855,7 @@ class GameDataHandler():
         print("Total time for city state origos: {}".format(time.time() - t0))
 
     def calcIncrementalWars(self):
+        # TODO: USE LOC_DIPLO_GRIEVANCE_LOG_ *
         self.calcDiploStateWarPeaceDiff()
         used_turns = []
         self.incWars = []
@@ -915,9 +920,7 @@ class GameDataHandler():
 
                         print(f"minor allies {minor_allies}")
 
-                        used_decs = []
-
-                        for dec in only_decs:
+                        for dec in sorted(only_decs):
                             for rec in recs:
                                 if rec < self.majorCivs:
                                     self.addWars(new_wars, g, dec, rec, i, turn, unique_index, found_wars, minor_allies)
@@ -926,7 +929,7 @@ class GameDataHandler():
                             decs.remove(dec)  # Remove Dec from dec list
 
                         if total_wars > found_wars[0]:
-                            for rec in only_recs:
+                            for rec in sorted(only_recs):
                                 for dec in decs:
                                     self.addWars(new_wars, g, dec, rec, i, turn, unique_index, found_wars, minor_allies)
                                 if rec < self.majorCivs:
@@ -950,53 +953,8 @@ class GameDataHandler():
                                 for rec in recs:
                                     self.addWars(new_wars, g, dec, rec, i, turn, unique_index, found_wars, minor_allies)
 
-                        # Dec Major's minors -> Dec Major + Minor's
-                        # Minor -> Dec Major
-                        # Dec Major's minors -> Minor
-
-                        # for dec in only_decs:
-                        #     for rec in recs:
-                        #         # if dec in minor_allies:
-                        #         #     if rec in minor_allies[dec]:  # Skip allies
-                        #         #         continue
-                        #         if self.warPeaceDiffTable[dec, rec, i - 1] > 0:  # New war
-                        #             found_wars += 1
-                        #             g.addEdge(np.where(unique_index == dec)[0][0], np.where(unique_index == rec)[0][0])
-                        #             new_wars.append({"turn": turn, "declarer": dec, "receiver": rec})
-                        #     decs.remove(dec)
-                        #     # minors = []
-                        #     # for d2 in decs:
-                        #     #     if diploAtTurnIdx[dec][d2]["state"][:3] == "MAX":
-                        #     #         minors.append(d2)
-                        #     # dec_minor_allys.append({dec: minors})
-                        #
-                        # for rec in only_recs:
-                        #     for dec in recs:
-                        #         if self.warPeaceDiffTable[dec, rec, i - 1] > 0:  # New war
-                        #             new_war = {"turn": turn, "declarer": dec, "receiver": rec}
-                        #             inv_war = {"turn": turn, "declarer": rec, "receiver": dec}
-                        #             if new_war not in new_wars and inv_war not in new_wars:
-                        #                 found_wars += 1
-                        #                 g.addEdge(np.where(unique_index == dec)[0][0], np.where(unique_index == rec)[0][0])
-                        #                 new_wars.append(new_war)
-                        #             else:
-                        #                 print(f"Bug: war already existed")
-                        #     recs.remove(rec)
-                        #
-                        # for dec in decs:
-                        #     for rec in recs:
-                        #         # if diploAtTurnIdx[dec][rec]["state"][:3] == "WAR":
-                        #         if self.warPeaceDiffTable[dec, rec, i - 1] > 0:  # New war
-                        #             new_war = {"turn": turn, "declarer": dec, "receiver": rec}
-                        #             inv_war = {"turn": turn, "declarer": rec, "receiver": dec}
-                        #             if new_war not in new_wars and inv_war not in new_wars:
-                        #                 found_wars += 1
-                        #                 g.addEdge(np.where(unique_index == dec)[0][0], np.where(unique_index == rec)[0][0])
-                        #                 new_wars.append(new_war)
-                        #             else:
-                        #                 print(f"Bug: war already existed")
-                        if g.isCyclic():
-                            print(f"Warning cyclic war declaration during turn #{i}!!")
+                        if g.isCyclic():  # And hope that there wasn't a cyclic war declaration
+                            print(f"Warning: cyclic war declaration during turn #{i} -> Declarer/Receiver might be wrong way!!")
                 else:
                     break
             self.incWars.append(new_wars)
@@ -1028,7 +986,7 @@ class GameDataHandler():
                 new_wars.append(new_war)
                 return 1
             else:
-                print(f"Bug: war already existed")
+                print(f"War already existed")
                 return -1
         return 0
 
