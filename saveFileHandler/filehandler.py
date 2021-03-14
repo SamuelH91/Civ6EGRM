@@ -672,6 +672,7 @@ def getWarTagData(binaryData, wTag):
 def getGrievances(binaryData, fileIdx):
 
     tag = b'LOC_DIPLO_GRIEVANCE_LOG_'
+    tagBaseLen = len(tag)
     data1 = b'\x10\x00\x00\x00'
     data0 = b'\x00\x00\x00\x00'
     grievances = []
@@ -686,20 +687,21 @@ def getGrievances(binaryData, fileIdx):
             tagLen = readUInt32(binaryData, grievanceIndex - 4)
             complainer = readUInt32(binaryData, grievanceIndex - 20)
             complainee = readUInt32(binaryData, grievanceIndex - 16)
-            value = readUInt32(binaryData, grievanceIndex - 12)
+            value = readInt32(binaryData, grievanceIndex - 12)
             turn = readUInt32(binaryData, grievanceIndex - 8)
+            grievance = binaryData[grievanceIndex + tagBaseLen:grievanceIndex + tagLen].decode("utf-8")
 
             try:
-                if found == grievanceCount - 1:
-                    dataIndex = binaryData.index(data0, grievanceIndex + tagLen)
-                else:
-                    dataIndex = binaryData.index(data1, grievanceIndex + tagLen)
+                dataIndex0 = binaryData.index(data0, grievanceIndex + tagLen)
+                dataIndex1 = binaryData.index(data1, grievanceIndex + tagLen)
+                dataIndex = dataIndex0 if dataIndex0 < dataIndex1 else dataIndex1
             except:
                 dataIndex = grievanceIndex + tagLen
 
             data = binaryData[grievanceIndex + tagLen:dataIndex]
 
             grievances.append({
+                "Grievance": grievance,
                 "Complainer": complainer,
                 "Complainee": complainee,
                 "Value": value,
@@ -718,6 +720,6 @@ def getGrievances(binaryData, fileIdx):
                 break
 
     except:
-        print("No grievances!")
+        # print("No grievances!")
         pass
     return grievances

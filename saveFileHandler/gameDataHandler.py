@@ -240,7 +240,7 @@ def map_civ_colors(civdata):
                 civColorsMinor[i] = colorMinor
 
 
-def fileWorker(idx, filePath):
+def fileWorker(idx, filePath, fileCount):
     f = open(filePath, "rb")
     data = f.read()
     f.close()
@@ -250,13 +250,15 @@ def fileWorker(idx, filePath):
     notifications = []
     diploStates = []
     wars = []
+    grievances = []
     try:
         if idx == 0:
             civData, leaderData = get_civ_data(data)
+        if idx == fileCount - 1:  # All grievance data stored in save file
+            grievances = getGrievances(mainDecompressedData, idx)
         # map_civ_colors(civdata)
         tileData = save_to_map_json(mainDecompressedData, idx)
         cityData = getCityData(mainDecompressedData, idx)
-        grievances = getGrievances(mainDecompressedData, idx)
         diploStates = getDiploStates(mainDecompressedData, idx)
         wars = getWars(mainDecompressedData, idx)
 
@@ -557,12 +559,15 @@ class GameDataHandler():
 
         t0 = time.time()
         pool = mp.Pool()
+        fileCount = len(filePaths)
         for ii, filePath in enumerate(filePaths):
-            pool.apply_async(fileWorker, args=(ii, filePath), callback=self.saveResult)
-            # self.saveResult(fileWorker(ii, filePath))  # debugging single thread
+            pool.apply_async(fileWorker, args=(ii, filePath, fileCount), callback=self.saveResult)
+            # self.saveResult(fileWorker(ii, filePath, fileCount))  # debugging single thread
         pool.close()
         pool.join()
         # unique_notifications = self.checkUniqueNotifications()
+
+        self.grievances = self.grievances[-1]
 
         self.X, self.Y = self.getMapSize()
         self.neighbours_list = []
@@ -850,13 +855,16 @@ class GameDataHandler():
                         self.minorOrigos[playerID] = ii
                     else:
                         print("Already found minor origo, something went wrong")
-
-
         print("Total time for city state origos: {}".format(time.time() - t0))
+
 
     def calcIncrementalWars(self):
         # TODO: USE LOC_DIPLO_GRIEVANCE_LOG_ *
         self.calcDiploStateWarPeaceDiff()
+        war_grievances = [x for x in self.grievances if
+                          (x["Grievance"] == "CITY_STATE_WAR_DECLARED" and x["Complainer"] >= self.majorCivs) or
+                          x["Grievance"] == "WAR_DECLARED"]
+
         used_turns = []
         self.incWars = []
         for i, (warsAtTurnIdx, diploAtTurnIdx) in enumerate(zip(self.wars, self.diploStates)):
@@ -884,6 +892,7 @@ class GameDataHandler():
                         # Total war count to be found by turn
                         total_wars = int(np.sum(self.warPeaceDiffTable[:, :, i - 1] > 0)/2)
                         found_wars = [0]
+                        war_grievances_at_turn = [x for x in war_grievances if x["Turn"] == turn]
 
                         unique_index = copy.copy(decs)
                         unique_index.extend(recs)
