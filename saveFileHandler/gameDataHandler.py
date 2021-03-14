@@ -250,17 +250,15 @@ def fileWorker(idx, filePath, fileCount):
     notifications = []
     diploStates = []
     wars = []
-    grievances = []
     try:
         if idx == 0:
             civData, leaderData = get_civ_data(data)
-        if idx == fileCount - 1:  # All grievance data stored in save file
-            grievances = getGrievances(mainDecompressedData, idx)
+        #if idx == fileCount - 1:  # All grievance data stored in save file
+        wars = getWars(mainDecompressedData, idx)
         # map_civ_colors(civdata)
         tileData = save_to_map_json(mainDecompressedData, idx)
         cityData = getCityData(mainDecompressedData, idx)
         diploStates = getDiploStates(mainDecompressedData, idx)
-        wars = getWars(mainDecompressedData, idx)
 
         checkCityTileOwner(cityData, tileData)
         cityNameData = getCityNameData(mainDecompressedData, idx)
@@ -271,7 +269,7 @@ def fileWorker(idx, filePath, fileCount):
     except Exception as e:
         traceback.print_exc()
         print(e)
-    return idx, tileData, cityData, civData, leaderData, notifications, diploStates, wars, grievances
+    return idx, tileData, cityData, civData, leaderData, notifications, diploStates, wars
 
 
 def getPlayerID(tile):
@@ -470,7 +468,6 @@ def cityHasExiststedAlreadyInCiv(CityName, CivIndex, cityData):
     return CivCityOrderIdx, CivCityOrderIdx1, oldIdx
 
 
-
 def compareCity(city1, city2):
     CivIndex = city1["CivIndex"]
     CivCityOrderIdx = city1["CivCityOrderIdx"]
@@ -502,7 +499,8 @@ def compareCity(city1, city2):
             else:
                 return 0
 
-class GameDataHandler():
+
+class GameDataHandler:
     def __init__(self, dataFolder, fileExt=".Civ6Save"):
         self.dataFolder = dataFolder
         self.recursive = False
@@ -513,6 +511,7 @@ class GameDataHandler():
         self.notifications = []
         self.diploStates = []
         self.wars = []
+        self.incWars = []
         self.grievances = []
         self.borderColors = []
         self.borderColorsInner = []
@@ -552,7 +551,6 @@ class GameDataHandler():
         self.notifications = [None] * count
         self.diploStates = [None] * count
         self.wars = [None] * count
-        self.grievances = [None] * count
 
         # self.saveResult(fileWorker(0, filePaths[0]))
         # self.calcMajorCivs()
@@ -567,8 +565,6 @@ class GameDataHandler():
         pool.join()
         # unique_notifications = self.checkUniqueNotifications()
 
-        self.grievances = self.grievances[-1]
-
         self.X, self.Y = self.getMapSize()
         self.neighbours_list = []
         for ii in range(self.X*self.Y):
@@ -580,6 +576,7 @@ class GameDataHandler():
         self.calcPlayersAlive()
         self.calculateCityStateOrigos()
         self.calcRazedCitys()
+        self.calcDiploStateWarPeaceDiff()
         self.calcIncrementalWars()
         print("Total time {} s for data parsing from {} files".format(time.time() - t0, count))
 
@@ -599,7 +596,6 @@ class GameDataHandler():
         self.notifications[result[0]] = result[5]
         self.diploStates[result[0]] = result[6]
         self.wars[result[0]] = result[7]
-        self.grievances[result[0]] = result[8]
 
     def calcCityCounts(self):
         self.cityCounts = []
@@ -857,147 +853,18 @@ class GameDataHandler():
                         print("Already found minor origo, something went wrong")
         print("Total time for city state origos: {}".format(time.time() - t0))
 
-
     def calcIncrementalWars(self):
-        # TODO: USE LOC_DIPLO_GRIEVANCE_LOG_ *
-        self.calcDiploStateWarPeaceDiff()
-        war_grievances = [x for x in self.grievances if
-                          (x["Grievance"] == "CITY_STATE_WAR_DECLARED" and x["Complainer"] >= self.majorCivs) or
-                          x["Grievance"] == "WAR_DECLARED"]
-
-        used_turns = []
+        used_wars = []
         self.incWars = []
-        for i, (warsAtTurnIdx, diploAtTurnIdx) in enumerate(zip(self.wars, self.diploStates)):
+        for turn in self.wars:
             new_wars = []
-            declarers = warsAtTurnIdx["declarers"]
-            receivers = warsAtTurnIdx["receivers"]
-
-            while True:
-                turn = -1
-                for declarer in declarers:
-                    if declarer["turn"] not in used_turns:
-                        turn = declarer["turn"]
-                        used_turns.append(turn)
-                        break
-                if turn > 0:
-                    decs = [declarer["id"] for declarer in declarers if declarer["turn"] == turn]
-                    recs = [receiver["id"] for receiver in receivers if receiver["turn"] == turn]
-                    if len(decs) == 1:  # trivial case 1
-                        for rec in recs:
-                            new_wars.append({"turn": turn, "declarer": decs[0], "receiver": rec})
-                    elif len(recs) == 1:  # trivial case 2
-                        for dec in decs:
-                            new_wars.append({"turn": turn, "declarer": dec, "receiver": recs[0]})
-                    else:
-                        # Total war count to be found by turn
-                        total_wars = int(np.sum(self.warPeaceDiffTable[:, :, i - 1] > 0)/2)
-                        found_wars = [0]
-                        war_grievances_at_turn = [x for x in war_grievances if x["Turn"] == turn]
-
-                        unique_index = copy.copy(decs)
-                        unique_index.extend(recs)
-                        unique_index = np.unique(unique_index)
-                        graph_size = len(unique_index)
-                        g = Graph(graph_size)
-                        # Declarer and it's minors declare war on the receiver major, receiver's minors will
-                        # declare war back to the declarer's and 1st? of their minor, rest of attacker's minor will
-                        # declare war to the receiver's minor
-                        # Recs seems to include unnecessary minors which have declared war to another minor
-                        # Sometimes random? Index based greater attacks smaller minor civ? If only minor attacks this
-                        # doesn't apply
-                        # Ignore minor-minor-wars ?
-                        # -> Simplified: just attacker + minor to defender and defender's minors attack back
-                        major_decs = [dec for dec in decs if dec < self.majorCivs]
-                        only_decs = [dec for dec in decs if dec not in recs]
-                        major_recs = [rec for rec in recs if rec < self.majorCivs]
-                        only_recs = [rec for rec in recs if rec not in decs]
-                        print(f"turn {turn}: war count {total_wars}")
-                        print(f"decs {decs}")
-                        print(f"recs {recs}")
-                        print(f"major_decs {major_decs}")
-                        print(f"only_decs {only_decs}")
-                        print(f"major_recs {major_recs}")
-                        print(f"only_recs {only_recs}")
-
-                        minor_allies = {}
-                        for major in major_decs:
-                            minor_allies[major] = self.findMinorAllies(major, i)
-
-                        for major in major_recs:
-                            if major not in minor_allies:
-                                minor_allies[major] = self.findMinorAllies(major, i)
-
-                        print(f"minor allies {minor_allies}")
-
-                        for dec in sorted(only_decs):
-                            for rec in recs:
-                                if rec < self.majorCivs:
-                                    self.addWars(new_wars, g, dec, rec, i, turn, unique_index, found_wars, minor_allies)
-                            if dec < self.majorCivs:
-                                major_decs.remove(dec)  # Remove Dec from dec list
-                            decs.remove(dec)  # Remove Dec from dec list
-
-                        if total_wars > found_wars[0]:
-                            for rec in sorted(only_recs):
-                                for dec in decs:
-                                    self.addWars(new_wars, g, dec, rec, i, turn, unique_index, found_wars, minor_allies)
-                                if rec < self.majorCivs:
-                                    major_recs.remove(rec)  # Remove Rec from dec list
-                                recs.remove(rec)  # Remove Rec from dec list
-
-                        if total_wars > found_wars[0]:
-                            for dec in major_decs:
-                                for rec in recs:
-                                    self.addWars(new_wars, g, dec, rec, i, turn, unique_index, found_wars, minor_allies)
-                                decs.remove(dec)  # Remove Major Dec from dec list
-
-                        if total_wars > found_wars[0]:
-                            for rec in major_recs:
-                                for dec in decs:
-                                    self.addWars(new_wars, g, dec, rec, i, turn, unique_index, found_wars, minor_allies)
-                                recs.remove(rec)  # Remove Rec from dec list
-
-                        if total_wars > found_wars[0]:
-                            for dec in decs:
-                                for rec in recs:
-                                    self.addWars(new_wars, g, dec, rec, i, turn, unique_index, found_wars, minor_allies)
-
-                        if g.isCyclic():  # And hope that there wasn't a cyclic war declaration
-                            print(f"Warning: cyclic war declaration during turn #{i} -> Declarer/Receiver might be wrong way!!")
-                else:
-                    break
+            for war in turn:
+                war_copy = {"Att": war["Att"], "Def": war["Def"], "Turn": war["Turn"]}
+                war_inverse = {"Att": war["Def"], "Def": war["Att"], "Turn": war["Turn"]}
+                if war_copy not in used_wars and war_inverse not in used_wars:
+                    new_wars.append(war_copy)
+                    used_wars.append(war_copy)
             self.incWars.append(new_wars)
-
-    def addWars(self, new_wars, g, dec, rec, i, turn, unique_index, found_wars, minor_allies):
-        if rec < self.majorCivs:
-            # If there is a new war Dec Major -> Rec Major
-            if self.addWar(new_wars, g, dec, rec, i, turn, unique_index, found_wars) > 0:
-                # If receiver has minor allies
-                for rec_minor in minor_allies[rec]:
-                    # minor declare war to major
-                    self.addWar(new_wars, g, rec_minor, dec, i, turn, unique_index, found_wars)
-                    # If declarer has minor allies
-                    if dec < self.majorCivs:
-                        for dec_minor in minor_allies[dec]:  # minors declare war to minors
-                            self.addWar(new_wars, g, rec_minor, dec_minor, i, turn,
-                                        unique_index, found_wars)
-        else:
-            self.addWar(new_wars, g, dec, rec, i, turn, unique_index, found_wars)
-
-    def addWar(self, new_wars, g, dec, rec, i, turn, unique_index, found_wars):
-        if self.warPeaceDiffTable[dec, rec, i - 1] > 0:  # New war
-            new_war = {"turn": turn, "declarer": dec, "receiver": rec}
-            inv_war = {"turn": turn, "declarer": rec, "receiver": dec}
-            if new_war not in new_wars and inv_war not in new_wars:
-                found_wars[0] += 1
-                g.addEdge(np.where(unique_index == dec)[0][0],
-                          np.where(unique_index == rec)[0][0])
-                new_wars.append(new_war)
-                return 1
-            else:
-                print(f"War already existed")
-                return -1
-        return 0
 
     def findMinorAllies(self, pIdx, turnIdx):
         diploAtTurnIdx = self.diploStates[turnIdx]

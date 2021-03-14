@@ -630,96 +630,39 @@ def getDiploStates(mainDecompressedData, turn):
     return diploStates
 
 
-def getWars(mainDecompressedData, fileIdx):
-    # # Always paired?
-    # wRecTag = b'WarsReceived'
-    # wDecTag = b'WarsDeclared'
-    # # Cyclic war declarations can't be solved from these?
-    #
-    # binaryData = mainDecompressedData
-    # wars = {}
-    #
-    # warCountIndexR = binaryData.index(wRecTag)
-    # warCountIndexD = binaryData.index(wDecTag)
+def getWars(binaryData, fileIdx):
+    tagDef = b'\xB1\xEE\x1B\xAD\xB1\xEE\x1B\xAD'
+    tagAtt = b'\xAC\x1E\xDF\xEB\xAC\x1E\xDF\xEB'
+    # Same data in both always?
+    tagBaseLen = len(tagAtt)
 
-    wDecTag = b'LOC_HOF_GRAPH_PLAYER_WARS_DECLARED'
-    wRecTag = b'LOC_HOF_GRAPH_PLAYER_WARS_RECEIVED'
-    binaryData = mainDecompressedData
-
-    receivers = getWarTagData(binaryData, wRecTag)
-    declarers = getWarTagData(binaryData, wDecTag)
-
-    return {"declarers": declarers, "receivers": receivers}
-
-
-def getWarTagData(binaryData, wTag):
-
-    warCountIndex = binaryData.index(wTag) + len(wTag) + 9
-    warCounts = readUInt32(binaryData, warCountIndex)
-
-    tags = []
-    idx = warCountIndex + 4
-
-    for i in range(warCounts):
-        id = readUInt32(binaryData, idx)
-        turnNum = readUInt32(binaryData, idx + 4)
-        idx += 12
-        tags.append({"turn": turnNum, "id": id})
-    tags.sort(key=lambda war: war["turn"])
-    return tags
-
-
-def getGrievances(binaryData, fileIdx):
-
-    tag = b'LOC_DIPLO_GRIEVANCE_LOG_'
-    tagBaseLen = len(tag)
-    data1 = b'\x10\x00\x00\x00'
-    data0 = b'\x00\x00\x00\x00'
-    grievances = []
+    wars = []
 
     try:
-        grievanceIndex = binaryData.index(tag)
-        grievanceCount = readUInt32(binaryData, grievanceIndex - 28)
+        warIndex = binaryData.index(tagAtt)
 
         found = 0
 
-        while grievanceIndex:
-            tagLen = readUInt32(binaryData, grievanceIndex - 4)
-            complainer = readUInt32(binaryData, grievanceIndex - 20)
-            complainee = readUInt32(binaryData, grievanceIndex - 16)
-            value = readInt32(binaryData, grievanceIndex - 12)
-            turn = readUInt32(binaryData, grievanceIndex - 8)
-            grievance = binaryData[grievanceIndex + tagBaseLen:grievanceIndex + tagLen].decode("utf-8")
+        while warIndex:
+            attacker = readUInt32(binaryData, warIndex + tagBaseLen + 4)
+            defender = readUInt32(binaryData, warIndex + tagBaseLen + 12)
+            turn = readUInt32(binaryData, warIndex + tagBaseLen)
 
-            try:
-                dataIndex0 = binaryData.index(data0, grievanceIndex + tagLen)
-                dataIndex1 = binaryData.index(data1, grievanceIndex + tagLen)
-                dataIndex = dataIndex0 if dataIndex0 < dataIndex1 else dataIndex1
-            except:
-                dataIndex = grievanceIndex + tagLen
-
-            data = binaryData[grievanceIndex + tagLen:dataIndex]
-
-            grievances.append({
-                "Grievance": grievance,
-                "Complainer": complainer,
-                "Complainee": complainee,
-                "Value": value,
+            wars.append({
+                "Att": attacker,
+                "Def": defender,
                 "Turn": turn,
-                "DebugIdx": grievanceIndex,
-                "Data": data,
+                "DebugIdx": warIndex,
             })
             found += 1
 
-            if found >= grievanceCount:
-                break
-
             try:
-                grievanceIndex = binaryData.index(tag, grievanceIndex + tagLen)
+                warIndex = binaryData.index(tagAtt, warIndex + tagBaseLen)
             except:
                 break
 
     except:
-        # print("No grievances!")
+        # print("No wars!")
         pass
-    return grievances
+    return wars
+
