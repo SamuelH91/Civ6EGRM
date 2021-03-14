@@ -512,7 +512,7 @@ class GameDataHandler:
         self.diploStates = []
         self.wars = []
         self.incWars = []
-        self.grievances = []
+        self.events = []
         self.borderColors = []
         self.borderColorsInner = []
         self.borderColorsSC = []
@@ -579,6 +579,34 @@ class GameDataHandler:
         self.calcDiploStateWarPeaceDiff()
         self.calcIncrementalWars()
         print("Total time {} s for data parsing from {} files".format(time.time() - t0, count))
+
+    def createEvents(self):
+        self.events = []
+        self.createWarEvents()
+        self.sortEvents()
+
+    def createWarEvents(self, filterMinorMinor=False, filterMinor=False):
+        colorhex = ''.join([format(int(c), '02x') for c in COLORS_PRISM["COLOR_STANDARD_RED_DK"]])
+        warIcon = "<font color=#" + colorhex + "> \u2694 </font>"  # Crossed swords, as red if no colored icon support
+        for ii, turn in enumerate(self.incWars):
+            for war in turn:
+                attIdx = war["Att"]
+                defIdx = war["Def"]
+                if filterMinor:
+                    if attIdx >= self.majorCivs or defIdx >= self.majorCivs:
+                        continue
+                elif filterMinorMinor:
+                    if attIdx >= self.majorCivs and defIdx >= self.majorCivs:
+                        continue
+                event_txt = "[" + str(ii + 1) + "]: " + self.civ_text[attIdx].replace("<br>", "") +\
+                            warIcon + self.civ_text[defIdx].replace("<br>", "")
+                event = {"TurnIdx": ii, "Event": event_txt}
+                self.events.append(event)
+
+    def sortEvents(self):
+        def sortEventFunc(e):
+            return e["TurnIdx"]
+        self.events.sort(key=sortEventFunc)
 
     def checkUniqueNotifications(self):
         unique_notifications = []

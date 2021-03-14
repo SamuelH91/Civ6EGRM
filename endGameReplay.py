@@ -437,6 +437,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.plot_widget.set_symbol_size(self.symbolSize)
         self.plot_widget.set_symbol_text_size(self.symbolTextSize)
 
+        self.gdh.createEvents()
+
         self.showMaximized()
 
     def setLanguage(self, language):
@@ -447,6 +449,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.language = language
         self.currentIdx = self.plot_widget.turnSlider.sliderPosition()
         self.updateCivs(self.currentIdx - 1)
+        self.gdh.createEvents()
+        self.updateEvents(self.currentIdx - 1)
 
     def updateCivs(self, turn):
         self.setCivilizationNames(self.gdh.getCivNames(turn))
@@ -570,6 +574,20 @@ class MainWindow(QtWidgets.QMainWindow):
                 colorhex = "181818"
                 self.plot_widget.symbols[razedCity].setHtml("<font color=#" + colorhex + ">" + symbol + "</font>")
 
+    def updateEvents(self, turn, highlightThreshold=2):
+        event_txt = ""
+        colorhex = ''.join([format(int(c), '02x') for c in COLORS_PRISM["COLOR_STANDARD_RED_DK"]])
+        for event in reversed(self.gdh.events):
+            if event["TurnIdx"] + highlightThreshold < turn:
+                event_txt += event["Event"] + "<br>"
+            elif event["TurnIdx"] <= turn:
+                event_list = event["Event"].split(":")
+                new_event = "<font color=#" + colorhex + ">" + event_list[0] + ":</font>" + event_list[1]
+                event_txt += new_event + "<br>"
+            else:
+                continue
+        self.plot_widget.eventList.label.setText(event_txt)
+
     def updateTurn(self, turn):
         t0 = time.time()
         self.plot_widget.bordersHG_cs.set_ec_colors(self.gdh.borderColorsSC[turn - 1])
@@ -597,6 +615,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.setCityNameSymbolAtTurn(turn - 1)
 
         self.updateCivs(turn - 1)
+
+        self.updateEvents(turn - 1)
 
         if self.enableTiming:
             print("Border update took {} s".format(tBorderSC))
