@@ -16,6 +16,8 @@ platformWin7 = platform.release() == "7" and platform.system() == "Windows"
 LANGUAGES = ["en_EN", "ru_RU", "de_DE", "es_ES", "fr_FR", "it_IT", "ja_JP", "ko_KR", "pl_PL", "pt_BR"]
 
 use_original_name = False
+
+
 def run_arg_parser():
     # Create the parser
     arg_parser = argparse.ArgumentParser(description='endGameReplay.py reads all civ6 autosave files from -d "<location>"\n'
@@ -53,37 +55,6 @@ class ButtonsWidget(QtWidgets.QWidget):
         layout.addWidget(button_widget)
         button_layout = QtWidgets.QHBoxLayout(button_widget)
 
-        button_toggle = QtWidgets.QPushButton('Toggle borders', self)
-        button_layout.addWidget(button_toggle)
-        button_toggle.clicked.connect(self.parent.toggleBorders)
-
-        button_toggle_water_borders = QtWidgets.QPushButton('on water', self)
-        button_layout.addWidget(button_toggle_water_borders)
-        button_toggle_water_borders.clicked.connect(self.parent.toggleWaterBorders)
-
-        button_toggle_civs = QtWidgets.QPushButton('Civ names', self)
-        button_layout.addWidget(button_toggle_civs)
-        button_toggle_civs.clicked.connect(self.parent.toggleCivilizationNames)
-        set_civ_width_button = QtWidgets.QPushButton("Civ width")
-        button_layout.addWidget(set_civ_width_button)
-        set_civ_width_button.clicked.connect(self.parent.set_civ_width)
-
-        button_play = QtWidgets.QPushButton('Play', self)
-        button_layout.addWidget(button_play)
-        button_play.clicked.connect(self.parent.play)
-
-        button_pause = QtWidgets.QPushButton('Pause', self)
-        button_layout.addWidget(button_pause)
-        button_pause.clicked.connect(self.parent.setPause)
-
-        button_gif = QtWidgets.QPushButton('Create gif', self)
-        button_layout.addWidget(button_gif)
-        button_gif.clicked.connect(self.parent.createGif)
-
-        button_mp4 = QtWidgets.QPushButton('Create mp4', self)
-        button_layout.addWidget(button_mp4)
-        button_mp4.clicked.connect(self.parent.createMp4)
-
         coordinate_widget = QtWidgets.QWidget(self)
         button_layout.addWidget(coordinate_widget)
         coordinate_layout = QtWidgets.QHBoxLayout(coordinate_widget)
@@ -108,36 +79,6 @@ class ButtonsWidget(QtWidgets.QWidget):
         shadow.setOffset(1)
         # adding shadow to the label
         self.civ.setGraphicsEffect(shadow)
-
-        updateFps_button = QtWidgets.QPushButton("Output fps")
-        button_layout.addWidget(updateFps_button)
-        updateFps_button.clicked.connect(self.parent.updateFps)
-        self.fps = QtWidgets.QLabel(self)  # QtWidgets.QLineEdit()
-        button_layout.addWidget(self.fps)
-        self.fps.setNum(10)
-
-        update_symbol_button = QtWidgets.QPushButton("Symbol size")
-        button_layout.addWidget(update_symbol_button)
-        update_symbol_button.clicked.connect(self.parent.updateSymbolSize)
-
-        update_text_button = QtWidgets.QPushButton("Text size")
-        button_layout.addWidget(update_text_button)
-        update_text_button.clicked.connect(self.parent.updateSymbolTextSize)
-
-        toggle_city_names_button = QtWidgets.QPushButton("Toggle city")
-        button_layout.addWidget(toggle_city_names_button)
-        toggle_city_names_button.clicked.connect(self.parent.toggleCityNames)
-
-        toggle_city_names_bg_button = QtWidgets.QPushButton("+ bg")
-        button_layout.addWidget(toggle_city_names_bg_button)
-        toggle_city_names_bg_button.clicked.connect(self.parent.toggleCityNamesBg)
-
-        toggle_events_button = QtWidgets.QPushButton("Toggle events")
-        button_layout.addWidget(toggle_events_button)
-        toggle_events_button.clicked.connect(self.parent.toggle_events)
-        set_event_width_button = QtWidgets.QPushButton("Event width")
-        button_layout.addWidget(set_event_width_button)
-        set_event_width_button.clicked.connect(self.parent.set_event_width)
 
         self.comboBox = QtWidgets.QComboBox(self)
         button_layout.addWidget(self.comboBox)
@@ -395,6 +336,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.setCentralWidget(self._main)
         main_layout = QtWidgets.QVBoxLayout(self._main)
 
+        self._createMenuBar()
+
         self.buttons_widget = ButtonsWidget(self)
         main_layout.addWidget(self.buttons_widget)
 
@@ -441,6 +384,94 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.showMaximized()
 
+    def _createMenuBar(self):
+        self._createActions()
+        menuBar = self.menuBar()
+        # Creating menus using a QMenu object
+        optionsMenu = QtWidgets.QMenu("&Options", self)
+        menuBar.addMenu(optionsMenu)
+
+        # playMenu = QtWidgets.QMenu("&Play", self)
+        # menuBar.addMenu(playMenu)
+        menuBar.addAction(self.playAction)
+
+        # pauseMenu = QtWidgets.QMenu("&Pause", self)
+        # menuBar.addMenu(pauseMenu)
+        menuBar.addAction(self.setPauseAction)
+
+        borderMenu = optionsMenu.addMenu("Borders")
+        borderMenu.addAction(self.toggleBorderAction)
+        borderMenu.addAction(self.toggleWaterBorderAction)
+
+        civnameMenu = optionsMenu.addMenu("Civilization panel")
+        civnameMenu.addAction(self.toggleCivilizationNamesAction)
+        civnameMenu.addAction(self.set_civ_widthAction)
+
+        optionsMenu.addAction(self.updateFpsAction)
+
+        createMenu = optionsMenu.addMenu("Create ...")
+        createMenu.addAction(self.createGifAction)
+        createMenu.addAction(self.createMp4Action)
+
+        symbolMenu = optionsMenu.addMenu("Map symbol sizes")
+        symbolMenu.addAction(self.updateSymbolSizeAction)
+        symbolMenu.addAction(self.updateSymbolTextSizeAction)
+
+        cityMenu = optionsMenu.addMenu("City name options")
+        cityMenu.addAction(self.toggleCityNamesAction)
+        cityMenu.addAction(self.toggleCityNamesBgAction)
+
+        eventMenu = optionsMenu.addMenu("Event")
+        eventMenu.addAction(self.toggle_eventsAction)
+        eventMenu.addAction(self.set_event_widthAction)
+
+    def _createActions(self):
+        # self.newAction = QtWidgets.QAction(self)
+        # self.newAction.setText("&New")
+        # self.newAction.setIcon(QIcon(":file-new.svg"))
+        # self.openAction = QAction(QIcon(":file-open.svg"), "&Open...", self)
+        # self.exitAction = QAction("&Exit", self)
+        self.toggleBorderAction = QtWidgets.QAction("&Toggle borders", self)
+        self.toggleBorderAction.triggered.connect(self.toggleBorders)
+
+        self.toggleWaterBorderAction = QtWidgets.QAction("&Toggle borders on water", self)
+        self.toggleWaterBorderAction.triggered.connect(self.toggleWaterBorders)
+
+        self.updateSymbolSizeAction = QtWidgets.QAction("&Set symbol size on map", self)
+        self.updateSymbolSizeAction.triggered.connect(self.updateSymbolSize)
+
+        self.updateSymbolTextSizeAction = QtWidgets.QAction("&Set city name size on map", self)
+        self.updateSymbolTextSizeAction.triggered.connect(self.updateSymbolTextSize)
+        self.toggleCityNamesAction = QtWidgets.QAction("&Toggle city names", self)
+        self.toggleCityNamesAction.triggered.connect(self.toggleCityNames)
+        self.toggleCityNamesBgAction = QtWidgets.QAction("&Toggle city name background shadow color", self)
+        self.toggleCityNamesBgAction.triggered.connect(self.toggleCityNamesBg)
+
+        self.toggle_eventsAction = QtWidgets.QAction("&Toggle events", self)
+        self.toggle_eventsAction.triggered.connect(self.toggle_events)
+        self.set_event_widthAction = QtWidgets.QAction("&Set events width", self)
+        self.set_event_widthAction.triggered.connect(self.set_event_width)
+
+        self.toggleCivilizationNamesAction = QtWidgets.QAction("&Toggle civilization names", self)
+        self.toggleCivilizationNamesAction.triggered.connect(self.toggleCivilizationNames)
+        self.set_civ_widthAction = QtWidgets.QAction("&Set civilization names panel width", self)
+        self.set_civ_widthAction.triggered.connect(self.set_civ_width)
+
+        self.createGifAction = QtWidgets.QAction("&a .gif", self)
+        self.createGifAction.triggered.connect(self.createGif)
+        self.createMp4Action = QtWidgets.QAction("&a .mp4", self)
+        self.createMp4Action.triggered.connect(self.createMp4)
+
+        self.updateFpsAction = QtWidgets.QAction("&Set output fps", self)
+        self.updateFpsAction.triggered.connect(self.updateFps)
+
+        self.playAction = QtWidgets.QAction("&Play", self)
+        self.playAction.triggered.connect(self.play)
+
+        self.setPauseAction = QtWidgets.QAction("&Pause", self)
+        self.setPauseAction.triggered.connect(self.setPause)
+
+
     def setLanguage(self, language):
         if language == LANGUAGES[0]:
             self.gdh.parseCivNames()
@@ -460,7 +491,7 @@ class MainWindow(QtWidgets.QMainWindow):
         num, ok = QtWidgets.QInputDialog.getInt(self, "Set output fps value", "Enter a number", self.outputFps)
         if ok:
             self.outputFps = num
-            self.buttons_widget.fps.setNum(num)
+            #self.buttons_widget.fps.setNum(num)
 
     def updateSymbolSize(self):
         num, ok = QtWidgets.QInputDialog.getInt(self, "Set on map symbol size", "Enter a number", self.symbolSize)
