@@ -1,5 +1,5 @@
 numpy==1.19.0
-Pillow==7.2.0
+Pillow==8.1.1
 pygifsicle==1.0.1
 PyQt5==5.15.0
 pyqtgraph==0.11.0
