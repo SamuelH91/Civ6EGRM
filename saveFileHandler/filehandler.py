@@ -445,9 +445,16 @@ def getCityData(mainDecompressedData, turn):
         # There is some religion info as well at same section
         while cityIndex:
             cityNameLength = readUInt32(bin, cityIndex + 8)
-            if bin[cityIndex + 12:cityIndex + 12 + 14] == b'LOC_CITY_NAME_':
-                cityName = " ".join([x.capitalize() for x in bin[cityIndex + 12 + 14:cityIndex + 12 + cityNameLength].decode("utf-8").replace("_", " ").lower().split()])
-                resolve_name_tag = False
+
+            if bin[cityIndex + 12:cityIndex + 12 + 9] == b'LOC_CITY_':  # Vietnam fix
+                if bin[cityIndex + 12:cityIndex + 12 + 14] == b'LOC_CITY_NAME_':
+                    cityName = " ".join([x.capitalize() for x in bin[cityIndex + 12 + 14:cityIndex + 12 + cityNameLength].decode("utf-8").replace("_", " ").lower().split()])
+                    resolve_name_tag = False
+                else:
+                    cityName = " ".join([x.capitalize() for x in
+                                         bin[cityIndex + 12 + 9:cityIndex + 12 + cityNameLength].decode(
+                                             "utf-8").replace("_", " ").lower().split()])
+                    resolve_name_tag = False
             else:
                 # HOW DID THIS HAPPEN!??!? -> Captured custom named city?
                 cityName = bin[cityIndex + 12:cityIndex + 12 + cityNameLength].decode("utf-8")
