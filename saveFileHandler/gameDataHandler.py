@@ -583,6 +583,7 @@ class GameDataHandler:
     def createEvents(self):
         self.events = []
         self.createWarEvents()
+        #self.createPeaceEvents()
         self.sortEvents()
 
     def createWarEvents(self, filterMinorMinor=False, filterMinor=False):
@@ -905,6 +906,11 @@ class GameDataHandler:
 
     def calcDiploStateWarPeaceDiff(self):
         pCount = self.majorCivs + self.minorCivs
+        # Fixing invisible minorCivs with diploStates, TODO: might be better to move this to somewhere else
+        M = len(self.diploStates[0]) - 1
+        if M < pCount:
+            self.minorCivs = M - self.majorCivs
+            pCount = M
         diploDiffsWars = np.zeros((pCount, pCount, len(self.diploStates)), dtype=np.int8)
         for idx, diploAtTurnIdx in enumerate(self.diploStates):
             for p1 in range(pCount):
@@ -913,6 +919,7 @@ class GameDataHandler:
                         diploDiffsWars[p1][p2][idx] = 1
                         # MAX_INFLUENCE PATRON
         self.warPeaceDiffTable = np.diff(diploDiffsWars)  # starting from turn "2" (idx - 1)
+
 
     def getOwner(self, turnIdx, x, y, language=None):
         civ_text = ""
