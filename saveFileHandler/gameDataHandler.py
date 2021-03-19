@@ -571,12 +571,12 @@ class GameDataHandler:
             self.neighbours_list.append(self.getNeighbourIndexes(ii))
 
         self.calcMajorCivs()
+        self.calcDiploStateWarPeaceDiff()
         self.calcCityCounts()
         self.calculateCivHexas()
         self.calcPlayersAlive()
         self.calculateCityStateOrigos()
         self.calcRazedCitys()
-        self.calcDiploStateWarPeaceDiff()
         self.calcIncrementalWars()
         print("Total time {} s for data parsing from {} files".format(time.time() - t0, count))
 

@@ -26,6 +26,7 @@ civNameExtra = "_FRONTEND"
 civNameStart = "LOC_CIVILIZATION_"
 leaderNameStart = "LOC_LEADER_"
 leaderNameExtra = "TRAIT"
+cityName0 = "LOC_CITY_"
 cityName = "LOC_CITY_NAME_"
 dlcFileEnd = "_Translations_ConfigText.xml"
 dlcFileEnd2 = "_Translations_Text.xml"
@@ -38,6 +39,7 @@ civNameStartLen = len(civNameStart)
 leaderNameStartLen = len(leaderNameStart)
 leaderNameExtraLen = len(leaderNameExtra)
 cityNameLen = len(cityName)
+cityNameLen0 = len(cityName0)
 dlcFileEndLen = len(dlcFileEnd)
 dlcFileEndLen2 = len(dlcFileEnd2)
 dlcFileEndLen3 = len(dlcFileEnd3)
@@ -81,10 +83,13 @@ def parse_xml(path, targetLanguage):
                     if tag[-nameEndLen:] == nameEnd:
                         tag = tag[:-nameEndLen]
                         add_tag_to_dict(replaceTag, leaders, tag, language)
-            elif tag[:cityNameLen] == cityName:
-                tag = tag[cityNameLen:]
-                add_tag_to_dict(replaceTag, citys, tag, language)
-
+            elif tag[:cityNameLen0] == cityName0:  # Vietnam fix
+                if tag[:cityNameLen] == cityName:
+                    tag = tag[cityNameLen:]
+                    add_tag_to_dict(replaceTag, citys, tag, language)
+                else:
+                    tag = tag[cityNameLen0:]
+                    add_tag_to_dict(replaceTag, citys, tag, language)
 
 snapshotVanilla = DirectorySnapshot(vanillapath, False)
 for i, path in enumerate(snapshotVanilla.paths):
