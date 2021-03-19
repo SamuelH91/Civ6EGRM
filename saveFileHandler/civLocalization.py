@@ -1068,6 +1068,17 @@ CIV_LEADER_NAMES = {
         "pl_PL": "Kubilaj-chan (Mongolia)",
         "pt_BR": "Kublai Khan (Mongólia)"
     },
+    "KUBLAI_KHAN_MONGOLIA": {  # MANUAL INSERT
+        "ru_RU": "Хубилай (Монголия)",
+        "de_DE": "Kublai Khan (Mongolei)",
+        "es_ES": "Kublai Kan (Mongolia)",
+        "fr_FR": "Kubilai Khan (Mongolie)",
+        "it_IT": "Kublai Khan (Mongolia)",
+        "ja_JP": "フビライ・ハン (モンゴル)",
+        "ko_KR": "쿠빌라이칸(몽골)",
+        "pl_PL": "Kubilaj-chan (Mongolia)",
+        "pt_BR": "Kublai Khan (Mongólia)"
+    },
     "LADY_TRIEU": {
         "ru_RU": "Чьеу Тхи Чинь",
         "de_DE": "Bà Triệu",
