@@ -513,6 +513,7 @@ class GameDataHandler:
         self.wars = []
         self.incWars = []
         self.events = []
+        self.events_orig = []
         self.borderColors = []
         self.borderColorsInner = []
         self.borderColorsSC = []
@@ -583,25 +584,64 @@ class GameDataHandler:
     def createEvents(self):
         self.events = []
         self.createWarEvents()
-        #self.createPeaceEvents()
+        self.createPeaceEvents()
+        self.createWinningConditionEvents()
+        self.createCityEvents()
+        self.createWonderEvents()
         self.sortEvents()
+        self.events_orig = self.events.copy()
 
-    def createWarEvents(self, filterMinorMinor=False, filterMinor=False):
+    def filterEvents(self, filter_rules):
+        self.events = self.events_orig
+        for event in reversed(self.events):
+            if event["Type"] in filter_rules:
+                if filter_rules[event["Type"]]:
+                    self.events.remove(event)
+
+    def createPeaceEvents(self):
+        colorhex = ''.join([format(int(c), '02x') for c in COLORS_PRISM["COLOR_STANDARD_WHITE_LT"]])
+        peaceIcon = "<font color=#" + colorhex + "> \U0001F54A </font>"  # Dove, as white if no colored icon support
+
+        pCount = self.majorCivs + self.minorCivs
+        for idx in range(self.warPeaceDiffTable.shape[-1]):
+            for p1 in range(pCount):
+                for p2 in range(p1 + 1, pCount):
+                    if self.warPeaceDiffTable[p1][p2][idx] == -1:
+                        peaceType = "Peace Major"
+                        if p1 >= self.majorCivs and p2 >= self.majorCivs:
+                            peaceType = "Peace Minor Minor"
+                        elif p1 >= self.majorCivs or p2 >= self.majorCivs:
+                            peaceType = "Peace Minor"
+                        event_txt = "[" + str(idx + 1) + "]: " + self.civ_text[p1].replace("<br>", "") + \
+                                    peaceIcon + self.civ_text[p2].replace("<br>", "")
+                        event = {"TurnIdx": idx, "Type": peaceType, "Event": event_txt}
+                        self.events.append(event)
+
+    def createWinningConditionEvents(self):
+        pass
+
+    def createCityEvents(self):
+        # Founded, captured, razed, revolt, flipped, freed etc...
+        pass
+
+    def createWonderEvents(self):
+        pass
+
+    def createWarEvents(self):
         colorhex = ''.join([format(int(c), '02x') for c in COLORS_PRISM["COLOR_STANDARD_RED_DK"]])
         warIcon = "<font color=#" + colorhex + "> \u2694 </font>"  # Crossed swords, as red if no colored icon support
         for ii, turn in enumerate(self.incWars):
             for war in turn:
                 attIdx = war["Att"]
                 defIdx = war["Def"]
-                if filterMinor:
-                    if attIdx >= self.majorCivs or defIdx >= self.majorCivs:
-                        continue
-                elif filterMinorMinor:
-                    if attIdx >= self.majorCivs and defIdx >= self.majorCivs:
-                        continue
+                warType = "War Major"
+                if attIdx >= self.majorCivs and defIdx >= self.majorCivs:
+                    warType = "War Minor Minor"
+                elif attIdx >= self.majorCivs or defIdx >= self.majorCivs:
+                    warType = "War Minor"
                 event_txt = "[" + str(ii + 1) + "]: " + self.civ_text[attIdx].replace("<br>", "") +\
                             warIcon + self.civ_text[defIdx].replace("<br>", "")
-                event = {"TurnIdx": ii, "Event": event_txt}
+                event = {"TurnIdx": ii, "Type": warType, "Event": event_txt}
                 self.events.append(event)
 
     def sortEvents(self):
@@ -907,7 +947,9 @@ class GameDataHandler:
     def calcDiploStateWarPeaceDiff(self):
         pCount = self.majorCivs + self.minorCivs
         # Fixing invisible minorCivs with diploStates, TODO: might be better to move this to somewhere else
-        M = len(self.diploStates[0]) - 1
+        M = len(self.diploStates[0])
+        if 62 in self.diploStates[0]:
+            M -= 1
         if M < pCount:
             self.minorCivs = M - self.majorCivs
             pCount = M

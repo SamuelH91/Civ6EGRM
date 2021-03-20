@@ -67,6 +67,10 @@ class ButtonsWidget(QtWidgets.QWidget):
         coordinate_layout.addWidget(self.y_value)
         self.y_value.setNum(0)
 
+        self.hex_value = QtWidgets.QLabel(self)
+        coordinate_layout.addWidget(self.hex_value)
+        self.hex_value.setNum(0)
+
         self.civ = QtWidgets.QLabel(self)
         button_layout.addWidget(self.civ)
         self.civ.setWordWrap(True)
@@ -109,7 +113,7 @@ class ScrollLabel(QtWidgets.QScrollArea):
         lay = QtWidgets.QVBoxLayout(content)
 
         # creating label
-        self.label = QtWidgets.QLabel(content)
+        self.label = QtWidgets.QLabel()  # content
 
         # setting alignment to the text
         self.label.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignTop)
@@ -275,6 +279,51 @@ class MapVisualizerWidget(QtWidgets.QWidget):
                 self.symbols[symbol].setFont(font)
 
 
+class EventFilterWindow(QtWidgets.QWidget):
+    def __init__(self, parent):
+        super().__init__()
+        self.setWindowTitle("Set event filters")
+        self.parent = parent
+        self.event_filters = parent.event_filters.copy()
+
+        layoutV0 = QtWidgets.QVBoxLayout()
+        layoutV1 = QtWidgets.QVBoxLayout()
+        layoutH1 = QtWidgets.QHBoxLayout()
+
+        self.filterRulesCheckBoxes = []
+        for key, value in parent.event_filters.items():
+            cbox = QtWidgets.QCheckBox(key)
+            cbox.setChecked(value)
+            self.filterRulesCheckBoxes.append(cbox)
+            self.filterRulesCheckBoxes[-1].stateChanged.connect(
+                lambda state, x=self.filterRulesCheckBoxes[-1]: self.checkBoxStatesChanged(x))
+            layoutV1.addWidget(cbox)
+
+        layoutV0.addLayout(layoutV1)
+
+        self.apply = QtWidgets.QPushButton("Apply filters")
+        self.apply.clicked.connect(self.applyNewFilters)
+        layoutH1.addWidget(self.apply)
+        self.cancel = QtWidgets.QPushButton("Cancel")
+        self.cancel.clicked.connect(self.cancelFilters)
+        layoutH1.addWidget(self.cancel)
+
+        layoutV0.addLayout(layoutH1)
+
+        self.setLayout(layoutV0)
+
+    def checkBoxStatesChanged(self, cbox):
+        self.event_filters[cbox.text()] = cbox.isChecked()
+
+    def applyNewFilters(self):
+        self.parent.event_filters = self.event_filters
+        self.parent.applyEventFilter()
+        self.close()
+
+    def cancelFilters(self):
+        self.close()
+
+
 class MainWindow(QtWidgets.QMainWindow):
 
     def __init__(self, app, target_path=None, *args, **kwargs):
@@ -297,6 +346,15 @@ class MainWindow(QtWidgets.QMainWindow):
         self.hiddenCityNames = False
         self.backgroundTextColor = False
         self.language = "en_EN"
+        self.filterWindow = None
+        self.event_filters = {
+            "War Major": False,
+            "War Minor": False,
+            "War Minor Minor": False,
+            "Peace Major": False,
+            "Peace Minor": False,
+            "Peace Minor Minor": False,
+        }
 
         # Options
         self.OptimizeGif = True
@@ -424,6 +482,11 @@ class MainWindow(QtWidgets.QMainWindow):
         eventMenu = optionsMenu.addMenu("Event")
         eventMenu.addAction(self.toggle_eventsAction)
         eventMenu.addAction(self.set_event_widthAction)
+        eventMenu.addAction(self.setFilterAction)
+
+    def showEventFilterWindow(self):
+        self.filterWindow = EventFilterWindow(self)
+        self.filterWindow.show()
 
     def _createActions(self):
         # self.newAction = QtWidgets.QAction(self)
@@ -451,6 +514,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.toggle_eventsAction.triggered.connect(self.toggle_events)
         self.set_event_widthAction = QtWidgets.QAction("&Set events width", self)
         self.set_event_widthAction.triggered.connect(self.set_event_width)
+        self.setFilterAction = QtWidgets.QAction("&Set event filters", self)
+        self.setFilterAction.triggered.connect(self.showEventFilterWindow)
 
         self.toggleCivilizationNamesAction = QtWidgets.QAction("&Toggle civilization names", self)
         self.toggleCivilizationNamesAction.triggered.connect(self.toggleCivilizationNames)
@@ -471,6 +536,10 @@ class MainWindow(QtWidgets.QMainWindow):
         self.setPauseAction = QtWidgets.QAction("&Pause", self)
         self.setPauseAction.triggered.connect(self.setPause)
 
+    def applyEventFilter(self):
+        self.gdh.filterEvents(self.event_filters)
+        self.currentIdx = self.plot_widget.turnSlider.sliderPosition()
+        self.updateEvents(self.currentIdx - 1)
 
     def setLanguage(self, language):
         if language == LANGUAGES[0]:
@@ -481,6 +550,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.currentIdx = self.plot_widget.turnSlider.sliderPosition()
         self.updateCivs(self.currentIdx - 1)
         self.gdh.createEvents()
+        self.applyEventFilter()
         self.updateEvents(self.currentIdx - 1)
 
     def updateCivs(self, turn):
@@ -806,12 +876,14 @@ class MainWindow(QtWidgets.QMainWindow):
             yidx = np.floor((mousePoint.y() + 1/np.sqrt(3)) / (np.sqrt(3) / 2))
             xidx = np.floor(mousePoint.x() + 0.5 - (yidx % 2) * 0.5)
             # print("x: {}, y {}".format(xidx, yidx))
-            self.buttons_widget.x_value.setNum(xidx)
-            self.buttons_widget.y_value.setNum(yidx)
-            self.currentIdx = self.plot_widget.turnSlider.sliderPosition()
-            language = self.buttons_widget.comboBox.currentText()
-            owner = self.gdh.getOwner(self.currentIdx - 1, int(xidx), int(yidx), language)
-            self.buttons_widget.civ.setText(owner)
+            if 0 <= xidx <= self.gdh.X and 0 <= yidx <= self.gdh.Y:
+                self.buttons_widget.x_value.setNum(xidx)
+                self.buttons_widget.y_value.setNum(yidx)
+                self.buttons_widget.hex_value.setNum(yidx * self.gdh.X + xidx)
+                self.currentIdx = self.plot_widget.turnSlider.sliderPosition()
+                language = self.buttons_widget.comboBox.currentText()
+                owner = self.gdh.getOwner(self.currentIdx - 1, int(xidx), int(yidx), language)
+                self.buttons_widget.civ.setText(owner)
 
 
 def main():

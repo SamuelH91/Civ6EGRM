@@ -301,10 +301,28 @@ def get_civ_data(data):
         pass
     civsOrdered = [None] * len(civs)
     leadersOrdered = [None] * len(civs)
+    missing_civs = []
     for civ in civs:
         idx = civ["CivIndex"]
-        civsOrdered[idx] = civ["CivName"]
-        leadersOrdered[idx] = civ["LeaderName"]
+        if civsOrdered[idx]:
+            # Some save files seems to be "corrupted" or at least illogical
+            print(f"WARNING: Overlapping indexes in Civ Names!!!!!!!!!")
+            other = civ["CivName"]
+            print(f"Old Civ {civsOrdered[idx]} at idx {idx} and other civ: {other}")
+            missing_civs.append(civ)
+        else:
+            civsOrdered[idx] = civ["CivName"]
+            leadersOrdered[idx] = civ["LeaderName"]
+
+    # Just insert the missing civ at its index
+    for civ in missing_civs:
+        idx = civ["CivIndex"]
+        civsOrdered[idx:idx] = [civ["CivName"]]
+        leadersOrdered[idx:idx] = [civ["LeaderName"]]
+
+    civsOrdered = [x for x in civsOrdered if x]
+    leadersOrdered = [x for x in leadersOrdered if x]
+
     return civsOrdered, leadersOrdered
 
 
@@ -500,7 +518,9 @@ def getCityNameData(mainDecompressedData, idx):
     searchTag1 = b'\x00\x00'
     searchTag = b'\xE8\x55\x3F\xEB\x00\x76\x8E\x0F\x7F\x00\x06\x00\x00\x00'
     origTag = b'LOC_CITY_NAME_'
+    origTag0 = b'LOC_CITY_'
     origTagLen = len(origTag)
+    origTagLen0 = len(origTag0)
     tagLen = 100
     cities = {"cityNames": []}
     nameIndex = 0
@@ -516,9 +536,12 @@ def getCityNameData(mainDecompressedData, idx):
             cityNameLength = readUInt32(bin, nameIndex)
             name = bin[nameIndex + 4:nameIndex + 4 + cityNameLength]
             cityOrigName = False
-            if name[:origTagLen] == origTag:
+            if name[:origTagLen0] == origTag0:
                 cityOrigName = True
-                cityName = " ".join([x.capitalize() for x in name[origTagLen:].decode("utf-8").replace("_", " ").lower().split()])
+                if name[:origTagLen] == origTag:
+                    cityName = " ".join([x.capitalize() for x in name[origTagLen:].decode("utf-8").replace("_", " ").lower().split()])
+                else:
+                    cityName = " ".join([x.capitalize() for x in name[origTagLen0:].decode("utf-8").replace("_", " ").lower().split()])
             else:
                 cityName = name.decode("utf-8")
 
