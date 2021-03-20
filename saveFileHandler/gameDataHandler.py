@@ -592,7 +592,7 @@ class GameDataHandler:
         self.events_orig = self.events.copy()
 
     def filterEvents(self, filter_rules):
-        self.events = self.events_orig
+        self.events = self.events_orig.copy()
         for event in reversed(self.events):
             if event["Type"] in filter_rules:
                 if filter_rules[event["Type"]]:

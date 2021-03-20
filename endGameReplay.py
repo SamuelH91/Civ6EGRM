@@ -44,61 +44,10 @@ def run_arg_parser():
 
 # pg.setConfigOptions(antialias=True)
 
-
-class ButtonsWidget(QtWidgets.QWidget):
-    def __init__(self, parent, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.parent = parent
-        layout = QtWidgets.QHBoxLayout(self)
-
-        button_widget = QtWidgets.QWidget(self)
-        layout.addWidget(button_widget)
-        button_layout = QtWidgets.QHBoxLayout(button_widget)
-
-        coordinate_widget = QtWidgets.QWidget(self)
-        button_layout.addWidget(coordinate_widget)
-        coordinate_layout = QtWidgets.QHBoxLayout(coordinate_widget)
-
-        self.x_value = QtWidgets.QLabel(self)
-        coordinate_layout.addWidget(self.x_value)
-        self.x_value.setNum(0)
-
-        self.y_value = QtWidgets.QLabel(self)
-        coordinate_layout.addWidget(self.y_value)
-        self.y_value.setNum(0)
-
-        self.hex_value = QtWidgets.QLabel(self)
-        coordinate_layout.addWidget(self.hex_value)
-        self.hex_value.setNum(0)
-
-        self.civ = QtWidgets.QLabel(self)
-        button_layout.addWidget(self.civ)
-        self.civ.setWordWrap(True)
-        self.civ.setText("")
-
-        # creating a QGraphicsDropShadowEffect object
-        shadow = QtWidgets.QGraphicsDropShadowEffect()
-        # setting blur radius
-        shadow.setBlurRadius(1)
-        shadow.setOffset(1)
-        # adding shadow to the label
-        self.civ.setGraphicsEffect(shadow)
-
-        self.comboBox = QtWidgets.QComboBox(self)
-        button_layout.addWidget(self.comboBox)
-        for lan in LANGUAGES:
-            self.comboBox.addItem(lan)
-        self.comboBox.activated[str].connect(self.parent.setLanguage)
-
-        self.status = QtWidgets.QLabel(self)
-        button_layout.addWidget(self.status)
-        self.status.setText("Status: Ready")
-
-
 # class for scrollable label
 class ScrollLabel(QtWidgets.QScrollArea):
 
-    # contructor
+    # constructor
     def __init__(self, *args, **kwargs):
         QtWidgets.QScrollArea.__init__(self, *args, **kwargs)
 
@@ -333,39 +282,23 @@ class DebugWindow(QtWidgets.QWidget):
         self.parent = parent
         self.setWindowFlags(self.windowFlags() | QtCore.Qt.Dialog)
         layout = QtWidgets.QHBoxLayout()
-        layoutX = QtWidgets.QHBoxLayout()
-        layoutY = QtWidgets.QHBoxLayout()
-        layoutH = QtWidgets.QHBoxLayout()
-        layoutC = QtWidgets.QHBoxLayout()
 
-        labelX = QtWidgets.QLabel("X: ")
-        layoutX.addWidget(labelX)
         self.x_value = QtWidgets.QLabel()
-        layoutX.addWidget(self.x_value)
-        self.x_value.setNum(self.parent.x_value)
-        layout.addLayout(layoutX)
+        layout.addWidget(self.x_value)
+        self.x_value.setText("X: " + str(int(self.parent.x_value)))
 
-        labelY = QtWidgets.QLabel("Y: ")
-        layoutY.addWidget(labelY)
         self.y_value = QtWidgets.QLabel()
-        layoutY.addWidget(self.y_value)
-        self.y_value.setNum(self.parent.y_value)
-        layout.addLayout(layoutY)
+        layout.addWidget(self.y_value)
+        self.y_value.setText("Y: " + str(int(self.parent.y_value)))
 
-        labelHexa = QtWidgets.QLabel("HexaIdx: ")
-        layoutH.addWidget(labelHexa)
         self.hex_value = QtWidgets.QLabel()
-        layoutH.addWidget(self.hex_value)
-        self.hex_value.setNum(self.parent.hex_value)
-        layout.addLayout(layoutH)
+        layout.addWidget(self.hex_value)
+        self.hex_value.setText("HexaIdx: " + str(int(self.parent.hex_value)))
 
-        labelCiv = QtWidgets.QLabel("Civ: ")
-        layoutC.addWidget(labelCiv)
         self.civ = QtWidgets.QLabel()
-        layoutC.addWidget(self.civ)
+        layout.addWidget(self.civ)
         self.civ.setWordWrap(True)
         self.civ.setText(self.parent.owner)
-        layout.addLayout(layoutC)
 
         # creating a QGraphicsDropShadowEffect object
         shadow = QtWidgets.QGraphicsDropShadowEffect()
@@ -376,16 +309,17 @@ class DebugWindow(QtWidgets.QWidget):
         self.civ.setGraphicsEffect(shadow)
 
         self.setLayout(layout)
-        self.setMinimumWidth(self.sizeHint().width()*3)
+        self.setMinimumWidth(self.sizeHint().width())
         self.move(100, 0)
 
         self.parent.debug_signal.connect(self.updateDebugs)
 
     def updateDebugs(self):
-        self.x_value.setNum(self.parent.x_value)
-        self.y_value.setNum(self.parent.y_value)
-        self.hex_value.setNum(self.parent.hex_value)
+        self.x_value.setText("X: " + str(int(self.parent.x_value)))
+        self.y_value.setText("Y: " + str(int(self.parent.y_value)))
+        self.hex_value.setText("HexaIdx: " + str(int(self.parent.hex_value)))
         self.civ.setText(self.parent.owner)
+        self.setMinimumWidth(self.sizeHint().width())
 
 
 class MainWindow(QtWidgets.QMainWindow):
@@ -466,9 +400,6 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self._createMenuBar()
 
-        self.buttons_widget = ButtonsWidget(self)
-        main_layout.addWidget(self.buttons_widget)
-
         self.plot_widget = \
             MapVisualizerWidget(self, self.M, self.N, self.gdh.envColors, self.gdh.riverColors,
                                 self.outerBordersOnly, self.gdh.borderColors[0], self.gdh.borderColorsInner[0],
@@ -522,6 +453,20 @@ class MainWindow(QtWidgets.QMainWindow):
         menuBar.addAction(self.playAction)
         menuBar.addAction(self.setPauseAction)
         menuBar.addAction(self.debugAction)
+
+        self.comboBox = QtWidgets.QComboBox()
+        for lan in LANGUAGES:
+            self.comboBox.addItem(lan)
+        self.languageListAction = QtWidgets.QWidgetAction(None)
+        self.languageListAction.setDefaultWidget(self.comboBox)
+        self.languageMenu = QtWidgets.QMenu("&Set Language", self)
+        self.languageMenu.addAction(self.languageListAction)
+        menuBar.addMenu(self.languageMenu)
+        self.comboBox.activated[str].connect(self.setLanguage)
+
+        self.statusMenu = QtWidgets.QMenu("&Status: Ready", self)
+        self.statusMenu.setDisabled(True)
+        menuBar.addMenu(self.statusMenu)
 
         borderMenu = optionsMenu.addMenu("Borders")
         borderMenu.addAction(self.toggleBorderAction)
@@ -833,10 +778,10 @@ class MainWindow(QtWidgets.QMainWindow):
     def toggleWaterBorders(self):
         self.drawWaterBorders = not self.drawWaterBorders
         print("Recalculating borders")
-        self.updateStatus("Status: Recalculating borders")
+        self.updateStatus("&Status: Recalculating borders")
         self.gdh.calculateBorderColors(3, self.outerBordersOnly, self.useCivColors, self.drawWaterBorders)
         print("Borders calculated")
-        self.updateStatus("Status: Ready")
+        self.updateStatus("&Status: Ready")
         self.currentIdx = self.plot_widget.turnSlider.sliderPosition()
         self.updateTurn(self.currentIdx)
 
@@ -846,8 +791,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.start_timer(self.TurnCount-self.currentIdx+1, 100)
 
     def updateStatus(self, status):
-        self.buttons_widget.status.setText(status)
-        self.buttons_widget.update()
+        self.statusMenu.setTitle(status)
+        #self.buttons_widget.update()
         self._main.update()
         QtWidgets.QApplication.processEvents()
 
@@ -857,10 +802,10 @@ class MainWindow(QtWidgets.QMainWindow):
             self.createImages()
         M = len(self.imageList)
         print("Please wait patiently: saving and optimizing gif!")
-        self.updateStatus("Status: Creating gif, please wait")
+        self.updateStatus("&Status: Creating gif, please wait")
         fps = self.outputFps
         self.imageList[0].save('endGameReplayMap.gif', save_all=True, append_images=self.imageList[1:], optimize=False, duration=1000/fps, loop=0)
-        self.updateStatus("Status: Optimizing gif, please wait")
+        self.updateStatus("&Status: Optimizing gif, please wait")
         gifsicle(
             sources=["endGameReplayMap.gif"],  # or a single_file.gif
             destination="endGameReplayMap.gif",   # or just omit it and will use the first source provided.
@@ -868,7 +813,7 @@ class MainWindow(QtWidgets.QMainWindow):
             colors=256,  # Number of colors t use
             options=["--verbose", "-O3"],  # Options to use. , "--lossy=0" , "-O3"
         )
-        self.updateStatus("Status: Gif done!")
+        self.updateStatus("&Status: Gif done!")
         print("Gif done!")
 
     def createMp4(self):
@@ -889,7 +834,7 @@ class MainWindow(QtWidgets.QMainWindow):
             width -= 1
         fps = self.outputFps
         print("Creating mp4, please wait")
-        self.updateStatus("Status: Creating mp4, please wait")
+        self.updateStatus("&Status: Creating mp4, please wait")
         command = ["ffmpeg.exe",
                    "-f", "rawvideo",
                    "-vcodec", "rawvideo",
@@ -919,11 +864,11 @@ class MainWindow(QtWidgets.QMainWindow):
                 imtemp = np.delete(imtemp, 0, 1)
             pipe.stdin.write(imtemp.tobytes())
 
-        self.updateStatus("Status: Mp4 done!")
+        self.updateStatus("&Status: Mp4 done!")
         print("Mp4 done!")
 
     def createImages(self):
-        self.updateStatus("Status: Gathering data")
+        self.updateStatus("&Status: Gathering data")
         for ii in range(1, self.TurnCount + 1):
             self.plot_widget.turnSlider.setValue(ii)
             self._main.update()
@@ -954,7 +899,7 @@ class MainWindow(QtWidgets.QMainWindow):
                 self.y_value = yidx
                 self.hex_value = yidx * self.gdh.X + xidx
                 self.currentIdx = self.plot_widget.turnSlider.sliderPosition()
-                language = self.buttons_widget.comboBox.currentText()
+                language = self.comboBox.currentText()
                 owner = self.gdh.getOwner(self.currentIdx - 1, int(xidx), int(yidx), language)
                 self.owner = owner
                 self.debug_signal.emit()
