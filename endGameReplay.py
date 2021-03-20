@@ -311,6 +311,7 @@ class EventFilterWindow(QtWidgets.QWidget):
         layoutV0.addLayout(layoutH1)
 
         self.setLayout(layoutV0)
+        self.setMinimumWidth(self.sizeHint().width()*2)
 
     def checkBoxStatesChanged(self, cbox):
         self.event_filters[cbox.text()] = cbox.isChecked()
@@ -324,7 +325,71 @@ class EventFilterWindow(QtWidgets.QWidget):
         self.close()
 
 
+class DebugWindow(QtWidgets.QWidget):
+    def __init__(self, parent):
+        #super().__init__(self)
+        QtWidgets.QWidget.__init__(self, parent)
+        self.setWindowTitle("Debug")
+        self.parent = parent
+        self.setWindowFlags(self.windowFlags() | QtCore.Qt.Dialog)
+        layout = QtWidgets.QHBoxLayout()
+        layoutX = QtWidgets.QHBoxLayout()
+        layoutY = QtWidgets.QHBoxLayout()
+        layoutH = QtWidgets.QHBoxLayout()
+        layoutC = QtWidgets.QHBoxLayout()
+
+        labelX = QtWidgets.QLabel("X: ")
+        layoutX.addWidget(labelX)
+        self.x_value = QtWidgets.QLabel()
+        layoutX.addWidget(self.x_value)
+        self.x_value.setNum(self.parent.x_value)
+        layout.addLayout(layoutX)
+
+        labelY = QtWidgets.QLabel("Y: ")
+        layoutY.addWidget(labelY)
+        self.y_value = QtWidgets.QLabel()
+        layoutY.addWidget(self.y_value)
+        self.y_value.setNum(self.parent.y_value)
+        layout.addLayout(layoutY)
+
+        labelHexa = QtWidgets.QLabel("HexaIdx: ")
+        layoutH.addWidget(labelHexa)
+        self.hex_value = QtWidgets.QLabel()
+        layoutH.addWidget(self.hex_value)
+        self.hex_value.setNum(self.parent.hex_value)
+        layout.addLayout(layoutH)
+
+        labelCiv = QtWidgets.QLabel("Civ: ")
+        layoutC.addWidget(labelCiv)
+        self.civ = QtWidgets.QLabel()
+        layoutC.addWidget(self.civ)
+        self.civ.setWordWrap(True)
+        self.civ.setText(self.parent.owner)
+        layout.addLayout(layoutC)
+
+        # creating a QGraphicsDropShadowEffect object
+        shadow = QtWidgets.QGraphicsDropShadowEffect()
+        # setting blur radius
+        shadow.setBlurRadius(1)
+        shadow.setOffset(1)
+        # adding shadow to the label
+        self.civ.setGraphicsEffect(shadow)
+
+        self.setLayout(layout)
+        self.setMinimumWidth(self.sizeHint().width()*3)
+        self.move(100, 0)
+
+        self.parent.debug_signal.connect(self.updateDebugs)
+
+    def updateDebugs(self):
+        self.x_value.setNum(self.parent.x_value)
+        self.y_value.setNum(self.parent.y_value)
+        self.hex_value.setNum(self.parent.hex_value)
+        self.civ.setText(self.parent.owner)
+
+
 class MainWindow(QtWidgets.QMainWindow):
+    debug_signal = QtCore.pyqtSignal()
 
     def __init__(self, app, target_path=None, *args, **kwargs):
         super(MainWindow, self).__init__(*args, **kwargs)
@@ -347,13 +412,18 @@ class MainWindow(QtWidgets.QMainWindow):
         self.backgroundTextColor = False
         self.language = "en_EN"
         self.filterWindow = None
+        self.debugWindow = None
+        self.x_value = 0
+        self.y_value = 0
+        self.hex_value = 0
+        self.owner = ""
         self.event_filters = {
             "War Major": False,
             "War Minor": False,
-            "War Minor Minor": False,
+            "War Minor Minor": True,
             "Peace Major": False,
             "Peace Minor": False,
-            "Peace Minor Minor": False,
+            "Peace Minor Minor": True,
         }
 
         # Options
@@ -447,15 +517,11 @@ class MainWindow(QtWidgets.QMainWindow):
         menuBar = self.menuBar()
         # Creating menus using a QMenu object
         optionsMenu = QtWidgets.QMenu("&Options", self)
+
         menuBar.addMenu(optionsMenu)
-
-        # playMenu = QtWidgets.QMenu("&Play", self)
-        # menuBar.addMenu(playMenu)
         menuBar.addAction(self.playAction)
-
-        # pauseMenu = QtWidgets.QMenu("&Pause", self)
-        # menuBar.addMenu(pauseMenu)
         menuBar.addAction(self.setPauseAction)
+        menuBar.addAction(self.debugAction)
 
         borderMenu = optionsMenu.addMenu("Borders")
         borderMenu.addAction(self.toggleBorderAction)
@@ -487,6 +553,10 @@ class MainWindow(QtWidgets.QMainWindow):
     def showEventFilterWindow(self):
         self.filterWindow = EventFilterWindow(self)
         self.filterWindow.show()
+
+    def showDebugWindow(self):
+        self.debugWindow = DebugWindow(self)
+        self.debugWindow.show()
 
     def _createActions(self):
         # self.newAction = QtWidgets.QAction(self)
@@ -535,6 +605,9 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.setPauseAction = QtWidgets.QAction("&Pause", self)
         self.setPauseAction.triggered.connect(self.setPause)
+
+        self.debugAction = QtWidgets.QAction("&Debug", self)
+        self.debugAction.triggered.connect(self.showDebugWindow)
 
     def applyEventFilter(self):
         self.gdh.filterEvents(self.event_filters)
@@ -877,13 +950,14 @@ class MainWindow(QtWidgets.QMainWindow):
             xidx = np.floor(mousePoint.x() + 0.5 - (yidx % 2) * 0.5)
             # print("x: {}, y {}".format(xidx, yidx))
             if 0 <= xidx <= self.gdh.X and 0 <= yidx <= self.gdh.Y:
-                self.buttons_widget.x_value.setNum(xidx)
-                self.buttons_widget.y_value.setNum(yidx)
-                self.buttons_widget.hex_value.setNum(yidx * self.gdh.X + xidx)
+                self.x_value = xidx
+                self.y_value = yidx
+                self.hex_value = yidx * self.gdh.X + xidx
                 self.currentIdx = self.plot_widget.turnSlider.sliderPosition()
                 language = self.buttons_widget.comboBox.currentText()
                 owner = self.gdh.getOwner(self.currentIdx - 1, int(xidx), int(yidx), language)
-                self.buttons_widget.civ.setText(owner)
+                self.owner = owner
+                self.debug_signal.emit()
 
 
 def main():

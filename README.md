@@ -7,9 +7,20 @@ Civilization 6 End Game Replay Map
 - fileCopier.py which copies automatically all autosaves (Single/Multi) (not necessary if you have some other method to collect your save files)
 - endGameReplay.py visualizes all separately (autosaved) data
   - Visualized environment similar to the minimap in the game
+  - Civilization border colors according to the prismatic jersey mod
   - Toggle borders on/off
   - Visualized goody huts and barb camps
   - Create gif or mp4 (custom fps)
+  - Civilization and City names (also custom city names)
+  - City States (and their type)
+  - Some localization of Civs, Leaders and Citys
+  - Events:
+    - Currently only War/Peace Declarations
+	- In future:
+	 - City info founding, razing, capturing, revolting etc...
+	 - Wonders
+	 - Great People
+	 - Winning Condition if the game has continued at least one more turn ...
   
 ## Quick start
 - Start game
@@ -71,7 +82,6 @@ Localization is done automatically by
 - Include natural wonders and other tile improvement data (some custom visualization?)
 
 - Nice to have stuff in future:
-  - List events (e.g. wars, wonders, great people)
   - Optional visualize units
   - Show disasters (e.g. meteors would be quite easy from tile data)
 
