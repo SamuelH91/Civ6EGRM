@@ -329,7 +329,7 @@ class MainWindow(QtWidgets.QMainWindow):
         super(MainWindow, self).__init__(*args, **kwargs)
         self.setWindowTitle("Civ VI End Game Replay Map")
         self.app = app
-        self.pause = False
+        self.pause = True
         self.currentIdx = 0
         self.current_timer = None
         self.timerCount = 0
@@ -359,6 +359,9 @@ class MainWindow(QtWidgets.QMainWindow):
             "Peace Minor": False,
             "Peace Minor Minor": True,
         }
+
+        self.playSc = QtWidgets.QShortcut(QtGui.QKeySequence('Space'), self)
+        self.playSc.activated.connect(self.play)
 
         # Options
         self.OptimizeGif = True
@@ -451,7 +454,6 @@ class MainWindow(QtWidgets.QMainWindow):
 
         menuBar.addMenu(optionsMenu)
         menuBar.addAction(self.playAction)
-        menuBar.addAction(self.setPauseAction)
         menuBar.addAction(self.debugAction)
 
         self.comboBox = QtWidgets.QComboBox()
@@ -545,11 +547,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.updateFpsAction = QtWidgets.QAction("&Set output fps", self)
         self.updateFpsAction.triggered.connect(self.updateFps)
 
-        self.playAction = QtWidgets.QAction("&Play", self)
+        self.playAction = QtWidgets.QAction("&Play/Pause", self)
         self.playAction.triggered.connect(self.play)
-
-        self.setPauseAction = QtWidgets.QAction("&Pause", self)
-        self.setPauseAction.triggered.connect(self.setPause)
 
         self.debugAction = QtWidgets.QAction("&Debug", self)
         self.debugAction.triggered.connect(self.showDebugWindow)
@@ -786,9 +785,12 @@ class MainWindow(QtWidgets.QMainWindow):
         self.updateTurn(self.currentIdx)
 
     def play(self):
-        self.pause = False
-        self.currentIdx = self.plot_widget.turnSlider.sliderPosition()
-        self.start_timer(self.TurnCount-self.currentIdx+1, 100)
+        if self.pause:
+            self.pause = False
+            self.currentIdx = self.plot_widget.turnSlider.sliderPosition()
+            self.start_timer(self.TurnCount-self.currentIdx+1, 100)
+        else:
+            self.pause = True
 
     def updateStatus(self, status):
         self.statusMenu.setTitle(status)
@@ -878,9 +880,6 @@ class MainWindow(QtWidgets.QMainWindow):
             buffer.open(QtCore.QBuffer.ReadWrite)
             screenshot.save(buffer, "png")
             self.imageList.append(Image.open(io.BytesIO(buffer.data())))
-
-    def setPause(self):
-        self.pause = True
 
     def updateSlider(self, idx):
         self.plot_widget.turnSlider.setValue(idx)
