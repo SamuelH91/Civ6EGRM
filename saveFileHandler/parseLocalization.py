@@ -32,6 +32,18 @@ dlcFileEnd = "_Translations_ConfigText.xml"
 dlcFileEnd2 = "_Translations_Text.xml"
 dlcFileEnd3 = "_Translations_Major_Text.xml"
 vanillaFileStart = "Vanilla_"
+ignored_names = [
+    "LOC_CITY_BANNER_",
+    "LOC_CITY_STATE_",
+    "LOC_CITY_STATES_",
+    "LOC_CITY_SACKED_",
+    "LOC_CITY_RECENTLY_",
+    "LOC_CITY_YIELD_",
+    "LOC_CITY_BELONGS_",
+    "LOC_CITY_GOLD_",
+    "LOC_CITY_PANEL_POWER_",
+    "LOC_CITY_GET_",
+]
 xmlfile = ".xml"
 nameEnd = "_NAME"
 civNameExtraLen = len(civNameExtra)
@@ -63,7 +75,7 @@ def add_tag_to_dict(replaceTag, dictionary, tag, language):
         dictionary[tag][language] = civName
 
 
-def parse_xml(path, targetLanguage):
+def parse_xml(path, targetLanguage, vanilla=False):
     tree = ET.parse(path)
     root = tree.getroot()
     LocalizedText = root[0]
@@ -88,8 +100,13 @@ def parse_xml(path, targetLanguage):
                     tag = tag[cityNameLen:]
                     add_tag_to_dict(replaceTag, citys, tag, language)
                 else:
-                    tag = tag[cityNameLen0:]
-                    add_tag_to_dict(replaceTag, citys, tag, language)
+                    if not vanilla:
+                        for ignored in ignored_names:
+                            if ignored == tag[:len(ignored)]:
+                                break
+                        else:
+                            tag = tag[cityNameLen0:]
+                            add_tag_to_dict(replaceTag, citys, tag, language)
 
 snapshotVanilla = DirectorySnapshot(vanillapath, False)
 for i, path in enumerate(snapshotVanilla.paths):
@@ -98,7 +115,7 @@ for i, path in enumerate(snapshotVanilla.paths):
         if tail[:vanillaFileStartLen] == vanillaFileStart:
             targetLanguage = tail[vanillaFileStartLen:-xmlfileLen]
             if targetLanguage in targetLanguages:
-                parse_xml(path, targetLanguage)
+                parse_xml(path, targetLanguage, vanilla=True)
 
 snapshot = DirectorySnapshot(dlcpath, True)
 for i, path in enumerate(snapshot.paths):
@@ -118,13 +135,13 @@ for i, path in enumerate(snapshot.paths):
 with codecs.open("civLocalization.py", "w", "utf-8") as stream:   # or utf-8
     stream.write(info)
     stream.write("CIV_LEADER_NAMES = ")
-    stream.write(json.dumps(leaders, indent=4, ensure_ascii=False))
+    stream.write(json.dumps(leaders, indent=4, ensure_ascii=False, sort_keys=True))
     stream.write("\n\n")
     stream.write("CIV_NAMES = ")
-    stream.write(json.dumps(civs, indent=4, ensure_ascii=False))
+    stream.write(json.dumps(civs, indent=4, ensure_ascii=False, sort_keys=True))
     stream.write("\n\n")
     stream.write("CITY_NAMES = ")
-    stream.write(json.dumps(citys, indent=4, ensure_ascii=False))
+    stream.write(json.dumps(citys, indent=4, ensure_ascii=False, sort_keys=True))
     stream.write("\n\n")
 
 print("Autogeneration done!!!")
