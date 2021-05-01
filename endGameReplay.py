@@ -20,11 +20,11 @@ use_original_name = False
 
 def run_arg_parser():
     print(
-        f"##################################################################\n"
-        f"Civ6EGRM: End Game Replay Map for Civ6 (Version 01.05.2021 V1.0.0)\n"
+        f"####################################################################\n"
+        f"Civ6EGRM: End Game Replay Map for Civ6 (Version 01.05.2021 V1.00.01)\n"
         f"Created by SH\n"
         f"If errors occur, send e.g. 10 autosave files in a zip\n"
-        f"##################################################################\n"
+        f"####################################################################\n"
     )
     # Create the parser
     arg_parser = argparse.ArgumentParser(description='endGameReplay.py reads all civ6 autosave files from -d "<location>"\n'
@@ -658,7 +658,7 @@ class MainWindow(QtWidgets.QMainWindow):
             if symbol[:9] == "CityName_":
                 self.plot_widget.symbols[symbol].setHtml("")
         if not self.hiddenCityNames:
-            for city in turn["cities"]:
+            for cityIdx, city in enumerate(turn["cities"]):
                 cityName = city["CityName"]
                 cityNameTag = "CityName_" + cityName
                 # if additional city name data
@@ -675,7 +675,8 @@ class MainWindow(QtWidgets.QMainWindow):
                             cityName = city["cityNameData"]["CityName"]  # Custom city name
                 if cityNameTag in self.plot_widget.symbols:
                     civIdx = city["CivIndex"]
-                    if civIdx < 0:
+                    buildOver = self.checkRemainingCityCoordinates(idx, cityIdx, city["LocationIdx"])
+                    if civIdx < 0 or buildOver:
                         cityName = ""
                     colorhex = ''.join([format(int(c), '02x') for c in civColorsInner[civIdx]])
                     if bg:
@@ -684,6 +685,13 @@ class MainWindow(QtWidgets.QMainWindow):
                     else:
                         self.plot_widget.set_symbol_shadow(cityNameTag, None)
                     self.plot_widget.symbols[cityNameTag].setHtml("<font color=#" + colorhex + ">" + cityName + "</font>")  #  background-color=#FF0000  text-shadow=2px 2px #FF0000
+
+    def checkRemainingCityCoordinates(self, turnIdx, cityIdx, loc):
+        turn = self.gdh.cityData[turnIdx]
+        for city in turn["cities"][cityIdx+1:]:
+            if city["LocationIdx"] == loc:
+                return True
+        return False
 
     def setCityRazedAtTurn(self, idx):
         turn = self.gdh.razedCityLocs[idx]
