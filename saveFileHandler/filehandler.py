@@ -384,6 +384,7 @@ def save_to_map_json(mainDecompressedData, idx):
     SY = MAPSIZEDATA[tileskey]["y"]
 
     for i in range(tiles):
+        # test = tilesmap["tiles"][-1]
         OwnershipBuffer = readUInt8(bin, mindex + 49)
         TileOverlayNum = readUInt32(bin, mindex + 51)
         GoodyHut = readUInt32(bin, mindex + 33)
@@ -393,17 +394,30 @@ def save_to_map_json(mainDecompressedData, idx):
             buflength += 24
         elif TileOverlayNum == 2:
             buflength += 44
+        elif TileOverlayNum == 3:
+            buflength += 64
+            # print(f"Warning TileOverlayNum is 3!!! File #{idx},x:{i % SX},y:{np.floor(i / SX)},raw index {mindex}")
         if OwnershipBuffer >= 64:
             buflength += 17
 
         FeatureType = readUInt32(bin, mindex + 16)
         TerrainType = readUInt32(bin, mindex + 12)
         if FeatureType not in Features:
-            print(f"File #{idx}: Add feature: {FeatureType}, x: {i % SX}, y: {np.floor(i / SX)}")
-
+            print(f"File #{idx}: Add feature: {FeatureType}, x: {i % SX}, y: {np.floor(i / SX)}, raw index {mindex}")
         # ski resort + mountain tunnel + galapagos (initial guess)
         if GoodyHut == 2135005470 or GoodyHut == 3108964764 or FeatureType == 226585075:
             buflength += 20
+
+        # barricade heuristic check, that confirms correct buffer length by testing next feature and terrain validity
+        if GoodyHut == 1765528555:
+            # print(f"Barricade? x: {i % SX}, y: {np.floor(i / SX)}, raw index {mindex}")
+            buflength += 20
+            # Check validity of next feature
+            if i < tiles - 1:
+                NextFeatureType = readUInt32(bin, mindex + 55 + buflength + 16)
+                NextTerrainType = readUInt32(bin, mindex + 55 + buflength + 12)
+                if NextFeatureType not in Features or NextTerrainType not in Terrains:
+                    buflength -= 20
 
         # galapagos heuristic check, that confirms correct buffer length by testing next feature and terrain validity
         if FeatureType == 226585075:
@@ -414,6 +428,12 @@ def save_to_map_json(mainDecompressedData, idx):
                 NextTerrainType = readUInt32(bin, mindex + 55 + buflength + 12)
                 if NextFeatureType not in Features or NextTerrainType not in Terrains:
                     buflength -= 20
+
+        if i < tiles - 1:
+            NextFeatureType = readUInt32(bin, mindex + 55 + buflength + 16)
+            NextTerrainType = readUInt32(bin, mindex + 55 + buflength + 12)
+            if NextFeatureType not in Features or NextTerrainType not in Terrains:
+                print(f"Warning next tile not valid: File#{idx}, x: {i % SX}, y: {np.floor(i / SX)}, raw index {mindex}")
 
         # See bin-structure.md for WIP documentation on what each of these values are
         tilesmap["tiles"].append({

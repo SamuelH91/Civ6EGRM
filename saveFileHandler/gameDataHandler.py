@@ -327,8 +327,10 @@ def combineNames(cityData, reCityData, cityNameData, fileNum):
                         print(f"File #{fileNum} Warning: a bug?, city names should be same when using originals")
                 break
             elif candidate["CivCityOrderIdx"] < city["CivCityOrderIdx"]:  # Free city?
-                if city in freeCitys:
-                    pass
+                print(f"Warning unconfirmed condition for city name mapping, a bug?")
+                break
+                # if city in freeCitys:
+                #     pass
             else:  # Captured city state?
                 skip += 1
                 total = idx + skip
@@ -372,17 +374,25 @@ def reorderedCityData(cityData, removeGaps=True):
 
     replacedCities2 = []
     for cityName in replacedCities:
+        buildOver = False
         for city in reorderedCityData:
             if city["CityName"] == cityName:
                 break
         else:
             for idx, missingCity in enumerate(reversed(cityData["cities"])):
                 if missingCity["CityName"] == cityName:
+                    cityLoc = missingCity["LocationIdx"]
+                    for cityForLocCheck in reversed(cityData["cities"]):
+                        if cityName != cityForLocCheck["CityName"]:
+                            if cityForLocCheck["LocationIdx"] == cityLoc:
+                                buildOver = True
                     break
             else:
                 print("Failed to find a missing city candidate at reorderedCityData")
                 continue
-
+            if buildOver:
+                # print("New city on same tile")
+                continue
             newCity = missingCity.copy()
             maxCivCityOrderIdx, maxCivCityOrderIdx1 = findLastCivCityIdx(cityData, missingCity["tileOwner"])
             newCity["OldIdx"] = len(cityData["cities"]) - idx - 1
@@ -894,6 +904,7 @@ class GameDataHandler:
         print("Total time for border colors: {}".format(time.time() - t0))
 
     def calculateCityStateOrigos(self):
+        whined = False
         t0 = time.time()
         # self.borderColorsInner = []
         if len(self.tileData) > 1:
@@ -919,7 +930,10 @@ class GameDataHandler:
                     if playerID not in self.minorOrigos:
                         self.minorOrigos[playerID] = ii
                     else:
-                        print("Already found minor origo, something went wrong")
+                        if not whined:
+                            whined = True
+                            print(f"Warning: CityState(s) location calculation possibly failed! Affects visually only!\n"
+                                  f"This happens if not starting from turn #1 (or maybe some mod)!")
         print("Total time for city state origos: {}".format(time.time() - t0))
 
     def calcIncrementalWars(self):

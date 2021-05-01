@@ -19,6 +19,13 @@ use_original_name = False
 
 
 def run_arg_parser():
+    print(
+        f"##################################################################\n"
+        f"Civ6EGRM: End Game Replay Map for Civ6 (Version 01.05.2021 V1.0.0)\n"
+        f"Created by SH\n"
+        f"If errors occur, send e.g. 10 autosave files in a zip\n"
+        f"##################################################################\n"
+    )
     # Create the parser
     arg_parser = argparse.ArgumentParser(description='endGameReplay.py reads all civ6 autosave files from -d "<location>"\n'
                                                      'and displays end game replay map turn by turn. You can also create\n'
