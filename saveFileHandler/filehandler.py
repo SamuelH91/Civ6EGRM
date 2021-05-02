@@ -2,6 +2,7 @@ import zlib
 import numpy as np
 from utils.binaryconvert import *
 from saveFileHandler.features import Terrains, Features
+import re
 
 CHUNKSIZE = 64 * 1024
 
@@ -59,6 +60,10 @@ def recompress(saveFileBuffer, decompressedData):
 
     return merged
 
+def writeBinDataToFile(data, fileName="test.bin"):
+    file = open(fileName, "wb")
+    file.write(data)
+    file.close()
 
 def revealMap(decompressedData):
     modifiedData = b''
@@ -644,16 +649,26 @@ def getDiploStates(mainDecompressedData, turn):
 
             try:
                 diploIndexCandidate = binaryData.index(nextSearch, idx)
-                num1 = readUInt32(binaryData, diploIndexCandidate - 8)  # Major/Minor/Alive/Dead?
-                num2 = readUInt32(binaryData, diploIndexCandidate - 4)  # Major/Minor/Alive/Dead?
+
+                foundCandidate = False
+                if binaryData[diploIndexCandidate + 16:diploIndexCandidate + 28] == b'DIPLO_STATE_':
+                    diploIndex = diploIndexCandidate
+                    foundCandidate = True
+                else:
+                    # backup regex search
+                    ridx = re.search(nextSearch + b'.\x00\x00\x00DIPLO_STATE_', binaryData)
+                    if ridx:
+                        diploIndexCandidate = ridx.start()
+                        diploIndex = diploIndexCandidate
+                        foundCandidate = True
+                num1 = readInt32(binaryData, diploIndexCandidate - 8)  # Major/Minor/Alive/Dead?
+                num2 = readInt32(binaryData, diploIndexCandidate - 4)  # Major/Minor/Alive/Dead?
 
                 if currentPlayerId not in diploStates:
                     diploStates[currentPlayerId] = {}
                 diploStates[currentPlayerId][targetPlayerId - 1] = {"state": diploState[12:], "num1": num1, "num2": num2}
 
-                if binaryData[diploIndexCandidate + 16:diploIndexCandidate + 28] == b'DIPLO_STATE_':
-                    diploIndex = diploIndexCandidate
-                else:
+                if not foundCandidate:
                     # Find next player
                     currentPlayerId += 1
                     currentPlayerBin = writeUInt32LE(currentPlayerId)

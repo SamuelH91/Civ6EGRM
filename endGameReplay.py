@@ -21,7 +21,7 @@ use_original_name = False
 def run_arg_parser():
     print(
         f"####################################################################\n"
-        f"Civ6EGRM: End Game Replay Map for Civ6 (Version 01.05.2021 V1.00.02)\n"
+        f"Civ6EGRM: End Game Replay Map for Civ6 (Version 01.05.2021 V1.00.03)\n"
         f"Created by SH\n"
         f"If errors occur, send e.g. 10 autosave files in a zip\n"
         f"####################################################################\n"

@@ -723,7 +723,6 @@ class GameDataHandler:
         t0 = time.time()
         for turnIdx, turn in enumerate(self.tileData):
             goodyHutsAtTurn = []
-            count = 0
             for ii, tile in enumerate(turn["tiles"]):
                 terrainType = tile["TerrainType"]
                 featureType = tile["FeatureType"]
@@ -735,8 +734,7 @@ class GameDataHandler:
                     else:
                         goodyHutsAtTurn.append(emptyBrush)
                 except:
-                    count += 1
-                    print("turnIdx: {}, errorCount: {}, x: {}, y: {}, goodyHut: {}".format(turnIdx, count, tile["x"], tile["y"], GoodyHut))
+                    print("Unknown feature: turnIdx: {}, x: {}, y: {}, goodyHut: {}".format(turnIdx, tile["x"], int(tile["y"]), GoodyHut))
                     goodyHutsAtTurn.append(emptyBrush)
             self.goodyHuts.append(copy.copy(goodyHutsAtTurn))
         print("Total time for goody huts / barb camps: {}".format(time.time() - t0))
@@ -927,7 +925,7 @@ class GameDataHandler:
                         found_orig = False
                         break
                 if found_orig:
-                    if playerID not in self.minorOrigos:
+                    if playerID not in self.minorOrigos and playerID != FREE_CITY_IDX:
                         self.minorOrigos[playerID] = ii
                     else:
                         if not whined:
