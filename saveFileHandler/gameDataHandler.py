@@ -749,7 +749,9 @@ class GameDataHandler:
                 terrainType = tile["TerrainType"]
                 featureType = tile["FeatureType"]
                 try:
-                    if (Terrains[terrainType]["TerrainType"] == "Ocean" or
+                    if Features[featureType]["FeatureType"] == "Pamukkale":
+                        self.envColors.append(Features[featureType]["color"])
+                    elif (Terrains[terrainType]["TerrainType"] == "Ocean" or
                             Terrains[terrainType]["TerrainType"] == "Coast"):
                         if Features[featureType]["FeatureType"] == "Ice":
                             self.envColors.append(Features[featureType]["color"])

@@ -110,7 +110,7 @@ Features = {  # + goodyhut codes
     2354893825: {"FeatureType": "MountKilimanjaro",     "color": pg.mkBrush(pg.mkColor(np.array([0, 0, 0])))},
     3861018290: {"FeatureType": "MountRoraima",         "color": pg.mkBrush(pg.mkColor(np.array([0, 0, 0])))},
     2284878731: {"FeatureType": "MountVesuvius",        "color": pg.mkBrush(pg.mkColor(np.array([0, 0, 0])))},
-    1491718565: {"FeatureType": "Pamukkale",            "color": pg.mkBrush(pg.mkColor(np.array([0, 0, 0])))},
+    1491718565: {"FeatureType": "Pamukkale",            "color": pg.mkBrush(pg.mkColor(np.array([132, 133, 134])))},
     1394593257: {"FeatureType": "Pantanal",             "color": pg.mkBrush(pg.mkColor(np.array([0, 0, 0])))},
     1624801336: {"FeatureType": "Piopiotahi",           "color": pg.mkBrush(pg.mkColor(np.array([0, 0, 0])))},
     3738443622: {"FeatureType": "SaharaElBeyda",        "color": pg.mkBrush(pg.mkColor(np.array([0, 0, 0])))},
