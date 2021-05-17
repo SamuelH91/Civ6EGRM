@@ -366,6 +366,7 @@ def find_mapstart_idx(bin, key, offset=0):
 #  */
 def save_to_map_json(mainDecompressedData, idx):
     bin = mainDecompressedData
+    # writeBinDataToFile(mainDecompressedData)
     try:
         mindex, tiles, tileskey, tilesmap =\
             find_mapstart_idx(bin, b'\x0E\x00\x00\x00\x0F\x00\x00\x00\x06\x00\x00\x00')
@@ -409,8 +410,8 @@ def save_to_map_json(mainDecompressedData, idx):
         TerrainType = readUInt32(bin, mindex + 12)
         if FeatureType not in Features:
             print(f"File #{idx}: Add feature: {FeatureType}, x: {i % SX}, y: {np.floor(i / SX)}, raw index {mindex}")
-        # ski resort + mountain tunnel + galapagos (initial guess)
-        if GoodyHut == 2135005470 or GoodyHut == 3108964764 or FeatureType == 226585075:
+        # ski resort + mountain tunnel + galapagos (initial guess) + Pamukkale
+        if GoodyHut == 2135005470 or GoodyHut == 3108964764 or FeatureType == 226585075 or FeatureType == 1491718565:
             buflength += 20
 
         # barricade heuristic check, that confirms correct buffer length by testing next feature and terrain validity
@@ -426,7 +427,15 @@ def save_to_map_json(mainDecompressedData, idx):
 
         # galapagos heuristic check, that confirms correct buffer length by testing next feature and terrain validity
         if FeatureType == 226585075:
-            # print("Galapagos on map, check for black tiles, remove this comment later if no issues")
+            # Check validity of next feature
+            if i < tiles - 1:
+                NextFeatureType = readUInt32(bin, mindex + 55 + buflength + 16)
+                NextTerrainType = readUInt32(bin, mindex + 55 + buflength + 12)
+                if NextFeatureType not in Features or NextTerrainType not in Terrains:
+                    buflength -= 20
+
+        # Pamukkale heuristic check, that confirms correct buffer length by testing next feature and terrain validity
+        if FeatureType == 1491718565:
             # Check validity of next feature
             if i < tiles - 1:
                 NextFeatureType = readUInt32(bin, mindex + 55 + buflength + 16)

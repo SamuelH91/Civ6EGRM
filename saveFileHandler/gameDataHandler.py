@@ -245,6 +245,7 @@ def fileWorker(idx, filePath, fileCount):
     data = f.read()
     f.close()
     mainDecompressedData = decompress(data)
+    # writeBinDataToFile(mainDecompressedData)
     civData = []
     leaderData = []
     notifications = []
@@ -253,7 +254,7 @@ def fileWorker(idx, filePath, fileCount):
     try:
         if idx == 0:
             civData, leaderData = get_civ_data(data)
-        #if idx == fileCount - 1:  # All grievance data stored in save file
+        # if idx == fileCount - 1:  # All grievance data stored in save file
         wars = getWars(mainDecompressedData, idx)
         # map_civ_colors(civdata)
         tileData = save_to_map_json(mainDecompressedData, idx)
