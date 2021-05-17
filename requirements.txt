@@ -5,3 +5,4 @@ PyQt5==5.15.0
 pyqtgraph==0.11.0
 raw-zlib==0.1.8
 watchdog==0.10.3
+wget==3.2
