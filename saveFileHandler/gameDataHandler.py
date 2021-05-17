@@ -906,33 +906,29 @@ class GameDataHandler:
         whined = False
         t0 = time.time()
         # self.borderColorsInner = []
-        if len(self.tileData) > 1:
-            turnIdx = 1
-        else:
-            turnIdx = 0
-        turn = self.tileData[turnIdx]
         self.minorOrigos = {}
-        for ii, tile in enumerate(turn["tiles"]):
-            playerID = getPlayerID(tile)
-            if playerID >= self.majorCivs:  # Minor only
-                neighbour_count_inv = 6
-                found_orig = True
-                for neighbour in self.neighbours_list[ii]:  # If more than 4 are owned (or all actually)
-                    if neighbour < self.X*self.Y:
-                        neighbourID = getPlayerID(turn["tiles"][neighbour])
-                        if neighbourID != playerID:
-                            neighbour_count_inv -= 1
-                    if neighbour_count_inv <= 3:
-                        found_orig = False
-                        break
-                if found_orig:
-                    if playerID not in self.minorOrigos and playerID != FREE_CITY_IDX:
-                        self.minorOrigos[playerID] = ii
-                    else:
-                        if not whined:
-                            whined = True
-                            print(f"Warning: CityState(s) location calculation possibly failed! Affects visually only!\n"
-                                  f"This happens if not starting from turn #1 (or maybe some mod)!")
+        for turn in self.tileData:
+            for ii, tile in enumerate(turn["tiles"]):
+                playerID = getPlayerID(tile)
+                if playerID >= self.majorCivs and playerID not in self.minorOrigos:  # Minor only and not found yet
+                    neighbour_count_inv = 6
+                    found_orig = True
+                    for neighbour in self.neighbours_list[ii]:  # If more than 4 are owned (or all actually)
+                        if neighbour < self.X*self.Y:
+                            neighbourID = getPlayerID(turn["tiles"][neighbour])
+                            if neighbourID != playerID:
+                                neighbour_count_inv -= 1
+                        if neighbour_count_inv <= 3:
+                            found_orig = False
+                            break
+                    if found_orig:
+                        if playerID not in self.minorOrigos and playerID != FREE_CITY_IDX:
+                            self.minorOrigos[playerID] = ii
+                        else:
+                            if not whined:
+                                whined = True
+                                print(f"Warning: CityState(s) location calculation possibly failed! Affects visually only!\n"
+                                      f"This happens if not starting from turn #1 (or maybe some mod)!")
         print("Total time for city state origos: {}".format(time.time() - t0))
 
     def calcIncrementalWars(self):
