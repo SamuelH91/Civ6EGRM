@@ -74,7 +74,7 @@ Features = {  # + goodyhut codes
     4214473799: {"FeatureType": "Quarry",               "color": pg.mkBrush(pg.mkColor(np.array([0, 0, 0])))},
     3910227001: {"FeatureType": "Rainforest",           "color": pg.mkBrush(pg.mkColor(np.array([0, 0, 0])))},
     3943953367: {"FeatureType": "Reef",                 "color": pg.mkBrush(pg.mkColor(np.array([0, 0, 0])))},
-    2334474827: {"FeatureType": "RockHewnChurch",            "color": pg.mkBrush(pg.mkColor(np.array([0, 0, 0])))},
+    2334474827: {"FeatureType": "RockHewnChurch",       "color": pg.mkBrush(pg.mkColor(np.array([0, 0, 0])))},
     1195876395: {"FeatureType": "RomanFort",            "color": pg.mkBrush(pg.mkColor(np.array([0, 0, 0])))},
     570930386:  {"FeatureType": "SeasideResort",        "color": pg.mkBrush(pg.mkColor(np.array([0, 0, 0])))},
     2182120684: {"FeatureType": "Sphinx",               "color": pg.mkBrush(pg.mkColor(np.array([0, 0, 0])))},
@@ -84,6 +84,8 @@ Features = {  # + goodyhut codes
     2005950930: {"FeatureType": "VolcanicSoil",         "color": pg.mkBrush(pg.mkColor(np.array([0, 0, 0])))},
     2771557557: {"FeatureType": "Volcano",              "color": pg.mkBrush(pg.mkColor(np.array([0, 0, 0])))},
     520634903:  {"FeatureType": "WindFarm",             "color": pg.mkBrush(pg.mkColor(np.array([0, 0, 0])))},
+    3029993898: {"FeatureType": "Ziggurat",             "color": pg.mkBrush(pg.mkColor(np.array([0, 0, 0])))},
+
 
     # Wonders
     2773098215: {"FeatureType": "ChocolateHills",       "color": pg.mkBrush(pg.mkColor(np.array([0, 0, 0])))},
