@@ -958,7 +958,7 @@ class GameDataHandler:
     def calcDiploStateWarPeaceDiff(self):
         pCount = self.majorCivs + self.minorCivs
         # Fixing invisible minorCivs with diploStates, TODO: might be better to move this to somewhere else
-        M = len(self.diploStates[0])
+        M = len(max(self.diploStates, key=len))
         if 62 in self.diploStates[0]:
             M -= 1
         if M < pCount:
@@ -966,6 +966,7 @@ class GameDataHandler:
             pCount = M
         diploDiffsWars = np.zeros((pCount, pCount, len(self.diploStates)), dtype=np.int8)
         for idx, diploAtTurnIdx in enumerate(self.diploStates):
+            pCount = len(diploAtTurnIdx)
             for p1 in range(pCount):
                 for p2 in range(pCount):
                     if diploAtTurnIdx[p1][p2]["state"][:3] == "WAR" or diploAtTurnIdx[p1][p2]["state"][-3:] == "WAR":
