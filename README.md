@@ -42,6 +42,7 @@ More detailed instruction and installation guide under
 - watchdog
 - Pillow
 - pygifsicle
+- wget (updater for non git users)
 
 These can be installed with pip e.g. 
 > - 'pip install matplotlib'
@@ -71,6 +72,10 @@ These can be installed with pip e.g.
     - Share it with your friends
 
 Any feedback or suggestions are appreciated.
+
+## Update
+1) Use git
+1) or run nonGitUpdater.py (which downloads necessary files from GitHub)
 
 ## Localization
 Localization is done automatically by
