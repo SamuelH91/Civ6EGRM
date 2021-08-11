@@ -284,6 +284,8 @@ def getPlayerID(tile):
 def checkCityTileOwner(cityData, tileData, updateWithTileOwner=True):
     for city in cityData["cities"]:
         pId = getPlayerID(tileData["tiles"][city["LocationIdx"]])
+        if pId == 255:  # Submerged land bug, No man's land -> city has been wiped out? TODO: Actually terrain changes
+            pId = -1
         city["tileOwner"] = pId
         if updateWithTileOwner:
             if pId != FREE_CITY_IDX and pId != city["CivIndex"]:  # and pId > 0:
@@ -295,9 +297,21 @@ def checkCityTileOwner(cityData, tileData, updateWithTileOwner=True):
                     city["CivIndex"] = pId
                 else:
                     maxCivCityOrderIdx, maxCivCityOrderIdx1 = findLastCivCityIdx(cityData, pId)
+                    if countCityName(city["CityName"], cityData) == 1:  # City is actually wiped on other player's land?
+                        #print(f"A city wiped out on other player's land at location hex {city['LocationIdx']}?")
+                        city["CivIndex"] = -1
+                        continue
                     city["CivCityOrderIdx"] = maxCivCityOrderIdx + 1
                     city["CivCityOrderIdx1"] = maxCivCityOrderIdx1 + 1
                     city["CivIndex"] = pId
+
+
+def countCityName(cityName, cityData):
+    count = 0
+    for city in cityData["cities"]:
+        if city["CityName"] == cityName:
+            count += 1
+    return count
 
 
 def combineNames(cityData, reCityData, cityNameData, fileNum):
