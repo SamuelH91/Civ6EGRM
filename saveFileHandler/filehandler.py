@@ -444,10 +444,25 @@ def save_to_map_json(mainDecompressedData, idx):
                     buflength -= 20
 
         if i < tiles - 1:
+            # TODO: Test if other heuristic checks can be removed
             NextFeatureType = readUInt32(bin, mindex + 55 + buflength + 16)
             NextTerrainType = readUInt32(bin, mindex + 55 + buflength + 12)
             if NextFeatureType not in Features or NextTerrainType not in Terrains:
-                print(f"Warning next tile not valid: File#{idx}, x: {i % SX}, y: {np.floor(i / SX)}, raw index {mindex}")
+                minNextFeatureIndex = None
+                for terrain in Terrains:
+                    # searchTag = writeUInt32LE(terrain)
+                    # print('\\x' + '\\x'.join(format(x, '02X') for x in searchTag))
+                    try:
+                        terrainTestIndex = bin.index(Terrains[terrain]["searchTag"], mindex + 55)
+                        if not minNextFeatureIndex or minNextFeatureIndex > terrainTestIndex:
+                            minNextFeatureIndex = terrainTestIndex
+                    except:
+                        continue
+                print(f"Warning next tile was not valid: File#{idx}, x: {i % SX}, y: {np.floor(i / SX)}, raw index {mindex}")
+                if minNextFeatureIndex:
+                    errorInBuf = minNextFeatureIndex - (mindex + 55 + buflength + 12)
+                    buflength += errorInBuf
+                    print(f"Heuristic search candidate: File#{idx}, raw index {mindex}, modified buffer with {errorInBuf}")
 
         # See bin-structure.md for WIP documentation on what each of these values are
         tilesmap["tiles"].append({

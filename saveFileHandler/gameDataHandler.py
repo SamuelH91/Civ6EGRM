@@ -966,7 +966,9 @@ class GameDataHandler:
             pCount = M
         diploDiffsWars = np.zeros((pCount, pCount, len(self.diploStates)), dtype=np.int8)
         for idx, diploAtTurnIdx in enumerate(self.diploStates):
-            pCount = len(diploAtTurnIdx)
+            pCount = len(diploAtTurnIdx)  # TODO: Remove FREE_CITIES from diploStates in first place?
+            if 62 in diploAtTurnIdx:  # Remove FREE_CITIES from turn player count at turn also
+                pCount -= 1
             for p1 in range(pCount):
                 for p2 in range(pCount):
                     if diploAtTurnIdx[p1][p2]["state"][:3] == "WAR" or diploAtTurnIdx[p1][p2]["state"][-3:] == "WAR":
