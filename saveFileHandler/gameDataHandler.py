@@ -697,7 +697,10 @@ class GameDataHandler:
             cityCounts = [0] * self.majorCivs
             usedCities = {}
             for city in turn["cities"]:
-                cityCounts[city["CivIndex"]] += 1
+                civIndex = city["CivIndex"]
+                if civIndex >= self.majorCivs:  # Skip if city state has been liberated
+                    continue
+                cityCounts[civIndex] += 1
                 if city["CityName"] not in usedCities:
                     usedCities[city["CityName"]] = city["CivIndex"]
                 else:
