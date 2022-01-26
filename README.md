@@ -92,6 +92,11 @@ Localization is done automatically by
 
 ## Special thanks for https://github.com/lucienmaloney/civ6save-editing
 
+## Check out also
+https://sourceforge.net/projects/civ-vi-replay/ by Keride
+
+It has a lot features that I have been also thinking about to add.
+
 ## Troubleshoot
 If following error at the start of endGameReplay.py file
 "qt.qpa.plugin: Could not find the Qt platform plugin "windows" in ""
